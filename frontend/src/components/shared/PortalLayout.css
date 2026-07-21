@@ -115,3 +115,14 @@
     display: none;
   }
 }
+.portal-layout__nav-link {
+  color: var(--paper);
+  font-family: var(--font-body);
+  font-size: 0.85rem;
+  text-decoration: none;
+  border-bottom: 1px solid transparent;
+}
+
+.portal-layout__nav-link:hover {
+  border-bottom-color: var(--stamp);
+}

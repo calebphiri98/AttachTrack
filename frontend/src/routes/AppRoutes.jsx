@@ -9,6 +9,7 @@ import ProtectedRoute from './ProtectedRoute';
 import StudentDashboardPage from '../features/student/pages/StudentDashboardPage';
 import UniversityStudentsListPage from '../features/universitySupervisor/pages/StudentsListPage';
 import UniversityStudentDetailPage from '../features/universitySupervisor/pages/StudentDetailPage';
+import MessagesPage from '../features/shared/pages/MessagesPage';
 
 export default function AppRoutes() {
   return (
@@ -61,6 +62,30 @@ export default function AppRoutes() {
         element={
           <ProtectedRoute roles={['university_supervisor']}>
             <UniversityStudentDetailPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/student/messages"
+        element={
+          <ProtectedRoute roles={['student']}>
+            <MessagesPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/industry/messages"
+        element={
+          <ProtectedRoute roles={['industry_supervisor']}>
+            <MessagesPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/university/messages"
+        element={
+          <ProtectedRoute roles={['university_supervisor']}>
+            <MessagesPage />
           </ProtectedRoute>
         }
       />

@@ -1,3 +1,4 @@
+import { Link } from 'react-router-dom';
 import './PortalLayout.css';
 import { useAuth } from '../../context/AuthContext';
 
@@ -5,6 +6,12 @@ const ROLE_LABELS = {
   student: 'Student',
   industry_supervisor: 'Industry Supervisor',
   university_supervisor: 'University Supervisor',
+};
+
+const MESSAGES_PATH = {
+  student: '/student/messages',
+  industry_supervisor: '/industry/messages',
+  university_supervisor: '/university/messages',
 };
 
 export default function PortalLayout({ eyebrow, title, actions, children }) {
@@ -18,6 +25,11 @@ export default function PortalLayout({ eyebrow, title, actions, children }) {
           <span className="portal-layout__wordmark">AttachTrack</span>
         </div>
         <div className="portal-layout__account">
+          {MESSAGES_PATH[user?.role] && (
+            <Link to={MESSAGES_PATH[user.role]} className="portal-layout__nav-link">
+              Messages
+            </Link>
+          )}
           <span className="portal-layout__role">{ROLE_LABELS[user?.role]}</span>
           <span className="portal-layout__name">{user?.name}</span>
           <button className="portal-layout__logout" onClick={logout}>
