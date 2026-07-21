@@ -165,4 +165,75 @@ async function markRead(messageId, userId) {
   return rows[0];
 }
 
-module.exports = { sendMessage, listThreads, getThread, markRead };
+// Returns the people `user` is allowed to start a conversation with, per the
+// same rules assertCanMessage() enforces — just listed instead of checked.
+// Each contact: { id, name, role }.
+async function getContacts(user) {
+  if (user.role === 'university_supervisor') {
+    const { rows } = await db.query(
+      `SELECT id, name, role
+       FROM users
+       WHERE role IN ('student', 'industry_supervisor')
+       ORDER BY name`
+    );
+    return rows;
+  }
+
+  if (user.role === 'student') {
+    const student = await studentsService.getByUserId(user.id);
+    const contacts = [];
+
+    if (student.industry_supervisor_id) {
+      const { rows } = await db.query(
+        `SELECT u.id, u.name, u.role
+         FROM industry_supervisors isup
+         JOIN users u ON u.id = isup.user_id
+         WHERE isup.id = $1`,
+        [student.industry_supervisor_id]
+      );
+      if (rows[0]) contacts.push(rows[0]);
+    }
+
+    if (student.university_supervisor_id) {
+      const { rows } = await db.query(
+        `SELECT u.id, u.name, u.role
+         FROM university_supervisors usup
+         JOIN users u ON u.id = usup.user_id
+         WHERE usup.id = $1`,
+        [student.university_supervisor_id]
+      );
+      if (rows[0]) contacts.push(rows[0]);
+    }
+
+    return contacts;
+  }
+
+  if (user.role === 'industry_supervisor') {
+    const own = await industrySupervisorsService.getSupervisorRecordByUserId(user.id);
+
+    const { rows: students } = await db.query(
+      `SELECT u.id, u.name, u.role
+       FROM students s
+       JOIN users u ON u.id = s.user_id
+       WHERE s.industry_supervisor_id = $1 AND s.user_id IS NOT NULL
+       ORDER BY u.name`,
+      [own.id]
+    );
+
+    const { rows: universitySupervisors } = await db.query(
+      `SELECT DISTINCT u.id, u.name, u.role
+       FROM students s
+       JOIN university_supervisors usup ON usup.id = s.university_supervisor_id
+       JOIN users u ON u.id = usup.user_id
+       WHERE s.industry_supervisor_id = $1 AND s.university_supervisor_id IS NOT NULL
+       ORDER BY u.name`,
+      [own.id]
+    );
+
+    return [...students, ...universitySupervisors];
+  }
+
+  throw new AppError('Not permitted to list contacts', 403);
+}
+
+module.exports = { sendMessage, listThreads, getThread, markRead, getContacts };

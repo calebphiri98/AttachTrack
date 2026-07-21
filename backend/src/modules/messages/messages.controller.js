@@ -26,4 +26,9 @@ const markRead = asyncHandler(async (req, res) => {
   res.status(200).json({ success: true, data: message });
 });
 
-module.exports = { send, threads, thread, markRead };
+const contacts = asyncHandler(async (req, res) => {
+  const data = await messagesService.getContacts(req.user);
+  res.status(200).json({ success: true, data });
+});
+
+module.exports = { send, threads, thread, markRead, contacts };
