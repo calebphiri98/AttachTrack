@@ -30,7 +30,8 @@ export default function DashboardPlaceholder() {
   if (user?.role === 'student') {
     return <Navigate to="/student/dashboard" replace />;
   }
-    if (user?.role === 'university_supervisor') {
+
+  if (user?.role === 'university_supervisor') {
     return <Navigate to="/university/students" replace />;
   }
 

@@ -30,7 +30,9 @@ export default function LoginPage() {
           ? '/industry/students'
           : user.role === 'student'
             ? '/student/dashboard'
-            : '/dashboard';
+            : user.role === 'university_supervisor'
+              ? '/university/students'
+              : '/dashboard';
       navigate(destination, { replace: true });
     } catch (err) {
       setError(err.message);

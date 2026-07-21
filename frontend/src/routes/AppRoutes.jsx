@@ -7,6 +7,8 @@ import StudentsListPage from '../features/industrySupervisor/pages/StudentsListP
 import StudentDetailPage from '../features/industrySupervisor/pages/StudentDetailPage';
 import ProtectedRoute from './ProtectedRoute';
 import StudentDashboardPage from '../features/student/pages/StudentDashboardPage';
+import UniversityStudentsListPage from '../features/universitySupervisor/pages/StudentsListPage';
+import UniversityStudentDetailPage from '../features/universitySupervisor/pages/StudentDetailPage';
 
 export default function AppRoutes() {
   return (
@@ -43,6 +45,22 @@ export default function AppRoutes() {
         element={
           <ProtectedRoute roles={['industry_supervisor']}>
             <StudentDetailPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/university/students"
+        element={
+          <ProtectedRoute roles={['university_supervisor']}>
+            <UniversityStudentsListPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/university/students/:studentId"
+        element={
+          <ProtectedRoute roles={['university_supervisor']}>
+            <UniversityStudentDetailPage />
           </ProtectedRoute>
         }
       />
