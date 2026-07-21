@@ -11,6 +11,9 @@ const feedbackRoutes = require('./modules/feedback/feedback.routes');
 const gradesRoutes = require('./modules/grades/grades.routes');
 const errorHandler = require('./middleware/errorHandler');
 const AppError = require('./utils/AppError');
+const messagesRoutes = require('./modules/messages/messages.routes');
+// ...
+
 
 const app = express();
 
@@ -29,6 +32,7 @@ app.use('/api/submissions', submissionsRoutes);
 app.use('/api/attendance', attendanceRoutes);
 app.use('/api/feedback', feedbackRoutes);
 app.use('/api/grades', gradesRoutes);
+app.use('/api/messages', messagesRoutes);
 
 // Unmatched routes
 app.use((req, res, next) => {
