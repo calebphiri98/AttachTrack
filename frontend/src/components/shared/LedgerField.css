@@ -1,0 +1,49 @@
+.ledger-field {
+  display: block;
+  margin-bottom: 22px;
+}
+
+.ledger-field__label {
+  display: block;
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-bottom: 8px;
+}
+
+.ledger-field__input {
+  width: 100%;
+  border: none;
+  border-bottom: 1.5px solid var(--line);
+  background: transparent;
+  padding: 8px 2px 10px;
+  font-family: var(--font-body);
+  font-size: 1rem;
+  color: var(--ink);
+  transition: border-color 150ms ease;
+}
+
+.ledger-field__input--mono {
+  font-family: var(--font-mono);
+  letter-spacing: 0.3em;
+  font-size: 1.15rem;
+}
+
+.ledger-field__input:focus {
+  outline: none;
+  border-bottom-color: var(--stamp);
+}
+
+.ledger-field__input--error {
+  border-bottom-color: var(--error);
+}
+
+.ledger-field__error {
+  display: block;
+  font-family: var(--font-body);
+  font-size: 0.82rem;
+  color: var(--error);
+  margin-top: 6px;
+}

@@ -1,0 +1,27 @@
+.stamp-button {
+  width: 100%;
+  padding: 13px 20px;
+  border: none;
+  border-radius: 6px;
+  background: var(--stamp);
+  color: var(--paper-raised);
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: 1rem;
+  letter-spacing: 0.02em;
+  cursor: pointer;
+  transition: background 150ms ease, transform 100ms ease;
+}
+
+.stamp-button:hover:not(:disabled) {
+  background: var(--stamp-dark);
+}
+
+.stamp-button:active:not(:disabled) {
+  transform: scale(0.98);
+}
+
+.stamp-button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}

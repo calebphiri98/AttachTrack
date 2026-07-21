@@ -1,0 +1,25 @@
+.status-badge {
+  display: inline-block;
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  padding: 4px 10px;
+  border-radius: 20px;
+  white-space: nowrap;
+}
+
+.status-badge--positive {
+  background: var(--sage-soft);
+  color: var(--sage);
+}
+
+.status-badge--negative {
+  background: var(--error-soft);
+  color: var(--error);
+}
+
+.status-badge--neutral {
+  background: #ece8da;
+  color: var(--muted);
+}

@@ -1,0 +1,140 @@
+.section-title {
+  font-family: var(--font-display);
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: var(--ink);
+  margin: 0 0 16px;
+}
+
+.section-divider {
+  border-top: 1px solid var(--line);
+  margin: 20px 0;
+}
+
+.inline-form__row {
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.inline-form__field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 14px;
+  flex: 1 1 160px;
+}
+
+.inline-form__field--full {
+  flex-basis: 100%;
+}
+
+.inline-form__field span {
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.inline-form__field input,
+.inline-form__field select,
+.inline-form__field textarea {
+  border: 1.5px solid var(--line);
+  border-radius: 6px;
+  padding: 9px 10px;
+  font-family: var(--font-body);
+  font-size: 0.92rem;
+  color: var(--ink);
+  background: var(--paper-raised);
+}
+
+.inline-form__field input:focus,
+.inline-form__field select:focus,
+.inline-form__field textarea:focus {
+  outline: none;
+  border-color: var(--stamp);
+}
+
+.inline-form__checkbox {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.88rem;
+  color: var(--ink);
+  margin-bottom: 16px;
+  cursor: pointer;
+}
+
+.inline-form__error {
+  color: var(--error);
+  font-size: 0.85rem;
+  margin: 0 0 12px;
+}
+
+.record-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.record-list__row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--line);
+  gap: 12px;
+}
+
+.record-list__row:last-child {
+  border-bottom: none;
+}
+
+.record-list__date {
+  font-family: var(--font-mono);
+  font-size: 0.78rem;
+  color: var(--muted);
+  white-space: nowrap;
+}
+
+.record-list__notes {
+  font-size: 0.85rem;
+  color: var(--muted);
+  flex: 1;
+  text-align: right;
+}
+
+.record-list__link {
+  color: var(--stamp);
+  font-size: 0.9rem;
+  font-weight: 500;
+  text-decoration: none;
+}
+
+.record-list__link:hover {
+  text-decoration: underline;
+}
+
+.record-list--stacked .record-list__entry {
+  padding: 12px 0;
+  border-bottom: 1px solid var(--line);
+}
+
+.record-list--stacked .record-list__entry:last-child {
+  border-bottom: none;
+}
+
+.record-list__entry-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 6px;
+}
+
+.record-list__content {
+  margin: 0;
+  font-size: 0.9rem;
+  color: var(--ink);
+  line-height: 1.5;
+}

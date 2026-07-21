@@ -1,0 +1,35 @@
+.role-select {
+  margin-bottom: 24px;
+}
+
+.role-select__options {
+  display: flex;
+  gap: 8px;
+  margin-top: 8px;
+  flex-wrap: wrap;
+}
+
+.role-select__option {
+  flex: 1 1 auto;
+  padding: 9px 12px;
+  border: 1.5px solid var(--line);
+  border-radius: 6px;
+  background: var(--paper-raised);
+  font-family: var(--font-body);
+  font-size: 0.84rem;
+  color: var(--muted);
+  cursor: pointer;
+  transition: all 120ms ease;
+  white-space: nowrap;
+}
+
+.role-select__option:hover {
+  border-color: var(--stamp);
+  color: var(--ink);
+}
+
+.role-select__option--active {
+  border-color: var(--stamp);
+  background: var(--stamp);
+  color: var(--paper-raised);
+}

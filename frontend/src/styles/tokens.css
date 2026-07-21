@@ -1,0 +1,68 @@
+@import url('https://fonts.googleapis.com/css2?family=Zilla+Slab:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@500;600&display=swap');
+
+:root {
+  /* Color */
+  --ink: #1c2333;
+  --ink-soft: #2b3350;
+  --paper: #f6f4ec;
+  --paper-raised: #fffdf7;
+  --stamp: #b23a2e;
+  --stamp-dark: #8f2e24;
+  --sage: #5c7a5e;
+  --sage-soft: #eaf0ea;
+  --line: #c9c2ae;
+  --muted: #6b6559;
+  --error: #a3342a;
+  --error-soft: #f6e6e3;
+
+  /* Type */
+  --font-display: 'Zilla Slab', Georgia, serif;
+  --font-body: 'IBM Plex Sans', -apple-system, sans-serif;
+  --font-mono: 'IBM Plex Mono', 'Courier New', monospace;
+
+  /* Scale */
+  --radius: 10px;
+  --shadow-card: 0 24px 60px -24px rgba(28, 35, 51, 0.35);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+  margin: 0;
+}
+
+body {
+  font-family: var(--font-body);
+  color: var(--ink);
+  background: var(--paper);
+  -webkit-font-smoothing: antialiased;
+}
+
+button,
+input {
+  font-family: inherit;
+}
+
+a {
+  color: inherit;
+}
+
+/* Visible keyboard focus, everywhere */
+:focus-visible {
+  outline: 2px solid var(--stamp);
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    transition-duration: 0.001ms !important;
+  }
+}

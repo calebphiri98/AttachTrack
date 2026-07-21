@@ -1,0 +1,117 @@
+.portal-layout {
+  min-height: 100vh;
+  background: var(--paper);
+}
+
+.portal-layout__topbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 32px;
+  background: var(--ink);
+  color: var(--paper);
+}
+
+.portal-layout__brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.portal-layout__mark {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 0.9rem;
+  border: 1.5px solid var(--paper);
+  border-radius: 5px;
+  width: 30px;
+  height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.portal-layout__wordmark {
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: 1rem;
+}
+
+.portal-layout__account {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.portal-layout__role {
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: #a9b0c9;
+}
+
+.portal-layout__name {
+  font-family: var(--font-body);
+  font-size: 0.9rem;
+}
+
+.portal-layout__logout {
+  border: 1.5px solid #3d445e;
+  background: transparent;
+  color: var(--paper);
+  border-radius: 6px;
+  padding: 6px 14px;
+  font-family: var(--font-body);
+  font-size: 0.82rem;
+  cursor: pointer;
+}
+
+.portal-layout__logout:hover {
+  border-color: var(--stamp);
+  color: var(--stamp);
+}
+
+.portal-layout__content {
+  max-width: 880px;
+  margin: 0 auto;
+  padding: 36px 32px 64px;
+}
+
+.portal-layout__page-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  flex-wrap: wrap;
+  gap: 16px;
+  margin-bottom: 28px;
+}
+
+.portal-layout__eyebrow {
+  display: block;
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--stamp);
+  margin-bottom: 6px;
+}
+
+.portal-layout__title {
+  font-family: var(--font-display);
+  font-size: 1.6rem;
+  color: var(--ink);
+  margin: 0;
+}
+
+@media (max-width: 600px) {
+  .portal-layout__topbar {
+    padding: 14px 18px;
+  }
+  .portal-layout__content {
+    padding: 24px 18px 48px;
+  }
+  .portal-layout__name {
+    display: none;
+  }
+}
