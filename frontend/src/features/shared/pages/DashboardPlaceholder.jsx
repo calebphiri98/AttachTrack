@@ -27,6 +27,13 @@ export default function DashboardPlaceholder() {
     return <Navigate to="/industry/students" replace />;
   }
 
+  if (user?.role === 'student') {
+    return <Navigate to="/student/dashboard" replace />;
+  }
+    if (user?.role === 'university_supervisor') {
+    return <Navigate to="/university/students" replace />;
+  }
+
   return (
     <div className="dashboard-placeholder">
       <header className="dashboard-placeholder__header">

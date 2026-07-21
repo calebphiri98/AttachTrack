@@ -25,7 +25,12 @@ export default function LoginPage() {
     setLoading(true);
     try {
       const user = await login(email, password);
-      const destination = user.role === 'industry_supervisor' ? '/industry/students' : '/dashboard';
+      const destination =
+        user.role === 'industry_supervisor'
+          ? '/industry/students'
+          : user.role === 'student'
+            ? '/student/dashboard'
+            : '/dashboard';
       navigate(destination, { replace: true });
     } catch (err) {
       setError(err.message);

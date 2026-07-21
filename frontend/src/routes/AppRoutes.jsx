@@ -6,6 +6,7 @@ import DashboardPlaceholder from '../features/shared/pages/DashboardPlaceholder'
 import StudentsListPage from '../features/industrySupervisor/pages/StudentsListPage';
 import StudentDetailPage from '../features/industrySupervisor/pages/StudentDetailPage';
 import ProtectedRoute from './ProtectedRoute';
+import StudentDashboardPage from '../features/student/pages/StudentDashboardPage';
 
 export default function AppRoutes() {
   return (
@@ -18,6 +19,14 @@ export default function AppRoutes() {
         element={
           <ProtectedRoute>
             <DashboardPlaceholder />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/student/dashboard"
+        element={
+          <ProtectedRoute roles={['student']}>
+            <StudentDashboardPage />
           </ProtectedRoute>
         }
       />
