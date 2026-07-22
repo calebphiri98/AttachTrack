@@ -3,12 +3,14 @@ import { Card, EmptyState } from '../../../components/shared/Card';
 import StampButton from '../../../components/shared/StampButton';
 import * as submissionsApi from '../../../api/submissions.api';
 import { enqueueSubmission, getQueuedSubmissions } from '../../../offline/db';
+import { trySyncQueuedSubmissions } from '../../../offline/syncSubmissions';
 
 export default function SubmissionsSection({ canSubmit }) {
   const [submissions, setSubmissions] = useState(null);
   const [queued, setQueued] = useState([]);
   const [error, setError] = useState('');
   const [uploading, setUploading] = useState(false);
+  const [retryingId, setRetryingId] = useState(null);
   const fileInputRef = useRef(null);
 
   function load() {
@@ -20,7 +22,7 @@ export default function SubmissionsSection({ canSubmit }) {
 
   function loadQueued() {
     getQueuedSubmissions()
-      .then((items) => setQueued(items.filter((i) => i.status === 'pending_sync')))
+      .then((items) => setQueued(items.filter((i) => i.status === 'pending_sync' || i.status === 'failed')))
       .catch(() => {
         // no queue yet — fine, nothing pending
       });
@@ -79,6 +81,15 @@ export default function SubmissionsSection({ canSubmit }) {
     }
   }
 
+  async function handleRetry(clientUuid) {
+    setRetryingId(clientUuid);
+    try {
+      await trySyncQueuedSubmissions();
+    } finally {
+      setRetryingId(null);
+    }
+  }
+
   const hasAnything = (submissions && submissions.length > 0) || queued.length > 0;
 
   return (
@@ -109,14 +120,51 @@ export default function SubmissionsSection({ canSubmit }) {
 
       {hasAnything && (
         <ul className="record-list">
-          {queued.map((q) => (
-            <li key={q.clientUuid} className="record-list__row">
-              <span style={{ color: 'var(--muted)' }}>{q.fileName}</span>
-              <span className="record-list__date" style={{ color: 'var(--stamp)' }}>
-                Pending sync — {new Date(q.submittedAt).toLocaleDateString()}
-              </span>
-            </li>
-          ))}
+          {queued.map((q) =>
+            q.status === 'failed' ? (
+              <li
+                key={q.clientUuid}
+                className="record-list__row"
+                style={{ flexDirection: 'column', alignItems: 'flex-start', gap: 4 }}
+              >
+                <div style={{ display: 'flex', justifyContent: 'space-between', width: '100%' }}>
+                  <span style={{ color: 'var(--muted)' }}>{q.fileName}</span>
+                  <span className="record-list__date" style={{ color: 'var(--error)' }}>
+                    Sync failed
+                  </span>
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', width: '100%', alignItems: 'center' }}>
+                  <span style={{ color: 'var(--error)', fontSize: '0.82rem' }}>
+                    {q.errorMessage || 'This submission could not be sent.'}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => handleRetry(q.clientUuid)}
+                    disabled={retryingId === q.clientUuid}
+                    style={{
+                      border: 'none',
+                      background: 'none',
+                      color: 'var(--stamp)',
+                      cursor: 'pointer',
+                      font: 'inherit',
+                      fontSize: '0.82rem',
+                      fontWeight: 600,
+                      padding: 0,
+                    }}
+                  >
+                    {retryingId === q.clientUuid ? 'Retrying…' : 'Retry'}
+                  </button>
+                </div>
+              </li>
+            ) : (
+              <li key={q.clientUuid} className="record-list__row">
+                <span style={{ color: 'var(--muted)' }}>{q.fileName}</span>
+                <span className="record-list__date" style={{ color: 'var(--stamp)' }}>
+                  Pending sync — {new Date(q.submittedAt).toLocaleDateString()}
+                </span>
+              </li>
+            )
+          )}
           {submissions &&
             submissions.map((s) => (
               <li key={s.id} className="record-list__row">

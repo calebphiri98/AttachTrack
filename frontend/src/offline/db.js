@@ -67,3 +67,9 @@ export async function removeQueuedSubmission(clientUuid) {
   const db = await getDB();
   await db.delete('submissionsQueue', clientUuid);
 }
+export async function updateQueuedSubmission(clientUuid, changes) {
+  const db = await getDB();
+  const existing = await db.get('submissionsQueue', clientUuid);
+  if (!existing) return;
+  await db.put('submissionsQueue', { ...existing, ...changes });
+}
