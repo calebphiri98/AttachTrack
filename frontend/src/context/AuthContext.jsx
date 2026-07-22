@@ -1,6 +1,6 @@
 import { createContext, useContext, useEffect, useState, useCallback, useRef } from 'react';
 import * as authApi from '../api/auth.api';
-import { setAccessToken, setUnauthorizedHandler, request } from '../api/httpClient';
+import { setAccessToken, setUnauthorizedHandler, tryRefresh } from '../api/httpClient';
 import { saveSession, getSession, clearSession as clearCachedSession } from '../offline/db';
 
 const REFRESH_KEY = 'attachtrack_refresh_token';
@@ -46,31 +46,27 @@ export function AuthProvider({ children }) {
         // no cached session yet — fine, the refresh call below is the fallback
       });
 
-    request('/auth/refresh', { method: 'POST', body: { refreshToken: storedRefreshToken } })
-      .then((res) => {
+    // Uses the SAME shared tryRefresh() as httpClient.js's own 401-retry
+    // logic — this is what a rotating refresh token requires. Two
+    // independent refresh calls racing each other (this effect firing at
+    // the same time as some other request's 401-triggered retry) would
+    // otherwise have the second one arrive with an already-consumed token
+    // and get wrongly rejected, incorrectly logging the user out.
+    tryRefresh()
+      .then((result) => {
         if (manualAuthRef.current) return;
-        setAccessToken(res.data.accessToken);
-        localStorage.setItem(REFRESH_KEY, res.data.refreshToken);
+        if (!result) return; // network failure or expired token — see below
+
         const cachedUser = localStorage.getItem('attachtrack_user');
         const resolvedUser = cachedUser ? JSON.parse(cachedUser) : null;
         setUser(resolvedUser);
         setStatus('authenticated');
         // Keep the IndexedDB copy fresh with the latest confirmed session.
-        saveSession({ refreshToken: res.data.refreshToken, user: resolvedUser }).catch(() => {});
+        saveSession({ refreshToken: result.refreshToken, user: resolvedUser }).catch(() => {});
       })
-      .catch((err) => {
-        if (manualAuthRef.current) return;
-        // Only clear on a genuine auth rejection (expired/revoked refresh
-        // token — a real 401/403 from the server). httpClient.js attaches
-        // `statusCode` only when a response was actually received (see
-        // request()'s `if (!res.ok)` branch) — a network failure (offline,
-        // server down) throws before that point and has no statusCode at
-        // all, so this correctly leaves an optimistically-restored session
-        // (from getSession() above) untouched in that case.
-        const isAuthRejection = err && (err.statusCode === 401 || err.statusCode === 403);
-        if (isAuthRejection) {
-          clearSession();
-        }
+      .catch(() => {
+        // tryRefresh() itself never throws (it catches internally and
+        // resolves null), so this is defensive only.
       });
   }, [clearSession]);
 

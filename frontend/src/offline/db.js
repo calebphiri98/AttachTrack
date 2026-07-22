@@ -51,3 +51,19 @@ export async function clearSession() {
   const db = await getDB();
   await db.delete('session', 'current');
 }
+// ---- Offline submissions queue (Phase 6) ----
+
+export async function enqueueSubmission(item) {
+  const db = await getDB();
+  await db.put('submissionsQueue', item);
+}
+
+export async function getQueuedSubmissions() {
+  const db = await getDB();
+  return db.getAll('submissionsQueue');
+}
+
+export async function removeQueuedSubmission(clientUuid) {
+  const db = await getDB();
+  await db.delete('submissionsQueue', clientUuid);
+}

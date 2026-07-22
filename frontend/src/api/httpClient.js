@@ -7,6 +7,15 @@ const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api'
 let accessToken = null;
 let onUnauthorized = null; // called when refresh also fails — AuthContext wires this to "log the user out"
 
+// Refresh tokens rotate (single-use) — if two callers try to refresh at the
+// same time (e.g. AuthContext's session-restore on load, and a 401-retry
+// from an unrelated request racing it), the second one to reach the server
+// would send an already-consumed token and get rejected, incorrectly
+// logging the user out. This shared in-flight promise ensures only one
+// real refresh request is ever in the air at a time — every concurrent
+// caller awaits the same result instead of racing.
+let refreshPromise = null;
+
 function setAccessToken(token) {
   accessToken = token;
 }
@@ -15,24 +24,37 @@ function setUnauthorizedHandler(handler) {
   onUnauthorized = handler;
 }
 
+// Returns { accessToken, refreshToken } on success, or null on failure.
+// Safe to call concurrently from multiple places — all callers share one
+// underlying request.
 async function tryRefresh() {
-  const refreshToken = localStorage.getItem('attachtrack_refresh_token');
-  if (!refreshToken) return false;
+  if (refreshPromise) return refreshPromise;
+
+  refreshPromise = (async () => {
+    const refreshToken = localStorage.getItem('attachtrack_refresh_token');
+    if (!refreshToken) return null;
+
+    try {
+      const res = await fetch(`${API_BASE_URL}/auth/refresh`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ refreshToken }),
+      });
+      const body = await res.json().catch(() => ({}));
+      if (!res.ok || !body.success) return null;
+
+      accessToken = body.data.accessToken;
+      localStorage.setItem('attachtrack_refresh_token', body.data.refreshToken);
+      return { accessToken: body.data.accessToken, refreshToken: body.data.refreshToken };
+    } catch {
+      return null;
+    }
+  })();
 
   try {
-    const res = await fetch(`${API_BASE_URL}/auth/refresh`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ refreshToken }),
-    });
-    const body = await res.json();
-    if (!res.ok || !body.success) return false;
-
-    accessToken = body.data.accessToken;
-    localStorage.setItem('attachtrack_refresh_token', body.data.refreshToken);
-    return true;
-  } catch {
-    return false;
+    return await refreshPromise;
+  } finally {
+    refreshPromise = null;
   }
 }
 
@@ -67,4 +89,4 @@ async function request(path, { method = 'GET', body, isForm = false, retry = tru
   return data;
 }
 
-export { request, setAccessToken, setUnauthorizedHandler };
+export { request, tryRefresh, setAccessToken, setUnauthorizedHandler };

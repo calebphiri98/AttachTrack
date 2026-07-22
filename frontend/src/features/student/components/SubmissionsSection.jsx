@@ -2,9 +2,11 @@ import { useEffect, useState, useRef } from 'react';
 import { Card, EmptyState } from '../../../components/shared/Card';
 import StampButton from '../../../components/shared/StampButton';
 import * as submissionsApi from '../../../api/submissions.api';
+import { enqueueSubmission, getQueuedSubmissions } from '../../../offline/db';
 
 export default function SubmissionsSection({ canSubmit }) {
   const [submissions, setSubmissions] = useState(null);
+  const [queued, setQueued] = useState([]);
   const [error, setError] = useState('');
   const [uploading, setUploading] = useState(false);
   const fileInputRef = useRef(null);
@@ -16,7 +18,29 @@ export default function SubmissionsSection({ canSubmit }) {
       .catch((err) => setError(err.message));
   }
 
-  useEffect(load, []);
+  function loadQueued() {
+    getQueuedSubmissions()
+      .then((items) => setQueued(items.filter((i) => i.status === 'pending_sync')))
+      .catch(() => {
+        // no queue yet — fine, nothing pending
+      });
+  }
+
+  useEffect(() => {
+    load();
+    loadQueued();
+
+    // SyncManager (mounted once, app-wide) runs in the background and
+    // dispatches this after every sync attempt — refresh both lists so a
+    // just-synced item moves out of "Pending sync" and into the real list
+    // without needing a manual page reload.
+    function handleSynced() {
+      load();
+      loadQueued();
+    }
+    window.addEventListener('attachtrack:submissions-synced', handleSynced);
+    return () => window.removeEventListener('attachtrack:submissions-synced', handleSynced);
+  }, []);
 
   async function handleUpload(e) {
     e.preventDefault();
@@ -27,16 +51,35 @@ export default function SubmissionsSection({ canSubmit }) {
     }
     setError('');
     setUploading(true);
+
+    const clientUuid = crypto.randomUUID();
+    const submittedAt = new Date().toISOString();
+
     try {
-      await submissionsApi.submitDocument(file);
+      await submissionsApi.submitDocument(file, clientUuid);
       fileInputRef.current.value = '';
       load();
     } catch (err) {
-      setError(err.message);
+      if (err.statusCode) {
+        setError(err.message);
+      } else {
+        await enqueueSubmission({
+          clientUuid,
+          file,
+          fileName: file.name,
+          fileType: file.type,
+          submittedAt,
+          status: 'pending_sync',
+        });
+        fileInputRef.current.value = '';
+        loadQueued();
+      }
     } finally {
       setUploading(false);
     }
   }
+
+  const hasAnything = (submissions && submissions.length > 0) || queued.length > 0;
 
   return (
     <Card>
@@ -62,19 +105,29 @@ export default function SubmissionsSection({ canSubmit }) {
       <div className="section-divider" />
 
       {submissions === null && !error && <p style={{ color: 'var(--muted)' }}>Loading…</p>}
-      {submissions && submissions.length === 0 && <EmptyState>No submissions yet.</EmptyState>}
-      {submissions && submissions.length > 0 && (
+      {submissions && !hasAnything && <EmptyState>No submissions yet.</EmptyState>}
+
+      {hasAnything && (
         <ul className="record-list">
-          {submissions.map((s) => (
-            <li key={s.id} className="record-list__row">
-              <a href={s.file_url} target="_blank" rel="noreferrer" style={{ color: 'var(--stamp)' }}>
-                {s.file_name}
-              </a>
-              <span className="record-list__date">
-                {new Date(s.submitted_at).toLocaleDateString()}
+          {queued.map((q) => (
+            <li key={q.clientUuid} className="record-list__row">
+              <span style={{ color: 'var(--muted)' }}>{q.fileName}</span>
+              <span className="record-list__date" style={{ color: 'var(--stamp)' }}>
+                Pending sync — {new Date(q.submittedAt).toLocaleDateString()}
               </span>
             </li>
           ))}
+          {submissions &&
+            submissions.map((s) => (
+              <li key={s.id} className="record-list__row">
+                <a href={s.file_url} target="_blank" rel="noreferrer" style={{ color: 'var(--stamp)' }}>
+                  {s.file_name}
+                </a>
+                <span className="record-list__date">
+                  {new Date(s.submitted_at).toLocaleDateString()}
+                </span>
+              </li>
+            ))}
         </ul>
       )}
     </Card>
