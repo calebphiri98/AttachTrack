@@ -12,13 +12,18 @@ const gradesRoutes = require('./modules/grades/grades.routes');
 const errorHandler = require('./middleware/errorHandler');
 const AppError = require('./utils/AppError');
 const messagesRoutes = require('./modules/messages/messages.routes');
-// ...
-
+const { authLimiter, generalLimiter } = require('./middleware/rateLimiters');
 
 const app = express();
 
 app.use(cors());
 app.use(express.json());
+
+// Rate limiting: a stricter cap on auth endpoints (login/signup/resend-code
+// are brute-force and spam targets), a looser general cap on everything
+// else. Applied after cors/json parsing, before any routes.
+app.use('/api/auth', authLimiter);
+app.use('/api', generalLimiter);
 
 app.get('/health', (req, res) => {
   res.status(200).json({ success: true, message: 'AttachTrack API is running' });
