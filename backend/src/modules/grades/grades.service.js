@@ -1,11 +1,12 @@
 const db = require('../../config/db');
 const AppError = require('../../utils/AppError');
+const { requireUuid, requireString, optionalString } = require('../../utils/validators');
 const studentsService = require('../students/students.service');
 
 async function assignGrade({ universitySupervisorId, studentId, gradeValue, comments }) {
-  if (!studentId || !gradeValue) {
-    throw new AppError('studentId and gradeValue are required', 400);
-  }
+  requireUuid(studentId, 'studentId');
+  const cleanGradeValue = requireString(gradeValue, 'gradeValue', { min: 1, max: 10 }); // matches grades.grade_value VARCHAR(10)
+  const cleanComments = optionalString(comments, { max: 2000 });
 
   await studentsService.assertSupervises(
     studentId,
@@ -19,14 +20,13 @@ async function assignGrade({ universitySupervisorId, studentId, gradeValue, comm
      ON CONFLICT (student_id)
      DO UPDATE SET grade_value = EXCLUDED.grade_value, comments = EXCLUDED.comments
      RETURNING *`,
-    [studentId, universitySupervisorId, gradeValue, comments || null]
+    [studentId, universitySupervisorId, cleanGradeValue, cleanComments]
   );
   return rows[0];
 }
 
-// Visible to: the student themselves, their industry supervisor, and their
-// university supervisor — per spec section 5.7.
 async function getForStudent(studentId, requester) {
+  requireUuid(studentId, 'studentId');
   const student = await studentsService.getById(studentId);
 
   const isOwnRecord = requester.role === 'student' && student.user_id === requester.id;

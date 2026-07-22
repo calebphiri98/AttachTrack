@@ -1,11 +1,11 @@
 const db = require('../../config/db');
 const AppError = require('../../utils/AppError');
+const { requireUuid, requireString } = require('../../utils/validators');
 const studentsService = require('../students/students.service');
 
 async function createFeedback({ industrySupervisorId, studentId, content, flaggedConcern }) {
-  if (!studentId || !content) {
-    throw new AppError('studentId and content are required', 400);
-  }
+  requireUuid(studentId, 'studentId');
+  const cleanContent = requireString(content, 'content', { max: 5000 });
 
   await studentsService.assertSupervises(studentId, 'industry_supervisor_id', industrySupervisorId);
 
@@ -13,12 +13,13 @@ async function createFeedback({ industrySupervisorId, studentId, content, flagge
     `INSERT INTO feedback (student_id, industry_supervisor_id, content, flagged_concern)
      VALUES ($1, $2, $3, $4)
      RETURNING *`,
-    [studentId, industrySupervisorId, content, !!flaggedConcern]
+    [studentId, industrySupervisorId, cleanContent, !!flaggedConcern]
   );
   return rows[0];
 }
 
 async function listForStudent(studentId, requester) {
+  requireUuid(studentId, 'studentId');
   const student = await studentsService.getById(studentId);
 
   const isOwnRecord = requester.role === 'student' && student.user_id === requester.id;

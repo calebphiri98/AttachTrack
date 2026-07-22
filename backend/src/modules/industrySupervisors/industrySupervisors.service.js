@@ -1,5 +1,6 @@
 const db = require('../../config/db');
 const AppError = require('../../utils/AppError');
+const { requireString, requireEmail } = require('../../utils/validators');
 const studentsService = require('../students/students.service');
 
 async function getSupervisorRecordByUserId(userId) {
@@ -14,14 +15,14 @@ async function getSupervisorRecordByUserId(userId) {
 }
 
 async function addStudent(userId, { name, email }) {
-  if (!name || !email) {
-    throw new AppError('name and email are required', 400);
-  }
+  const cleanName = requireString(name, 'name', { max: 150 });
+  const cleanEmail = requireEmail(email);
+
   const supervisor = await getSupervisorRecordByUserId(userId);
 
   return studentsService.assignSupervisor({
-    email,
-    name,
+    email: cleanEmail,
+    name: cleanName,
     supervisorColumn: 'industry_supervisor_id',
     supervisorId: supervisor.id,
   });

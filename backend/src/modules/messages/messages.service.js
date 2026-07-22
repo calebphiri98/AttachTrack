@@ -1,5 +1,6 @@
 const db = require('../../config/db');
 const AppError = require('../../utils/AppError');
+const { requireUuid, optionalString } = require('../../utils/validators');
 const studentsService = require('../students/students.service');
 const industrySupervisorsService = require('../industrySupervisors/industrySupervisors.service');
 const universitySupervisorsService = require('../universitySupervisors/universitySupervisors.service');
@@ -10,11 +11,6 @@ async function getUserBasic(userId) {
   return rows[0] || null;
 }
 
-// Enforces messaging permission rules:
-// - student <-> their own linked industry_supervisor and/or university_supervisor
-// - industry_supervisor <-> their own students, and <-> a university_supervisor
-//   who shares at least one of those students
-// - university_supervisor <-> anyone (oversight role, unrestricted)
 async function assertCanMessage(sender, recipientId) {
   if (sender.id === recipientId) {
     throw new AppError('You cannot message yourself', 400);
@@ -72,7 +68,10 @@ async function assertCanMessage(sender, recipientId) {
 }
 
 async function sendMessage({ sender, recipientId, content, file }) {
-  if (!content && !file) {
+  requireUuid(recipientId, 'recipientId');
+  const cleanContent = optionalString(content, { max: 5000 });
+
+  if (!cleanContent && !file) {
     throw new AppError('A message must have content or an attachment', 400);
   }
 
@@ -94,13 +93,11 @@ async function sendMessage({ sender, recipientId, content, file }) {
     `INSERT INTO messages (sender_id, recipient_id, content, attachment_url, attachment_name)
      VALUES ($1, $2, $3, $4, $5)
      RETURNING *`,
-    [sender.id, recipientId, content || null, attachmentUrl, attachmentName]
+    [sender.id, recipientId, cleanContent, attachmentUrl, attachmentName]
   );
   return rows[0];
 }
 
-// One row per conversation partner: most recent message + unread count
-// (messages sent TO the current user that they haven't read yet).
 async function listThreads(userId) {
   const { rows } = await db.query(
     `SELECT
@@ -140,6 +137,7 @@ async function listThreads(userId) {
 }
 
 async function getThread(userId, otherUserId) {
+  requireUuid(otherUserId, 'userId');
   const { rows } = await db.query(
     `SELECT *
      FROM messages
@@ -152,6 +150,7 @@ async function getThread(userId, otherUserId) {
 }
 
 async function markRead(messageId, userId) {
+  requireUuid(messageId, 'messageId');
   const { rows } = await db.query(
     `UPDATE messages
      SET read_at = now()
@@ -165,9 +164,6 @@ async function markRead(messageId, userId) {
   return rows[0];
 }
 
-// Returns the people `user` is allowed to start a conversation with, per the
-// same rules assertCanMessage() enforces — just listed instead of checked.
-// Each contact: { id, name, role }.
 async function getContacts(user) {
   if (user.role === 'university_supervisor') {
     const { rows } = await db.query(

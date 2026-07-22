@@ -1,11 +1,7 @@
 const db = require('../../config/db');
 const AppError = require('../../utils/AppError');
+const { requireEmail, requireString, requireUuid } = require('../../utils/validators');
 
-// A student row is considered "linked" once someone has actually verified an
-// account for it (user_id set) AND at least one supervisor has claimed them.
-// Both halves matter — an added-but-unregistered student, or a registered
-// student nobody has added yet, are both still "unlinked" in the sense the
-// spec cares about (they can't submit/message/receive feedback yet).
 function computeLinkStatus(row) {
   const hasAccount = !!row.user_id;
   const hasSupervisor = !!row.industry_supervisor_id || !!row.university_supervisor_id;
@@ -24,8 +20,6 @@ async function recomputeAndSave(studentId) {
   return { ...student, link_status: newStatus };
 }
 
-// Finds a student row by email, or creates a bare placeholder one if none
-// exists yet (used when a supervisor adds a student who hasn't signed up).
 async function findOrCreateByEmail(email, name) {
   const { rows } = await db.query('SELECT * FROM students WHERE email = $1', [email]);
   if (rows[0]) return rows[0];
@@ -47,11 +41,12 @@ function assertValidSupervisorColumn(column) {
   }
 }
 
-// Called by a supervisor's "add student" endpoint.
-// supervisorColumn is either 'industry_supervisor_id' or 'university_supervisor_id'.
 async function assignSupervisor({ email, name, supervisorColumn, supervisorId }) {
   assertValidSupervisorColumn(supervisorColumn);
-  const student = await findOrCreateByEmail(email, name);
+  const cleanEmail = requireEmail(email);
+  const cleanName = requireString(name, 'name', { min: 1, max: 150 });
+
+  const student = await findOrCreateByEmail(cleanEmail, cleanName);
 
   const currentValue = student[supervisorColumn];
   if (currentValue && currentValue !== supervisorId) {
@@ -71,13 +66,13 @@ async function assignSupervisor({ email, name, supervisorColumn, supervisorId })
   return recomputeAndSave(student.id);
 }
 
-// Called during student signup — matches a newly verified user to any
-// student record a supervisor may have already created for that email.
 async function attachUserAccount({ email, name, userId }) {
-  const student = await findOrCreateByEmail(email, name);
+  const cleanEmail = requireEmail(email);
+  const cleanName = requireString(name, 'name', { min: 1, max: 150 });
+
+  const student = await findOrCreateByEmail(cleanEmail, cleanName);
 
   if (student.user_id && student.user_id !== userId) {
-    // Shouldn't happen in practice (email is unique in `users`), but guard anyway.
     throw new AppError('This student email is already linked to a different account', 409);
   }
 
@@ -129,6 +124,7 @@ async function getByUserId(userId) {
 }
 
 async function getById(studentId) {
+  requireUuid(studentId, 'studentId');
   const { rows } = await db.query('SELECT * FROM students WHERE id = $1', [studentId]);
   const student = rows[0];
   if (!student) {
@@ -137,8 +133,6 @@ async function getById(studentId) {
   return student;
 }
 
-// Confirms the given supervisor actually supervises this student before
-// letting them read/write attendance, feedback, or grades for that student.
 async function assertSupervises(studentId, supervisorColumn, supervisorId) {
   assertValidSupervisorColumn(supervisorColumn);
   const student = await getById(studentId);

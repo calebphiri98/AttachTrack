@@ -5,6 +5,7 @@ const crypto = require('crypto');
 const db = require('../../config/db');
 const env = require('../../config/env');
 const AppError = require('../../utils/AppError');
+const { requireString, requireEmail, requirePassword } = require('../../utils/validators');
 const { sendVerificationEmail } = require('../../config/mailer');
 const studentsService = require('../students/students.service');
 
@@ -12,14 +13,10 @@ const SALT_ROUNDS = 10;
 const VALID_ROLES = ['student', 'industry_supervisor', 'university_supervisor'];
 
 function generateCode() {
-  // 6-digit numeric code, zero-padded
   return crypto.randomInt(0, 1000000).toString().padStart(6, '0');
 }
 
 function hashToken(rawToken) {
-  // Refresh tokens are already high-entropy random values, so a plain SHA-256
-  // digest (fast lookup by exact match) is appropriate here — unlike
-  // passwords, which need bcrypt's slow, salted hashing.
   return crypto.createHash('sha256').update(rawToken).digest('hex');
 }
 
@@ -44,36 +41,29 @@ async function issueRefreshToken(userId) {
 }
 
 async function signup({ name, email, password, role }) {
-  if (!name || !email || !password || !role) {
-    throw new AppError('name, email, password and role are all required', 400);
-  }
-  if (!VALID_ROLES.includes(role)) {
+  const cleanName = requireString(name, 'name', { min: 1, max: 150 }); // matches users.name VARCHAR(150)
+  const cleanEmail = requireEmail(email);
+  const cleanPassword = requirePassword(password);
+
+  if (!role || !VALID_ROLES.includes(role)) {
     throw new AppError('Invalid role', 400);
   }
-  if (password.length < 8) {
-    throw new AppError('Password must be at least 8 characters', 400);
-  }
 
-  const existing = await db.query('SELECT id FROM users WHERE email = $1', [email]);
+  const existing = await db.query('SELECT id FROM users WHERE email = $1', [cleanEmail]);
   if (existing.rows.length > 0) {
     throw new AppError('An account with this email already exists', 409);
   }
 
-  const passwordHash = await bcrypt.hash(password, SALT_ROUNDS);
+  const passwordHash = await bcrypt.hash(cleanPassword, SALT_ROUNDS);
 
   const { rows } = await db.query(
     `INSERT INTO users (name, email, password_hash, role)
      VALUES ($1, $2, $3, $4)
      RETURNING id, name, email, role, email_verified, created_at`,
-    [name, email, passwordHash, role]
+    [cleanName, cleanEmail, passwordHash, role]
   );
   const user = rows[0];
 
-  // Each role gets its own profile row — industry/university supervisors need
-  // one to be referenced by students.industry_supervisor_id /
-  // university_supervisor_id. Students don't get a row here; theirs gets
-  // created/matched at verify-email time (see verifyEmail below), since
-  // that's the point the spec treats as "the account is real."
   if (role === 'industry_supervisor') {
     await db.query('INSERT INTO industry_supervisors (user_id) VALUES ($1)', [user.id]);
   } else if (role === 'university_supervisor') {
@@ -95,11 +85,13 @@ async function signup({ name, email, password, role }) {
 }
 
 async function verifyEmail({ email, code }) {
-  if (!email || !code) {
-    throw new AppError('email and code are required', 400);
+  const cleanEmail = requireEmail(email);
+  const cleanCode = requireString(code, 'code', { min: 6, max: 6 });
+  if (!/^\d{6}$/.test(cleanCode)) {
+    throw new AppError('Invalid verification code', 400);
   }
 
-  const { rows: userRows } = await db.query('SELECT * FROM users WHERE email = $1', [email]);
+  const { rows: userRows } = await db.query('SELECT * FROM users WHERE email = $1', [cleanEmail]);
   const user = userRows[0];
   if (!user) {
     throw new AppError('No account found with this email', 404);
@@ -113,7 +105,7 @@ async function verifyEmail({ email, code }) {
      WHERE user_id = $1 AND code = $2 AND consumed_at IS NULL
      ORDER BY created_at DESC
      LIMIT 1`,
-    [user.id, code]
+    [user.id, cleanCode]
   );
   const verification = codeRows[0];
 
@@ -130,9 +122,6 @@ async function verifyEmail({ email, code }) {
   await db.query('UPDATE users SET email_verified = TRUE WHERE id = $1', [user.id]);
 
   if (user.role === 'student') {
-    // Matches this now-verified account against any student record a
-    // supervisor may have already created for this email, or creates a
-    // fresh (still supervisor-less) one if nobody has added them yet.
     await studentsService.attachUserAccount({
       email: user.email,
       name: user.name,
@@ -144,7 +133,9 @@ async function verifyEmail({ email, code }) {
 }
 
 async function resendVerificationCode({ email }) {
-  const { rows } = await db.query('SELECT * FROM users WHERE email = $1', [email]);
+  const cleanEmail = requireEmail(email);
+
+  const { rows } = await db.query('SELECT * FROM users WHERE email = $1', [cleanEmail]);
   const user = rows[0];
   if (!user) {
     throw new AppError('No account found with this email', 404);
@@ -171,8 +162,9 @@ async function login({ email, password }) {
   if (!email || !password) {
     throw new AppError('email and password are required', 400);
   }
+  const cleanEmail = email.trim().toLowerCase();
 
-  const { rows } = await db.query('SELECT * FROM users WHERE email = $1', [email]);
+  const { rows } = await db.query('SELECT * FROM users WHERE email = $1', [cleanEmail]);
   const user = rows[0];
   if (!user) {
     throw new AppError('Invalid email or password', 401);
@@ -213,7 +205,6 @@ async function refresh({ refreshToken }) {
     throw new AppError('Invalid or expired refresh token', 401);
   }
 
-  // Rotate: revoke the used token, issue a new pair.
   await db.query('UPDATE refresh_tokens SET revoked = TRUE WHERE id = $1', [stored.id]);
 
   const { rows: userRows } = await db.query('SELECT * FROM users WHERE id = $1', [

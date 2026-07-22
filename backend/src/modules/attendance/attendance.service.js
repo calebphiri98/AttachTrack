@@ -1,16 +1,17 @@
 const db = require('../../config/db');
 const AppError = require('../../utils/AppError');
+const { requireUuid, requireDate, optionalString } = require('../../utils/validators');
 const studentsService = require('../students/students.service');
 
 const VALID_STATUSES = ['present', 'absent', 'partial'];
 
 async function markAttendance({ industrySupervisorId, studentId, weekStartDate, status, notes }) {
-  if (!studentId || !weekStartDate || !status) {
-    throw new AppError('studentId, weekStartDate and status are required', 400);
-  }
-  if (!VALID_STATUSES.includes(status)) {
+  requireUuid(studentId, 'studentId');
+  requireDate(weekStartDate, 'weekStartDate');
+  if (!status || !VALID_STATUSES.includes(status)) {
     throw new AppError('Invalid attendance status', 400);
   }
+  const cleanNotes = optionalString(notes, { max: 2000 });
 
   await studentsService.assertSupervises(studentId, 'industry_supervisor_id', industrySupervisorId);
 
@@ -20,14 +21,13 @@ async function markAttendance({ industrySupervisorId, studentId, weekStartDate, 
      ON CONFLICT (student_id, week_start_date)
      DO UPDATE SET status = EXCLUDED.status, notes = EXCLUDED.notes
      RETURNING *`,
-    [studentId, industrySupervisorId, weekStartDate, status, notes || null]
+    [studentId, industrySupervisorId, weekStartDate, status, cleanNotes]
   );
   return rows[0];
 }
 
-// Any of: the student themselves, their industry supervisor, or their
-// university supervisor may view attendance history.
 async function listForStudent(studentId, requester) {
+  requireUuid(studentId, 'studentId');
   const student = await studentsService.getById(studentId);
 
   const isOwnRecord = requester.role === 'student' && student.user_id === requester.id;
