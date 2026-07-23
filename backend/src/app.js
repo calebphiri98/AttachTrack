@@ -18,7 +18,7 @@ const app = express();
 
 app.use(cors());
 app.use(express.json());
-
+app.set('trust proxy', 1); // add before the rate limiters, only when actually behind a proxy
 // Rate limiting: a stricter cap on auth endpoints (login/signup/resend-code
 // are brute-force and spam targets), a looser general cap on everything
 // else. Applied after cors/json parsing, before any routes.
