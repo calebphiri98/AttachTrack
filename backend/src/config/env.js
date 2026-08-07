@@ -4,8 +4,7 @@ const required = [
   'DATABASE_URL',
   'JWT_ACCESS_SECRET',
   'JWT_REFRESH_SECRET',
-  'GMAIL_USER',
-  'GMAIL_APP_PASSWORD',
+  'RESEND_API_KEY',
   'CLOUDINARY_CLOUD_NAME',
   'CLOUDINARY_API_KEY',
   'CLOUDINARY_API_SECRET',
@@ -34,6 +33,9 @@ module.exports = {
   },
 
   mail: {
+    resendApiKey: process.env.RESEND_API_KEY,
+    // Kept optional (not in `required`) in case anything still references these;
+    // safe to delete entirely later once you confirm nothing else imports them.
     gmailUser: process.env.GMAIL_USER,
     gmailAppPassword: process.env.GMAIL_APP_PASSWORD,
     clientUrl: process.env.CLIENT_URL || 'http://localhost:5173',

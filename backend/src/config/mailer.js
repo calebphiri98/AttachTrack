@@ -1,17 +1,15 @@
-const nodemailer = require('nodemailer');
+const { Resend } = require('resend');
 const env = require('./env');
 
-const transporter = nodemailer.createTransport({
-  service: 'gmail',
-  auth: {
-    user: env.mail.gmailUser,
-    pass: env.mail.gmailAppPassword,
-  },
-});
+const resend = new Resend(env.mail.resendApiKey);
 
+// Render (and many hosting platforms) block outbound SMTP connections
+// (ports 587/465/25) as an anti-spam measure — Nodemailer's direct Gmail
+// SMTP transport worked locally but timed out (ETIMEDOUT) in production.
+// Resend sends over HTTPS instead, which isn't blocked the same way.
 async function sendVerificationEmail(toEmail, name, code) {
-  await transporter.sendMail({
-    from: `AttachTrack <${env.mail.gmailUser}>`,
+  const { error } = await resend.emails.send({
+    from: 'AttachTrack <onboarding@resend.dev>',
     to: toEmail,
     subject: 'Verify your AttachTrack account',
     text:
@@ -30,6 +28,13 @@ async function sendVerificationEmail(toEmail, name, code) {
       </div>
     `,
   });
+
+  if (error) {
+    // Let the caller decide how to handle this (see auth.service.js) rather
+    // than throwing here — a raw exception type from the Resend SDK isn't
+    // as useful upstream as a plain Error with a clear message.
+    throw new Error(`Failed to send verification email: ${error.message || 'Unknown error'}`);
+  }
 }
 
-module.exports = { transporter, sendVerificationEmail };
+module.exports = { sendVerificationEmail };

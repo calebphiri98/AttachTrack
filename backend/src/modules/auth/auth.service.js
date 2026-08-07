@@ -79,7 +79,16 @@ async function signup({ name, email, password, role }) {
     [user.id, code, expiresAt]
   );
 
-  await sendVerificationEmail(user.email, user.name, code);
+  try {
+    await sendVerificationEmail(user.email, user.name, code);
+  } catch (err) {
+    // The account and verification code both exist in the database at this
+    // point — only the email delivery failed. Don't 500 the whole signup;
+    // the user can still recover via "resend code" once the underlying
+    // email issue is fixed, or in the worst case a re-signup attempt will
+    // correctly 409 rather than crash. Log the real error for debugging.
+    console.error('[signup] verification email failed to send:', err.message);
+  }
 
   return user;
 }
@@ -153,7 +162,15 @@ async function resendVerificationCode({ email }) {
     [user.id, code, expiresAt]
   );
 
-  await sendVerificationEmail(user.email, user.name, code);
+  try {
+    await sendVerificationEmail(user.email, user.name, code);
+  } catch (err) {
+    console.error('[resendVerificationCode] email failed to send:', err.message);
+    throw new AppError(
+      'Could not send verification email right now. Please try again shortly.',
+      502
+    );
+  }
 
   return { message: 'Verification code resent' };
 }
