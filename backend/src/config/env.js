@@ -4,7 +4,7 @@ const required = [
   'DATABASE_URL',
   'JWT_ACCESS_SECRET',
   'JWT_REFRESH_SECRET',
-  'RESEND_API_KEY',
+  'BREVO_API_KEY',
   'CLOUDINARY_CLOUD_NAME',
   'CLOUDINARY_API_KEY',
   'CLOUDINARY_API_SECRET',
@@ -32,7 +32,7 @@ module.exports = {
     codeExpiryMinutes: Number(process.env.VERIFICATION_CODE_EXPIRY_MINUTES || 15),
   },
 
- mail: {
+  mail: {
     brevoApiKey: process.env.BREVO_API_KEY,
     senderEmail: process.env.MAIL_SENDER_EMAIL || 'attachmenttracking738@gmail.com',
     clientUrl: process.env.CLIENT_URL || 'http://localhost:5173',
