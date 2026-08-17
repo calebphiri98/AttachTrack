@@ -13,6 +13,7 @@ export default function LoginPage() {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [notice, setNotice] = useState(location.state?.message || '');
 
   async function handleSubmit(e) {
     e.preventDefault();
@@ -61,8 +62,18 @@ export default function LoginPage() {
           value={password}
           onChange={(e) => setPassword(e.target.value)}
           autoComplete="current-password"
+          showToggle
         />
 
+        <div style={{ display: 'flex', justifyContent: 'flex-end', margin: '-4px 0 16px' }}>
+          <Link to="/forgot-password" style={{ color: 'var(--stamp)', fontWeight: 500, fontSize: '0.82rem' }}>
+            Forgot password?
+          </Link>
+        </div>
+
+        {notice && (
+          <p style={{ color: 'var(--stamp)', fontSize: '0.88rem', marginBottom: 16 }}>{notice}</p>
+        )}
         {error && <p style={{ color: 'var(--error)', fontSize: '0.88rem', marginBottom: 16 }}>{error}</p>}
 
         <StampButton type="submit" loading={loading}>

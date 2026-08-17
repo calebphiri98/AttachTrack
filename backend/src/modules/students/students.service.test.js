@@ -1,6 +1,6 @@
 jest.mock('../../config/db');
 const db = require('../../config/db');
-const { assignSupervisor, attachUserAccount } = require('./students.service');
+const { assignSupervisor, attachUserAccount, updateLocation } = require('./students.service');
 
 beforeEach(() => {
   jest.resetAllMocks();
@@ -231,5 +231,26 @@ describe('input validation — assignSupervisor and attachUserAccount', () => {
         supervisorId: 'is-id',
       })
     ).rejects.toThrow('name is required');
+  });
+});
+
+describe('student profile updates', () => {
+  test('updateLocation stores a trimmed value and returns the student row', async () => {
+    db.query
+      .mockResolvedValueOnce({
+        rows: [{ id: 'student-id', user_id: 'user-id', location: null }],
+      })
+      .mockResolvedValueOnce({
+        rows: [{ id: 'student-id', user_id: 'user-id', location: '123 Main Street' }],
+      });
+
+    const result = await updateLocation({ userId: 'user-id', location: '   123 Main Street   ' });
+
+    expect(result.location).toBe('123 Main Street');
+    expect(db.query).toHaveBeenNthCalledWith(
+      2,
+      'UPDATE students SET location = $1 WHERE user_id = $2 RETURNING *',
+      ['123 Main Street', 'user-id']
+    );
   });
 });

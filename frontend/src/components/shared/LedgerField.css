@@ -13,6 +13,10 @@
   margin-bottom: 8px;
 }
 
+.ledger-field__input-wrap {
+  position: relative;
+}
+
 .ledger-field__input {
   width: 100%;
   border: none;
@@ -23,6 +27,10 @@
   font-size: 1rem;
   color: var(--ink);
   transition: border-color 150ms ease;
+}
+
+.ledger-field__input--with-toggle {
+  padding-right: 32px;
 }
 
 .ledger-field__input--mono {
@@ -38,6 +46,37 @@
 
 .ledger-field__input--error {
   border-bottom-color: var(--error);
+}
+
+.ledger-field__toggle {
+  position: absolute;
+  right: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  border: none;
+  background: transparent;
+  color: var(--muted);
+  width: 28px;
+  height: 28px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  padding: 0;
+}
+
+.ledger-field__toggle:hover {
+  color: var(--stamp);
+}
+
+.ledger-field__toggle svg {
+  width: 18px;
+  height: 18px;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  fill: none;
+  stroke-linecap: round;
+  stroke-linejoin: round;
 }
 
 .ledger-field__error {

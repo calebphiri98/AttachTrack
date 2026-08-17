@@ -6,5 +6,6 @@ const requireRole = require('../../middleware/requireRole');
 const router = express.Router();
 
 router.get('/me', auth, requireRole('student'), studentsController.getMyProfile);
+router.patch('/me/location', auth, requireRole('student'), studentsController.updateMyLocation);
 
 module.exports = router;

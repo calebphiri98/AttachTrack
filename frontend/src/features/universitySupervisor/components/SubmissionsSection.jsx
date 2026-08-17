@@ -6,6 +6,8 @@ export default function SubmissionsSection({ studentId }) {
   const [submissions, setSubmissions] = useState(null);
   const [error, setError] = useState('');
 
+  const isVideoSubmission = (fileType) => (fileType || '').startsWith('video/');
+
   useEffect(() => {
     submissionsApi
       .listSubmissionsForStudent(studentId)
@@ -22,11 +24,18 @@ export default function SubmissionsSection({ studentId }) {
       {submissions && submissions.length > 0 && (
         <ul className="record-list">
           {submissions.map((s) => (
-            <li key={s.id} className="record-list__row">
-              <a href={s.file_url} target="_blank" rel="noreferrer" style={{ color: 'var(--stamp)' }}>
-                {s.file_name}
-              </a>
+            <li key={s.id} className="record-list__row" style={{ flexDirection: 'column', alignItems: 'flex-start', gap: 10 }}>
+              {isVideoSubmission(s.file_type) ? (
+                <video controls src={s.file_url} style={{ maxWidth: '100%', maxHeight: 220, borderRadius: 8 }} />
+              ) : (
+                <a href={s.file_url} target="_blank" rel="noreferrer" style={{ color: 'var(--stamp)' }}>
+                  {s.file_name}
+                </a>
+              )}
               <span className="record-list__date">
+                {s.file_name}
+                {isVideoSubmission(s.file_type) ? ' • video' : ''}
+                {' • '}
                 {new Date(s.submitted_at).toLocaleDateString()}
               </span>
             </li>

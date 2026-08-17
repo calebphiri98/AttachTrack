@@ -2,6 +2,8 @@ import { Routes, Route, Navigate } from 'react-router-dom';
 import SignupPage from '../features/auth/pages/SignupPage';
 import VerifyEmailPage from '../features/auth/pages/VerifyEmailPage';
 import LoginPage from '../features/auth/pages/LoginPage';
+import ForgotPasswordPage from '../features/auth/pages/ForgotPasswordPage';
+import ResetPasswordPage from '../features/auth/pages/ResetPasswordPage';
 import DashboardPlaceholder from '../features/shared/pages/DashboardPlaceholder';
 import StudentsListPage from '../features/industrySupervisor/pages/StudentsListPage';
 import StudentDetailPage from '../features/industrySupervisor/pages/StudentDetailPage';
@@ -17,6 +19,8 @@ export default function AppRoutes() {
       <Route path="/signup" element={<SignupPage />} />
       <Route path="/verify-email" element={<VerifyEmailPage />} />
       <Route path="/login" element={<LoginPage />} />
+      <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+      <Route path="/reset-password" element={<ResetPasswordPage />} />
       <Route
         path="/dashboard"
         element={

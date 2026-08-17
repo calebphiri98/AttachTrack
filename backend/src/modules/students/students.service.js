@@ -1,6 +1,6 @@
 const db = require('../../config/db');
 const AppError = require('../../utils/AppError');
-const { requireEmail, requireString, requireUuid } = require('../../utils/validators');
+const { requireEmail, requireString, requireUuid, optionalString } = require('../../utils/validators');
 
 function computeLinkStatus(row) {
   const hasAccount = !!row.user_id;
@@ -86,7 +86,7 @@ async function attachUserAccount({ email, name, userId }) {
 async function listBySupervisor(supervisorColumn, supervisorId) {
   assertValidSupervisorColumn(supervisorColumn);
   const { rows } = await db.query(
-    `SELECT id, name, email, link_status, created_at
+    `SELECT id, name, email, link_status, location, created_at
      FROM students
      WHERE ${supervisorColumn} = $1
      ORDER BY created_at DESC`,
@@ -97,7 +97,7 @@ async function listBySupervisor(supervisorColumn, supervisorId) {
 
 async function getProfileByUserId(userId) {
   const { rows } = await db.query(
-    `SELECT s.id, s.name, s.email, s.link_status,
+    `SELECT s.id, s.name, s.email, s.link_status, s.location,
             iSup.company_name AS industry_supervisor_company,
             uSup.department AS university_supervisor_department
      FROM students s
@@ -133,6 +133,18 @@ async function getById(studentId) {
   return student;
 }
 
+async function updateLocation({ userId, location }) {
+  const cleanLocation = optionalString(location, { max: 255 });
+  const student = await getByUserId(userId);
+
+  const { rows } = await db.query(
+    'UPDATE students SET location = $1 WHERE user_id = $2 RETURNING *',
+    [cleanLocation, userId]
+  );
+
+  return rows[0] || student;
+}
+
 async function assertSupervises(studentId, supervisorColumn, supervisorId) {
   assertValidSupervisorColumn(supervisorColumn);
   const student = await getById(studentId);
@@ -149,5 +161,6 @@ module.exports = {
   getProfileByUserId,
   getByUserId,
   getById,
+  updateLocation,
   assertSupervises,
 };

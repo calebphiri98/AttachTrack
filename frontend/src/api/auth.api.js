@@ -19,3 +19,11 @@ export function login({ email, password }) {
 export function logout({ refreshToken }) {
   return request('/auth/logout', { method: 'POST', body: { refreshToken } });
 }
+
+export function forgotPassword({ email }) {
+  return request('/auth/forgot-password', { method: 'POST', body: { email } });
+}
+
+export function resetPassword({ token, newPassword }) {
+  return request('/auth/reset-password', { method: 'POST', body: { token, newPassword } });
+}

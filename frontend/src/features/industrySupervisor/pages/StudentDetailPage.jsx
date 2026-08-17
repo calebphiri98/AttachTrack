@@ -34,7 +34,14 @@ export default function StudentDetailPage() {
       title={student ? student.name : 'Student'}
       actions={student && <StatusBadge>{student.link_status}</StatusBadge>}
     >
-      {student && <p style={{ color: 'var(--muted)', marginTop: -16, marginBottom: 24 }}>{student.email}</p>}
+      {student && (
+        <>
+          <p style={{ color: 'var(--muted)', marginTop: -16, marginBottom: 8 }}>{student.email}</p>
+          {student.location && (
+            <p style={{ color: 'var(--muted)', marginTop: 0, marginBottom: 24 }}>{student.location}</p>
+          )}
+        </>
+      )}
 
       <AttendanceSection studentId={studentId} />
       <FeedbackSection studentId={studentId} />

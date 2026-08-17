@@ -6,7 +6,7 @@ const db = require('../../config/db');
 const env = require('../../config/env');
 const AppError = require('../../utils/AppError');
 const { requireString, requireEmail, requirePassword } = require('../../utils/validators');
-const { sendVerificationEmail } = require('../../config/mailer');
+const { sendVerificationEmail, sendPasswordResetEmail } = require('../../config/mailer');
 const studentsService = require('../students/students.service');
 
 const SALT_ROUNDS = 10;
@@ -247,6 +247,67 @@ async function logout({ refreshToken }) {
   return { message: 'Logged out' };
 }
 
+async function requestPasswordReset({ email }) {
+  const cleanEmail = requireEmail(email);
+  const { rows } = await db.query('SELECT * FROM users WHERE email = $1', [cleanEmail]);
+  const user = rows[0];
+
+  if (user) {
+    const rawToken = crypto.randomBytes(32).toString('hex');
+    const tokenHash = hashToken(rawToken);
+    const expiresAt = new Date(Date.now() + 60 * 60 * 1000);
+
+    await db.query(
+      `INSERT INTO password_resets (user_id, token_hash, expires_at)
+       VALUES ($1, $2, $3)`,
+      [user.id, tokenHash, expiresAt]
+    );
+
+    try {
+      await sendPasswordResetEmail(
+        user.email,
+        user.name,
+        `${env.mail.clientUrl}/reset-password?token=${rawToken}`
+      );
+    } catch (err) {
+      console.error('[requestPasswordReset] email failed to send:', err.message);
+    }
+  }
+
+  return { message: 'If an account exists for that email, a reset link has been sent.' };
+}
+
+async function resetPassword({ token, newPassword }) {
+  const cleanToken = requireString(token, 'token', { min: 1, max: 1024 });
+  const cleanPassword = requirePassword(newPassword);
+  const tokenHash = hashToken(cleanToken);
+
+  const { rows: resetRows } = await db.query(
+    `SELECT * FROM password_resets
+     WHERE token_hash = $1 AND consumed_at IS NULL AND expires_at > now()
+     ORDER BY created_at DESC
+     LIMIT 1`,
+    [tokenHash]
+  );
+  const resetRecord = resetRows[0];
+  if (!resetRecord) {
+    throw new AppError('Invalid or expired reset token', 400);
+  }
+
+  const { rows: userRows } = await db.query('SELECT * FROM users WHERE id = $1', [resetRecord.user_id]);
+  const user = userRows[0];
+  if (!user) {
+    throw new AppError('User no longer exists', 404);
+  }
+
+  const passwordHash = await bcrypt.hash(cleanPassword, SALT_ROUNDS);
+  await db.query('UPDATE users SET password_hash = $1 WHERE id = $2', [passwordHash, user.id]);
+  await db.query('UPDATE password_resets SET consumed_at = now() WHERE id = $1', [resetRecord.id]);
+  await db.query('UPDATE refresh_tokens SET revoked = TRUE WHERE user_id = $1', [user.id]);
+
+  return { message: 'Password reset successfully' };
+}
+
 module.exports = {
   signup,
   verifyEmail,
@@ -254,4 +315,6 @@ module.exports = {
   login,
   refresh,
   logout,
+  requestPasswordReset,
+  resetPassword,
 };

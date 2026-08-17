@@ -86,6 +86,22 @@ CREATE INDEX idx_refresh_tokens_user ON refresh_tokens(user_id);
 CREATE INDEX idx_refresh_tokens_hash ON refresh_tokens(token_hash);
 
 -- ---------------------------------------------------------------------
+-- 3.5 PASSWORD RESET TOKENS
+-- ---------------------------------------------------------------------
+
+CREATE TABLE password_resets (
+    id                  UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id             UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    token_hash          TEXT NOT NULL,
+    expires_at          TIMESTAMPTZ NOT NULL,
+    consumed_at         TIMESTAMPTZ,
+    created_at          TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+CREATE INDEX idx_password_resets_user ON password_resets(user_id);
+CREATE INDEX idx_password_resets_hash ON password_resets(token_hash);
+
+-- ---------------------------------------------------------------------
 -- 4. INDUSTRY SUPERVISORS
 -- ---------------------------------------------------------------------
 
@@ -119,6 +135,7 @@ CREATE TABLE students (
     industry_supervisor_id      UUID REFERENCES industry_supervisors(id) ON DELETE SET NULL,
     university_supervisor_id    UUID REFERENCES university_supervisors(id) ON DELETE SET NULL,
     link_status                 link_status NOT NULL DEFAULT 'unlinked',
+    location                    VARCHAR(255),
     created_at                  TIMESTAMPTZ NOT NULL DEFAULT now(),
     updated_at                  TIMESTAMPTZ NOT NULL DEFAULT now()
 );

@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react';
 import PortalLayout from '../../../components/shared/PortalLayout';
 import StatusBadge from '../../../components/shared/StatusBadge';
+import LedgerField from '../../../components/shared/LedgerField';
+import StampButton from '../../../components/shared/StampButton';
 import FeedbackSection from '../components/FeedbackSection';
 import AttendanceSection from '../components/AttendanceSection';
 import SubmissionsSection from '../components/SubmissionsSection';
@@ -10,14 +12,37 @@ import '../../../styles/portalSections.css';
 
 export default function StudentDashboardPage() {
   const [profile, setProfile] = useState(null);
+  const [location, setLocation] = useState('');
+  const [savingLocation, setSavingLocation] = useState(false);
   const [error, setError] = useState('');
 
-  useEffect(() => {
+  function loadProfile() {
     studentsApi
       .getMyStudentProfile()
-      .then((res) => setProfile(res.data))
+      .then((res) => {
+        setProfile(res.data);
+        setLocation(res.data.location || '');
+      })
       .catch((err) => setError(err.message));
+  }
+
+  useEffect(() => {
+    loadProfile();
   }, []);
+
+  async function handleLocationSave(e) {
+    e.preventDefault();
+    if (!profile) return;
+    setSavingLocation(true);
+    try {
+      const res = await studentsApi.updateLocation({ location });
+      setProfile((prev) => ({ ...prev, location: res.data.location }));
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setSavingLocation(false);
+    }
+  }
 
   return (
     <PortalLayout
@@ -32,6 +57,20 @@ export default function StudentDashboardPage() {
           Waiting to be linked to a supervisor. Once your industry or university supervisor
           adds you, this will update automatically.
         </p>
+      )}
+
+      {profile && (
+        <form onSubmit={handleLocationSave} className="inline-form" style={{ marginBottom: 24 }}>
+          <LedgerField
+            label="Placement location"
+            value={location}
+            onChange={(e) => setLocation(e.target.value)}
+            placeholder="Add your site address or location"
+          />
+          <StampButton type="submit" loading={savingLocation} style={{ width: 'auto', padding: '9px 20px' }}>
+            Save location
+          </StampButton>
+        </form>
       )}
 
       {profile && (

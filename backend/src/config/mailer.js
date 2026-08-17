@@ -47,4 +47,39 @@ async function sendVerificationEmail(toEmail, name, code) {
   }
 }
 
-module.exports = { sendVerificationEmail };
+async function sendPasswordResetEmail(toEmail, name, resetLink) {
+  const res = await fetch(BREVO_API_URL, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Accept: 'application/json',
+      'api-key': env.mail.brevoApiKey,
+    },
+    body: JSON.stringify({
+      sender: { name: 'AttachTrack', email: env.mail.senderEmail },
+      to: [{ email: toEmail, name }],
+      subject: 'Reset your AttachTrack password',
+      textContent:
+        `Hi ${name},\n\n` +
+        `We received a request to reset your AttachTrack password.\n\n` +
+        `Use this link to choose a new password: ${resetLink}\n\n` +
+        `If you did not request this, you can safely ignore this email.`,
+      htmlContent: `
+        <div style="font-family: sans-serif; max-width: 480px;">
+          <h2>Reset your AttachTrack password</h2>
+          <p>Hi ${name},</p>
+          <p>We received a request to reset your password.</p>
+          <p><a href="${resetLink}">Reset password</a></p>
+          <p>If you did not request this, you can safely ignore this email.</p>
+        </div>
+      `,
+    }),
+  });
+
+  if (!res.ok) {
+    const body = await res.json().catch(() => ({}));
+    throw new Error(`Failed to send password reset email: ${body.message || res.statusText}`);
+  }
+}
+
+module.exports = { sendVerificationEmail, sendPasswordResetEmail };

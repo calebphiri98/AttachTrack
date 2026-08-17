@@ -91,6 +91,7 @@ export default function SubmissionsSection({ canSubmit }) {
   }
 
   const hasAnything = (submissions && submissions.length > 0) || queued.length > 0;
+  const isVideoSubmission = (fileType) => (fileType || '').startsWith('video/');
 
   return (
     <Card>
@@ -99,12 +100,12 @@ export default function SubmissionsSection({ canSubmit }) {
       {canSubmit ? (
         <form onSubmit={handleUpload} className="inline-form">
           <label className="inline-form__field inline-form__field--full">
-            <span>Document (PDF or Word, up to 20MB)</span>
-            <input type="file" ref={fileInputRef} accept=".pdf,.doc,.docx" />
+            <span>Document or video (PDF, Word, MP4, MOV — up to 150MB)</span>
+            <input type="file" ref={fileInputRef} accept=".pdf,.doc,.docx,.mp4,.mov,.webm" />
           </label>
           {error && <p className="inline-form__error">{error}</p>}
           <StampButton type="submit" loading={uploading} style={{ width: 'auto', padding: '9px 20px' }}>
-            Submit document
+            Submit file
           </StampButton>
         </form>
       ) : (
@@ -167,11 +168,18 @@ export default function SubmissionsSection({ canSubmit }) {
           )}
           {submissions &&
             submissions.map((s) => (
-              <li key={s.id} className="record-list__row">
-                <a href={s.file_url} target="_blank" rel="noreferrer" style={{ color: 'var(--stamp)' }}>
-                  {s.file_name}
-                </a>
+              <li key={s.id} className="record-list__row" style={{ flexDirection: 'column', alignItems: 'flex-start', gap: 10 }}>
+                {isVideoSubmission(s.file_type) ? (
+                  <video controls src={s.file_url} style={{ maxWidth: '100%', maxHeight: 220, borderRadius: 8 }} />
+                ) : (
+                  <a href={s.file_url} target="_blank" rel="noreferrer" style={{ color: 'var(--stamp)' }}>
+                    {s.file_name}
+                  </a>
+                )}
                 <span className="record-list__date">
+                  {s.file_name}
+                  {isVideoSubmission(s.file_type) ? ' • video' : ''}
+                  {' • '}
                   {new Date(s.submitted_at).toLocaleDateString()}
                 </span>
               </li>

@@ -93,6 +93,7 @@ export default function SignupPage() {
           onChange={(e) => updateField('password', e.target.value)}
           error={errors.password}
           autoComplete="new-password"
+          showToggle
         />
 
         {serverError && (

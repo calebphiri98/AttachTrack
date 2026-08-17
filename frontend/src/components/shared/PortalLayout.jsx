@@ -1,4 +1,4 @@
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import './PortalLayout.css';
 import { useAuth } from '../../context/AuthContext';
 
@@ -6,6 +6,12 @@ const ROLE_LABELS = {
   student: 'Student',
   industry_supervisor: 'Industry Supervisor',
   university_supervisor: 'University Supervisor',
+};
+
+const DASHBOARD_PATH = {
+  student: '/student/dashboard',
+  industry_supervisor: '/industry/students',
+  university_supervisor: '/university/students',
 };
 
 const MESSAGES_PATH = {
@@ -16,6 +22,7 @@ const MESSAGES_PATH = {
 
 export default function PortalLayout({ eyebrow, title, actions, children }) {
   const { user, logout } = useAuth();
+  const location = useLocation();
 
   return (
     <div className="portal-layout">
@@ -25,8 +32,19 @@ export default function PortalLayout({ eyebrow, title, actions, children }) {
           <span className="portal-layout__wordmark">AttachTrack</span>
         </div>
         <div className="portal-layout__account">
+          {DASHBOARD_PATH[user?.role] && (
+            <Link
+              to={DASHBOARD_PATH[user.role]}
+              className={`portal-layout__nav-link${location.pathname === DASHBOARD_PATH[user.role] ? ' portal-layout__nav-link--active' : ''}`}
+            >
+              Dashboard
+            </Link>
+          )}
           {MESSAGES_PATH[user?.role] && (
-            <Link to={MESSAGES_PATH[user.role]} className="portal-layout__nav-link">
+            <Link
+              to={MESSAGES_PATH[user.role]}
+              className={`portal-layout__nav-link${location.pathname === MESSAGES_PATH[user.role] ? ' portal-layout__nav-link--active' : ''}`}
+            >
               Messages
             </Link>
           )}

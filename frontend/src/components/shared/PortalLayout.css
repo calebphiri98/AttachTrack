@@ -124,8 +124,10 @@
   white-space: nowrap;
 }
 
-.portal-layout__nav-link:hover {
+.portal-layout__nav-link:hover,
+.portal-layout__nav-link--active {
   border-bottom-color: var(--stamp);
+  color: var(--stamp);
 }
 
 /* Tablet-ish: let the account cluster wrap onto its own line under the
