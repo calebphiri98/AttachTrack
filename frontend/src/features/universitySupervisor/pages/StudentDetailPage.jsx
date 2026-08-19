@@ -5,6 +5,10 @@ import AttendanceSection from '../components/AttendanceSection';
 import FeedbackSection from '../components/FeedbackSection';
 import SubmissionsSection from '../components/SubmissionsSection';
 import GradeSection from '../components/GradeSection';
+import SiteVisitSection from '../components/SiteVisitSection';
+import LogbookSection from '../../student/components/LogbookSection';
+import ExportButton from '../../../components/shared/ExportButton';
+import * as reportsApi from '../../../api/reports.api';
 import '../../../styles/portalSections.css';
 
 export default function StudentDetailPage() {
@@ -12,6 +16,18 @@ export default function StudentDetailPage() {
   const location = useLocation();
   const navigate = useNavigate();
   const student = location.state?.student;
+
+  async function handleExport() {
+    if (!studentId) return;
+    const csv = await reportsApi.exportStudentReport(studentId);
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const anchor = document.createElement('a');
+    anchor.href = url;
+    anchor.download = `${student?.name || 'student'}-report.csv`;
+    anchor.click();
+    URL.revokeObjectURL(url);
+  }
 
   return (
     <PortalLayout
@@ -33,7 +49,14 @@ export default function StudentDetailPage() {
         </button>
       }
       title={student ? student.name : 'Student'}
-      actions={student && <StatusBadge>{student.link_status}</StatusBadge>}
+      actions={
+        student ? (
+          <>
+            <StatusBadge>{student.link_status}</StatusBadge>
+            <ExportButton onClick={handleExport}>Export report</ExportButton>
+          </>
+        ) : null
+      }
     >
       {student && (
         <>
@@ -48,6 +71,8 @@ export default function StudentDetailPage() {
       <AttendanceSection studentId={studentId} />
       <FeedbackSection studentId={studentId} />
       <SubmissionsSection studentId={studentId} />
+      <LogbookSection studentId={studentId} />
+      <SiteVisitSection studentId={studentId} />
     </PortalLayout>
   );
 }

@@ -1,6 +1,7 @@
 const db = require('../../config/db');
 const AppError = require('../../utils/AppError');
 const { requireUuid, optionalString } = require('../../utils/validators');
+const { sendNotificationEmail } = require('../../config/mailer');
 const studentsService = require('../students/students.service');
 const industrySupervisorsService = require('../industrySupervisors/industrySupervisors.service');
 const universitySupervisorsService = require('../universitySupervisors/universitySupervisors.service');
@@ -95,7 +96,25 @@ async function sendMessage({ sender, recipientId, content, file }) {
      RETURNING *`,
     [sender.id, recipientId, cleanContent, attachmentUrl, attachmentName]
   );
-  return rows[0];
+
+  const message = rows[0];
+  const { rows: userRows } = await db.query('SELECT id, name, email FROM users WHERE id = $1', [recipientId]);
+
+  if (userRows[0]) {
+    const { rows: senderRows } = await db.query('SELECT name FROM users WHERE id = $1', [sender.id]);
+    const senderName = senderRows[0]?.name || 'AttachTrack user';
+    const messageBody = cleanContent || 'You received a new message with an attachment.';
+
+    await sendNotificationEmail(
+     userRows[0].email,
+     userRows[0].name,
+     `New message from ${senderName}`,
+     `${senderName} sent you a new message.\n\n${messageBody}`,
+     `<div style="font-family:sans-serif;max-width:520px"><h2>New message from ${senderName}</h2><p>${messageBody.replace(/\n/g, '<br />')}</p></div>`
+    );
+  }
+
+  return message;
 }
 
 async function listThreads(userId) {

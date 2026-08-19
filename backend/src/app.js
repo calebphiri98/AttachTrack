@@ -12,6 +12,11 @@ const gradesRoutes = require('./modules/grades/grades.routes');
 const errorHandler = require('./middleware/errorHandler');
 const AppError = require('./utils/AppError');
 const messagesRoutes = require('./modules/messages/messages.routes');
+const adminRoutes = require('./modules/admin/admin.routes');
+const companiesRoutes = require('./modules/companies/companies.routes');
+const logbooksRoutes = require('./modules/logbooks/logbooks.routes');
+const siteVisitsRoutes = require('./modules/siteVisits/siteVisits.routes');
+const reportsRoutes = require('./modules/reports/reports.routes');
 const { authLimiter, generalLimiter } = require('./middleware/rateLimiters');
 
 const app = express();
@@ -38,6 +43,11 @@ app.use('/api/attendance', attendanceRoutes);
 app.use('/api/feedback', feedbackRoutes);
 app.use('/api/grades', gradesRoutes);
 app.use('/api/messages', messagesRoutes);
+app.use('/api/admin', adminRoutes);
+app.use('/api/companies', companiesRoutes);
+app.use('/api/logbooks', logbooksRoutes);
+app.use('/api/site-visits', siteVisitsRoutes);
+app.use('/api/reports', reportsRoutes);
 
 // Unmatched routes
 app.use((req, res, next) => {

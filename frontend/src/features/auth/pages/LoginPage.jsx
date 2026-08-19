@@ -33,7 +33,9 @@ export default function LoginPage() {
             ? '/student/dashboard'
             : user.role === 'university_supervisor'
               ? '/university/students'
-              : '/dashboard';
+              : user.role === 'admin'
+                ? '/admin/dashboard'
+                : '/dashboard';
       navigate(destination, { replace: true });
     } catch (err) {
       setError(err.message);

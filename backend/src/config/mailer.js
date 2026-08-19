@@ -82,4 +82,35 @@ async function sendPasswordResetEmail(toEmail, name, resetLink) {
   }
 }
 
-module.exports = { sendVerificationEmail, sendPasswordResetEmail };
+async function sendNotificationEmail(toEmail, name, subject, bodyText, bodyHtml) {
+  if (env.nodeEnv === 'test' || !env.mail?.brevoApiKey || !env.mail?.senderEmail) {
+    return;
+  }
+
+  const res = await fetch(BREVO_API_URL, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Accept: 'application/json',
+      'api-key': env.mail.brevoApiKey,
+    },
+    body: JSON.stringify({
+      sender: { name: 'AttachTrack', email: env.mail.senderEmail },
+      to: [{ email: toEmail, name }],
+      subject,
+      textContent: bodyText,
+      htmlContent: bodyHtml || bodyText.replace(/\n/g, '<br />'),
+    }),
+  });
+
+  if (!res.ok) {
+    const body = await res.json().catch(() => ({}));
+    console.error('[sendNotificationEmail] failed:', body.message || res.statusText);
+  }
+}
+
+module.exports = {
+  sendVerificationEmail,
+  sendPasswordResetEmail,
+  sendNotificationEmail,
+};

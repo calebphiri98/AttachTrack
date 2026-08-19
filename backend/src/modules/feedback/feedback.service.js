@@ -1,6 +1,7 @@
 const db = require('../../config/db');
 const AppError = require('../../utils/AppError');
 const { requireUuid, requireString } = require('../../utils/validators');
+const { sendNotificationEmail } = require('../../config/mailer');
 const studentsService = require('../students/students.service');
 
 async function createFeedback({ industrySupervisorId, studentId, content, flaggedConcern }) {
@@ -15,7 +16,27 @@ async function createFeedback({ industrySupervisorId, studentId, content, flagge
      RETURNING *`,
     [studentId, industrySupervisorId, cleanContent, !!flaggedConcern]
   );
-  return rows[0];
+
+  const feedbackEntry = rows[0];
+  const { rows: studentRows } = await db.query(
+    `SELECT u.email, u.name
+     FROM students s
+     JOIN users u ON u.id = s.user_id
+     WHERE s.id = $1`,
+    [studentId]
+  );
+
+  if (studentRows[0]) {
+    await sendNotificationEmail(
+     studentRows[0].email,
+     studentRows[0].name,
+     'New feedback received',
+     `You have received new feedback from your industry supervisor.\n\n${cleanContent}`,
+     `<div style="font-family:sans-serif;max-width:520px"><h2>New feedback received</h2><p>You have received new feedback from your industry supervisor.</p><p>${cleanContent.replace(/\n/g, '<br />')}</p></div>`
+    );
+  }
+
+  return feedbackEntry;
 }
 
 async function listForStudent(studentId, requester) {

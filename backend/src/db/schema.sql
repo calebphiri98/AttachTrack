@@ -17,7 +17,8 @@ CREATE EXTENSION IF NOT EXISTS citext;
 CREATE TYPE user_role AS ENUM (
     'student',
     'industry_supervisor',
-    'university_supervisor'
+    'university_supervisor',
+    'admin'
 );
 
 CREATE TYPE link_status AS ENUM (
@@ -105,9 +106,21 @@ CREATE INDEX idx_password_resets_hash ON password_resets(token_hash);
 -- 4. INDUSTRY SUPERVISORS
 -- ---------------------------------------------------------------------
 
+CREATE TABLE companies (
+    id                  UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    name                VARCHAR(200) NOT NULL,
+    address             TEXT,
+    industry_sector     VARCHAR(150),
+    mou_status          VARCHAR(50) NOT NULL DEFAULT 'pending',
+    mou_date            DATE,
+    created_at          TIMESTAMPTZ NOT NULL DEFAULT now(),
+    updated_at          TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
 CREATE TABLE industry_supervisors (
     id                  UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     user_id             UUID NOT NULL UNIQUE REFERENCES users(id) ON DELETE CASCADE,
+    company_id          UUID REFERENCES companies(id) ON DELETE SET NULL,
     company_name        VARCHAR(200),
     created_at          TIMESTAMPTZ NOT NULL DEFAULT now()
 );
@@ -219,7 +232,43 @@ CREATE TABLE attendance (
 CREATE INDEX idx_attendance_student ON attendance(student_id);
 
 -- ---------------------------------------------------------------------
--- 11. MESSAGES
+-- 11. LOGBOOK ENTRIES
+-- ---------------------------------------------------------------------
+
+CREATE TABLE logbook_entries (
+    id                  UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    student_id          UUID NOT NULL REFERENCES students(id) ON DELETE CASCADE,
+    entry_date          DATE NOT NULL,
+    activity            TEXT NOT NULL,
+    notes               TEXT,
+    attachment_url      TEXT,
+    attachment_name     VARCHAR(255),
+    created_at          TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+CREATE INDEX idx_logbook_entries_student ON logbook_entries(student_id);
+CREATE INDEX idx_logbook_entries_date ON logbook_entries(entry_date);
+
+-- ---------------------------------------------------------------------
+-- 12. SITE VISITS
+-- ---------------------------------------------------------------------
+
+CREATE TABLE site_visits (
+    id                      UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    student_id              UUID NOT NULL REFERENCES students(id) ON DELETE CASCADE,
+    university_supervisor_id UUID NOT NULL REFERENCES university_supervisors(id) ON DELETE CASCADE,
+    visit_date              DATE NOT NULL,
+    notes                   TEXT,
+    photo_url               TEXT,
+    photo_name              VARCHAR(255),
+    created_at              TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+CREATE INDEX idx_site_visits_student ON site_visits(student_id);
+CREATE INDEX idx_site_visits_supervisor ON site_visits(university_supervisor_id);
+
+-- ---------------------------------------------------------------------
+-- 13. MESSAGES
 -- ---------------------------------------------------------------------
 
 CREATE TABLE messages (
@@ -238,7 +287,7 @@ CREATE INDEX idx_messages_recipient ON messages(recipient_id);
 CREATE INDEX idx_messages_sent_at ON messages(sent_at);
 
 -- ---------------------------------------------------------------------
--- 12. GRADES
+-- 14. GRADES
 -- ---------------------------------------------------------------------
 
 CREATE TABLE grades (
@@ -271,6 +320,10 @@ CREATE TRIGGER trg_users_updated_at
 
 CREATE TRIGGER trg_students_updated_at
     BEFORE UPDATE ON students
+    FOR EACH ROW EXECUTE FUNCTION set_updated_at();
+
+CREATE TRIGGER trg_companies_updated_at
+    BEFORE UPDATE ON companies
     FOR EACH ROW EXECUTE FUNCTION set_updated_at();
 
 CREATE TRIGGER trg_grades_updated_at

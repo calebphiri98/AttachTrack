@@ -7,7 +7,10 @@ import FeedbackSection from '../components/FeedbackSection';
 import AttendanceSection from '../components/AttendanceSection';
 import SubmissionsSection from '../components/SubmissionsSection';
 import GradesSection from '../components/GradesSection';
+import LogbookSection from '../components/LogbookSection';
+import ExportButton from '../../../components/shared/ExportButton';
 import * as studentsApi from '../../../api/students.api';
+import * as reportsApi from '../../../api/reports.api';
 import '../../../styles/portalSections.css';
 
 export default function StudentDashboardPage() {
@@ -24,6 +27,22 @@ export default function StudentDashboardPage() {
         setLocation(res.data.location || '');
       })
       .catch((err) => setError(err.message));
+  }
+
+  async function handleExport() {
+    if (!profile) return;
+    try {
+      const csv = await reportsApi.exportStudentReport(profile.id);
+      const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const anchor = document.createElement('a');
+      anchor.href = url;
+      anchor.download = `${profile.name || 'student'}-report.csv`;
+      anchor.click();
+      URL.revokeObjectURL(url);
+    } catch (err) {
+      setError(err.message);
+    }
   }
 
   useEffect(() => {
@@ -48,7 +67,14 @@ export default function StudentDashboardPage() {
     <PortalLayout
       eyebrow="Your attachment"
       title={profile ? profile.name : 'Dashboard'}
-      actions={profile && <StatusBadge>{profile.link_status}</StatusBadge>}
+      actions={
+        profile ? (
+          <>
+            <StatusBadge>{profile.link_status}</StatusBadge>
+            <ExportButton onClick={handleExport}>Export report</ExportButton>
+          </>
+        ) : null
+      }
     >
       {error && <p style={{ color: 'var(--error)' }}>{error}</p>}
 
@@ -79,6 +105,7 @@ export default function StudentDashboardPage() {
           <AttendanceSection studentId={profile.id} />
           <FeedbackSection studentId={profile.id} />
           <GradesSection studentId={profile.id} />
+          <LogbookSection />
         </>
       )}
     </PortalLayout>

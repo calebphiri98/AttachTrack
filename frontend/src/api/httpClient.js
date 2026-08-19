@@ -59,7 +59,8 @@ async function tryRefresh() {
 }
 
 // options.isForm: pass a FormData body (for file uploads) instead of JSON.
-async function request(path, { method = 'GET', body, isForm = false, retry = true } = {}) {
+// options.parseJson: set false to receive a raw text response (CSV downloads).
+async function request(path, { method = 'GET', body, isForm = false, retry = true, parseJson = true } = {}) {
   const headers = {};
   if (!isForm) headers['Content-Type'] = 'application/json';
   if (accessToken) headers['Authorization'] = `Bearer ${accessToken}`;
@@ -75,12 +76,12 @@ async function request(path, { method = 'GET', body, isForm = false, retry = tru
   if (res.status === 401 && retry) {
     const refreshed = await tryRefresh();
     if (refreshed) {
-      return request(path, { method, body, isForm, retry: false });
+      return request(path, { method, body, isForm, retry: false, parseJson });
     }
     if (onUnauthorized) onUnauthorized();
   }
 
-  const data = await res.json().catch(() => ({}));
+  const data = parseJson ? await res.json().catch(() => ({})) : await res.text().catch(() => '');
   if (!res.ok) {
     const error = new Error(data.message || 'Something went wrong');
     error.statusCode = res.status;

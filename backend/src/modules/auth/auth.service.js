@@ -10,7 +10,7 @@ const { sendVerificationEmail, sendPasswordResetEmail } = require('../../config/
 const studentsService = require('../students/students.service');
 
 const SALT_ROUNDS = 10;
-const VALID_ROLES = ['student', 'industry_supervisor', 'university_supervisor'];
+const VALID_ROLES = ['student', 'industry_supervisor', 'university_supervisor', 'admin'];
 
 function generateCode() {
   return crypto.randomInt(0, 1000000).toString().padStart(6, '0');

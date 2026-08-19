@@ -6,12 +6,14 @@ const ROLE_LABELS = {
   student: 'Student',
   industry_supervisor: 'Industry Supervisor',
   university_supervisor: 'University Supervisor',
+  admin: 'Administrator',
 };
 
 const DASHBOARD_PATH = {
   student: '/student/dashboard',
   industry_supervisor: '/industry/students',
   university_supervisor: '/university/students',
+  admin: '/admin/dashboard',
 };
 
 const MESSAGES_PATH = {

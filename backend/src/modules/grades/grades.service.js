@@ -1,6 +1,7 @@
 const db = require('../../config/db');
 const AppError = require('../../utils/AppError');
 const { requireUuid, requireString, optionalString } = require('../../utils/validators');
+const { sendNotificationEmail } = require('../../config/mailer');
 const studentsService = require('../students/students.service');
 
 async function assignGrade({ universitySupervisorId, studentId, gradeValue, comments }) {
@@ -22,7 +23,27 @@ async function assignGrade({ universitySupervisorId, studentId, gradeValue, comm
      RETURNING *`,
     [studentId, universitySupervisorId, cleanGradeValue, cleanComments]
   );
-  return rows[0];
+
+  const gradeEntry = rows[0];
+  const { rows: studentRows } = await db.query(
+    `SELECT u.email, u.name
+     FROM students s
+     JOIN users u ON u.id = s.user_id
+     WHERE s.id = $1`,
+    [studentId]
+  );
+
+  if (studentRows[0]) {
+    await sendNotificationEmail(
+     studentRows[0].email,
+     studentRows[0].name,
+     'A grade has been recorded',
+     `Your final placement grade has been recorded: ${cleanGradeValue}.\n\n${cleanComments || 'No additional comments were provided.'}`,
+     `<div style="font-family:sans-serif;max-width:520px"><h2>A grade has been recorded</h2><p>Your final placement grade has been recorded: <strong>${cleanGradeValue}</strong>.</p><p>${(cleanComments || 'No additional comments were provided.').replace(/\n/g, '<br />')}</p></div>`
+    );
+  }
+
+  return gradeEntry;
 }
 
 async function getForStudent(studentId, requester) {

@@ -1,6 +1,5 @@
 const siteVisitsService = require('./siteVisits.service');
 const asyncHandler = require('../../utils/asyncHandler');
-const resolveSupervisorContext = require('../../utils/resolveSupervisorContext');
 
 const createVisit = asyncHandler(async (req, res) => {
   const visit = await siteVisitsService.createVisit({
@@ -15,14 +14,11 @@ const createVisit = asyncHandler(async (req, res) => {
 });
 
 const listForStudent = asyncHandler(async (req, res) => {
-  let requester = { role: req.user.role, id: req.user.id };
-
-  if (req.user.role !== 'student') {
-    const supervisorContext = await resolveSupervisorContext(req.user);
-    requester.supervisorId = supervisorContext.id;
-  }
-
-  const visits = await siteVisitsService.listForStudent(req.params.studentId, requester);
+  const visits = await siteVisitsService.listForStudent(req.params.studentId, {
+    role: req.user.role,
+    id: req.user.id,
+    supervisorId: req.user.supervisorId,
+  });
 
   res.status(200).json({ success: true, data: visits });
 });
