@@ -11,6 +11,7 @@ export default function SubmissionsSection({ canSubmit }) {
   const [error, setError] = useState('');
   const [uploading, setUploading] = useState(false);
   const [retryingId, setRetryingId] = useState(null);
+  const [recipientRole, setRecipientRole] = useState('university_supervisor');
   const fileInputRef = useRef(null);
 
   function load() {
@@ -23,19 +24,13 @@ export default function SubmissionsSection({ canSubmit }) {
   function loadQueued() {
     getQueuedSubmissions()
       .then((items) => setQueued(items.filter((i) => i.status === 'pending_sync' || i.status === 'failed')))
-      .catch(() => {
-        // no queue yet — fine, nothing pending
-      });
+      .catch(() => {});
   }
 
   useEffect(() => {
     load();
     loadQueued();
 
-    // SyncManager (mounted once, app-wide) runs in the background and
-    // dispatches this after every sync attempt — refresh both lists so a
-    // just-synced item moves out of "Pending sync" and into the real list
-    // without needing a manual page reload.
     function handleSynced() {
       load();
       loadQueued();
@@ -58,7 +53,7 @@ export default function SubmissionsSection({ canSubmit }) {
     const submittedAt = new Date().toISOString();
 
     try {
-      await submissionsApi.submitDocument(file, clientUuid);
+      await submissionsApi.submitDocument(file, clientUuid, recipientRole);
       fileInputRef.current.value = '';
       load();
     } catch (err) {
@@ -71,6 +66,7 @@ export default function SubmissionsSection({ canSubmit }) {
           fileName: file.name,
           fileType: file.type,
           submittedAt,
+          recipientRole,
           status: 'pending_sync',
         });
         fileInputRef.current.value = '';
@@ -92,6 +88,8 @@ export default function SubmissionsSection({ canSubmit }) {
 
   const hasAnything = (submissions && submissions.length > 0) || queued.length > 0;
   const isVideoSubmission = (fileType) => (fileType || '').startsWith('video/');
+  const recipientLabel = (role) =>
+    role === 'industry_supervisor' ? 'Industry supervisor' : 'University supervisor';
 
   return (
     <Card>
@@ -99,6 +97,13 @@ export default function SubmissionsSection({ canSubmit }) {
 
       {canSubmit ? (
         <form onSubmit={handleUpload} className="inline-form">
+          <label className="inline-form__field inline-form__field--full">
+            <span>Send to</span>
+            <select value={recipientRole} onChange={(e) => setRecipientRole(e.target.value)}>
+              <option value="university_supervisor">University supervisor</option>
+              <option value="industry_supervisor">Industry supervisor</option>
+            </select>
+          </label>
           <label className="inline-form__field inline-form__field--full">
             <span>Document or video (PDF, Word, MP4, MOV — up to 150MB)</span>
             <input type="file" ref={fileInputRef} accept=".pdf,.doc,.docx,.mp4,.mov,.webm" />
@@ -159,7 +164,9 @@ export default function SubmissionsSection({ canSubmit }) {
               </li>
             ) : (
               <li key={q.clientUuid} className="record-list__row">
-                <span style={{ color: 'var(--muted)' }}>{q.fileName}</span>
+                <span style={{ color: 'var(--muted)' }}>
+                  {q.fileName} · {recipientLabel(q.recipientRole)}
+                </span>
                 <span className="record-list__date" style={{ color: 'var(--stamp)' }}>
                   Pending sync — {new Date(q.submittedAt).toLocaleDateString()}
                 </span>
@@ -177,7 +184,7 @@ export default function SubmissionsSection({ canSubmit }) {
                   </a>
                 )}
                 <span className="record-list__date">
-                  {s.file_name}
+                  {s.file_name} · {recipientLabel(s.recipient_role)}
                   {isVideoSubmission(s.file_type) ? ' • video' : ''}
                   {' • '}
                   {new Date(s.submitted_at).toLocaleDateString()}
