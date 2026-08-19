@@ -329,4 +329,3 @@ CREATE TRIGGER trg_companies_updated_at
 CREATE TRIGGER trg_grades_updated_at
     BEFORE UPDATE ON grades
     FOR EACH ROW EXECUTE FUNCTION set_updated_at();
-CREATE INDEX idx_submissions_recipient_role ON submissions(recipient_role);
