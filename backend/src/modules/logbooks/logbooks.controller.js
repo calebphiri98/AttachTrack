@@ -1,5 +1,6 @@
 const logbooksService = require('./logbooks.service');
 const asyncHandler = require('../../utils/asyncHandler');
+const resolveSupervisorContext = require('../../utils/resolveSupervisorContext');
 
 const listMine = asyncHandler(async (req, res) => {
   const entries = await logbooksService.listMine(req.user.id);
@@ -19,10 +20,11 @@ const createEntry = asyncHandler(async (req, res) => {
 });
 
 const listForStudent = asyncHandler(async (req, res) => {
+  const supervisorContext = await resolveSupervisorContext(req.user);
   const entries = await logbooksService.listForStudent(req.params.studentId, {
     role: req.user.role,
     id: req.user.id,
-    supervisorId: req.user.supervisorId,
+    supervisorId: supervisorContext ? supervisorContext.id : null,
   });
 
   res.status(200).json({ success: true, data: entries });
