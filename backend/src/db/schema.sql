@@ -329,3 +329,8 @@ CREATE TRIGGER trg_companies_updated_at
 CREATE TRIGGER trg_grades_updated_at
     BEFORE UPDATE ON grades
     FOR EACH ROW EXECUTE FUNCTION set_updated_at();
+ALTER TABLE submissions
+    ADD COLUMN recipient_role user_role NOT NULL DEFAULT 'university_supervisor'
+    CHECK (recipient_role IN ('industry_supervisor', 'university_supervisor'));
+
+CREATE INDEX idx_submissions_recipient_role ON submissions(recipient_role);

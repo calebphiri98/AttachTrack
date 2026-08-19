@@ -7,6 +7,7 @@ const create = asyncHandler(async (req, res) => {
     studentUserId: req.user.id,
     file: req.file,
     clientUuid: req.body.clientUuid,
+    recipientRole: req.body.recipientRole,
   });
   res.status(201).json({ success: true, data: submission });
 });

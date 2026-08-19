@@ -4,9 +4,15 @@ const AppError = require('../../utils/AppError');
 const studentsService = require('../students/students.service');
 const { uploadBuffer } = require('../../utils/uploadToCloudinary');
 
-async function createSubmission({ studentUserId, file, clientUuid }) {
+const VALID_RECIPIENT_ROLES = ['industry_supervisor', 'university_supervisor'];
+
+async function createSubmission({ studentUserId, file, clientUuid, recipientRole }) {
   if (!file) {
     throw new AppError('A file is required', 400);
+  }
+
+  if (!VALID_RECIPIENT_ROLES.includes(recipientRole)) {
+    throw new AppError('recipientRole must be industry_supervisor or university_supervisor', 400);
   }
 
   const student = await studentsService.getByUserId(studentUserId);
@@ -17,10 +23,13 @@ async function createSubmission({ studentUserId, file, clientUuid }) {
     );
   }
 
-  // In Phase 3 (online-only) the server can safely generate this if the
-  // client didn't send one. Once offline submission (Phase 6) lands, the
-  // client generates it itself at "Submit" time, before this endpoint is
-  // even reachable — this fallback just keeps things working either way.
+  if (recipientRole === 'industry_supervisor' && !student.industry_supervisor_id) {
+    throw new AppError('You are not linked to an industry supervisor', 400);
+  }
+  if (recipientRole === 'university_supervisor' && !student.university_supervisor_id) {
+    throw new AppError('You are not linked to a university supervisor', 400);
+  }
+
   const finalClientUuid = clientUuid || crypto.randomUUID();
 
   const uploadResult = await uploadBuffer(file.buffer, {
@@ -33,12 +42,13 @@ async function createSubmission({ studentUserId, file, clientUuid }) {
   try {
     const { rows } = await db.query(
       `INSERT INTO submissions
-        (client_uuid, student_id, file_url, file_name, file_type, submitted_at, synced_at, status)
-       VALUES ($1, $2, $3, $4, $5, $6, now(), 'synced')
+        (client_uuid, student_id, recipient_role, file_url, file_name, file_type, submitted_at, synced_at, status)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, now(), 'synced')
        RETURNING *`,
       [
         finalClientUuid,
         student.id,
+        recipientRole,
         uploadResult.secure_url,
         file.originalname,
         file.mimetype,
@@ -48,9 +58,6 @@ async function createSubmission({ studentUserId, file, clientUuid }) {
     return rows[0];
   } catch (err) {
     if (err.code === '23505') {
-      // Same client_uuid already recorded (a retry) — return the existing
-      // row instead of erroring, since this is exactly the dedup behavior
-      // the schema's client_uuid unique constraint exists for.
       const { rows } = await db.query('SELECT * FROM submissions WHERE client_uuid = $1', [
         finalClientUuid,
       ]);
@@ -63,7 +70,7 @@ async function createSubmission({ studentUserId, file, clientUuid }) {
 async function listMine(studentUserId) {
   const student = await studentsService.getByUserId(studentUserId);
   const { rows } = await db.query(
-    `SELECT id, file_url, file_name, file_type, submitted_at, synced_at, status
+    `SELECT id, recipient_role, file_url, file_name, file_type, submitted_at, synced_at, status
      FROM submissions
      WHERE student_id = $1
      ORDER BY submitted_at DESC`,
@@ -72,16 +79,20 @@ async function listMine(studentUserId) {
   return rows;
 }
 
-// supervisorContext = { column: 'industry_supervisor_id' | 'university_supervisor_id', id: supervisorRowId }
 async function listForStudent(studentId, supervisorContext) {
   await studentsService.assertSupervises(studentId, supervisorContext.column, supervisorContext.id);
 
+  const recipientRole =
+    supervisorContext.column === 'industry_supervisor_id'
+      ? 'industry_supervisor'
+      : 'university_supervisor';
+
   const { rows } = await db.query(
-    `SELECT id, file_url, file_name, file_type, submitted_at, synced_at, status
+    `SELECT id, recipient_role, file_url, file_name, file_type, submitted_at, synced_at, status
      FROM submissions
-     WHERE student_id = $1
+     WHERE student_id = $1 AND recipient_role = $2
      ORDER BY submitted_at DESC`,
-    [studentId]
+    [studentId, recipientRole]
   );
   return rows;
 }
