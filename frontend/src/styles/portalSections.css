@@ -1,3 +1,7 @@
+/* ============================================================
+   Section headings & dividers
+   ============================================================ */
+
 .section-title {
   font-family: var(--font-display);
   font-size: 1.1rem;
@@ -7,14 +11,26 @@
 }
 
 .section-divider {
+  border: none;
   border-top: 1px solid var(--line);
   margin: 20px 0;
 }
+
+
+/* ============================================================
+   Inline form
+   ============================================================ */
 
 .inline-form__row {
   display: flex;
   gap: 16px;
   flex-wrap: wrap;
+
+  /* Prevent the form row from becoming wider than its parent */
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
 }
 
 .inline-form__field {
@@ -22,7 +38,13 @@
   flex-direction: column;
   gap: 6px;
   margin-bottom: 14px;
+
   flex: 1 1 160px;
+
+  /* Allows the field to shrink on small screens */
+  min-width: 0;
+  max-width: 100%;
+  box-sizing: border-box;
 }
 
 .inline-form__field--full {
@@ -40,13 +62,30 @@
 .inline-form__field input,
 .inline-form__field select,
 .inline-form__field textarea {
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+
+  /* Prevent padding/borders from increasing the width */
+  box-sizing: border-box;
+
   border: 1.5px solid var(--line);
   border-radius: 6px;
   padding: 9px 10px;
+
   font-family: var(--font-body);
   font-size: 0.92rem;
   color: var(--ink);
   background: var(--paper-raised);
+
+  transition:
+    border-color 0.15s ease,
+    box-shadow 0.15s ease;
+}
+
+.inline-form__field textarea {
+  resize: vertical;
+  min-height: 80px;
 }
 
 .inline-form__field input:focus,
@@ -54,16 +93,32 @@
 .inline-form__field textarea:focus {
   outline: none;
   border-color: var(--stamp);
+
+  box-shadow:
+    0 0 0 3px
+    color-mix(in srgb, var(--stamp) 18%, transparent);
+}
+
+.inline-form__field input:disabled,
+.inline-form__field select:disabled,
+.inline-form__field textarea:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  background: var(--line);
 }
 
 .inline-form__checkbox {
   display: flex;
   align-items: center;
   gap: 8px;
+
   font-size: 0.88rem;
   color: var(--ink);
+
   margin-bottom: 16px;
   cursor: pointer;
+
+  accent-color: var(--stamp);
 }
 
 .inline-form__error {
@@ -72,51 +127,242 @@
   margin: 0 0 12px;
 }
 
+
+/* ============================================================
+   Record list
+   ============================================================ */
+
 .record-list {
   list-style: none;
+
   margin: 0;
   padding: 0;
+
+  /*
+     Keep the list inside its parent container.
+     This is important for mobile responsiveness.
+  */
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+
+  box-sizing: border-box;
 }
+
+
+/* ============================================================
+   Record list — row
+   ============================================================ */
 
 .record-list__row {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  flex-wrap: wrap;
+
+  /*
+     These prevent long filenames from increasing
+     the width of the entire card.
+  */
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+
+  box-sizing: border-box;
+
   padding: 10px 0;
   border-bottom: 1px solid var(--line);
-  gap: 12px;
+
+  gap: 4px 12px;
 }
 
 .record-list__row:last-child {
   border-bottom: none;
 }
 
+
+/* ============================================================
+   IMPORTANT — prevent children from forcing the row wider
+   ============================================================ */
+
+/*
+   A filename can be extremely long, for example:
+
+   Uptown_Garage_Workflow_and_Business_Logic.pdf
+
+   Flex items can sometimes keep their intrinsic width.
+   min-width: 0 tells them they are allowed to shrink.
+*/
+
+.record-list__row > * {
+  min-width: 0;
+  max-width: 100%;
+
+  box-sizing: border-box;
+}
+
+
+/*
+   Apply the same protection to common elements that may
+   contain document filenames.
+
+   This is important because the document filename may not
+   actually be using .record-list__link.
+*/
+
+.record-list__row a,
+.record-list__row span,
+.record-list__row p,
+.record-list__row div {
+  min-width: 0;
+  max-width: 100%;
+
+  box-sizing: border-box;
+
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+
+/* ============================================================
+   Record list — date
+   ============================================================ */
+
 .record-list__date {
   font-family: var(--font-mono);
   font-size: 0.78rem;
   color: var(--muted);
+
+  /*
+     Dates normally stay on one line.
+     On mobile we handle extremely long dates separately.
+  */
   white-space: nowrap;
+
+  max-width: 100%;
 }
+
+
+/* ============================================================
+   Record list — notes
+   ============================================================ */
 
 .record-list__notes {
   font-size: 0.85rem;
   color: var(--muted);
-  flex: 1;
+
+  flex: 1 1 200px;
+
+  min-width: 0;
+  max-width: 100%;
+
   text-align: right;
+
+  /*
+     Allows long text and filenames to wrap.
+  */
+  overflow-wrap: anywhere;
+  word-break: break-word;
+
+  box-sizing: border-box;
 }
 
+
+/* ============================================================
+   Record list — file/download link
+   ============================================================ */
+
 .record-list__link {
+  /*
+     Block display allows the link to respect the available
+     width of its parent.
+  */
+  display: block;
+
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+
+  box-sizing: border-box;
+
   color: var(--stamp);
   font-size: 0.9rem;
   font-weight: 500;
   text-decoration: none;
+
+  /*
+     IMPORTANT:
+     Do not allow a long filename to remain on one line.
+  */
+  white-space: normal;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+
+  line-height: 1.4;
 }
 
 .record-list__link:hover {
   text-decoration: underline;
 }
 
+.record-list__link:focus-visible {
+  outline: 2px solid var(--stamp);
+  outline-offset: 2px;
+  border-radius: 2px;
+}
+
+
+/* ============================================================
+   EXTRA PROTECTION FOR FILE NAMES
+   ============================================================ */
+
+/*
+   If the document filename is rendered inside a span,
+   paragraph, div, or another element instead of
+   .record-list__link, these rules will still force it
+   to wrap inside the available width.
+*/
+
+.record-list__row a,
+.record-list__row span,
+.record-list__row p {
+  white-space: normal;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+
+/*
+   Specifically target common filename-like elements.
+   These rules are intentionally generic so they work even
+   if the document and video use different elements.
+*/
+
+.record-list__row [class*="file"],
+.record-list__row [class*="filename"],
+.record-list__row [class*="name"] {
+  max-width: 100%;
+  min-width: 0;
+
+  white-space: normal;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+
+  box-sizing: border-box;
+}
+
+
+/* ============================================================
+   Stacked record list
+   ============================================================ */
+
 .record-list--stacked .record-list__entry {
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+
+  box-sizing: border-box;
+
   padding: 12px 0;
   border-bottom: 1px solid var(--line);
 }
@@ -125,16 +371,534 @@
   border-bottom: none;
 }
 
+
+/* ============================================================
+   Record list — entry header
+   ============================================================ */
+
 .record-list__entry-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  flex-wrap: wrap;
+
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+
+  box-sizing: border-box;
+
+  gap: 4px 12px;
   margin-bottom: 6px;
 }
 
+
+/*
+   Prevent header children from forcing the container wider.
+*/
+
+.record-list__entry-header > * {
+  min-width: 0;
+  max-width: 100%;
+
+  box-sizing: border-box;
+}
+
+
+/* ============================================================
+   Record list — content
+   ============================================================ */
+
 .record-list__content {
   margin: 0;
+
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+
+  box-sizing: border-box;
+
   font-size: 0.9rem;
   color: var(--ink);
   line-height: 1.5;
+
+  /*
+     Break long words, URLs and filenames.
+  */
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+
+/* ============================================================
+   Mobile — 640px and below
+   ============================================================ */
+
+@media (max-width: 640px) {
+
+  /* ----------------------------------------------------------
+     Section divider
+     ---------------------------------------------------------- */
+
+  .section-divider {
+    margin: 16px 0;
+  }
+
+
+  /* ----------------------------------------------------------
+     Inline form
+     ---------------------------------------------------------- */
+
+  .inline-form__row {
+    gap: 12px;
+  }
+
+  .inline-form__field {
+    /*
+       One field per row on mobile.
+    */
+    flex-basis: 100%;
+
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+  }
+
+  .inline-form__field input,
+  .inline-form__field select,
+  .inline-form__field textarea {
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+
+    box-sizing: border-box;
+
+    /*
+       16px prevents iOS Safari from zooming when
+       an input receives focus.
+    */
+    font-size: 1rem;
+
+    /*
+       Larger touch target on mobile.
+    */
+    padding: 10px 12px;
+  }
+
+  .inline-form__checkbox {
+    font-size: 0.92rem;
+  }
+
+
+  /* ----------------------------------------------------------
+     Record list
+     ---------------------------------------------------------- */
+
+  .record-list {
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+
+    box-sizing: border-box;
+  }
+
+
+  /* ----------------------------------------------------------
+     Record row — mobile stacked layout
+     ---------------------------------------------------------- */
+
+  .record-list__row {
+    /*
+       Stack the content vertically.
+    */
+    flex-direction: column;
+
+    justify-content: flex-start;
+
+    /*
+       stretch allows children to use the full available
+       width without overflowing the card.
+    */
+    align-items: stretch;
+
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+
+    gap: 4px;
+
+    padding: 12px 0;
+  }
+
+
+  /* ----------------------------------------------------------
+     Make every row child responsive
+     ---------------------------------------------------------- */
+
+  .record-list__row > *,
+  .record-list__row a,
+  .record-list__row span,
+  .record-list__row p,
+  .record-list__row div {
+    /*
+       Absolutely critical for flex layouts.
+       It allows the child to shrink below its content's
+       natural/intrinsic width.
+    */
+    min-width: 0;
+
+    /*
+       Never allow an individual element to become wider
+       than the card.
+    */
+    width: 100%;
+    max-width: 100%;
+
+    box-sizing: border-box;
+
+    /*
+       Break long document filenames.
+    */
+    white-space: normal;
+    overflow-wrap: anywhere;
+    word-break: break-word;
+  }
+
+
+  /* ----------------------------------------------------------
+     Date
+     ---------------------------------------------------------- */
+
+  .record-list__date {
+    width: 100%;
+    max-width: 100%;
+
+    /*
+       Keep normal dates on one line.
+    */
+    white-space: nowrap;
+
+    /*
+       If something unusually long is placed here,
+       truncate it rather than overflowing.
+    */
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+
+  /* ----------------------------------------------------------
+     Notes
+     ---------------------------------------------------------- */
+
+  .record-list__notes {
+    /*
+       Reset the desktop 200px flex basis.
+    */
+    flex: 0 1 auto;
+
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+
+    text-align: left;
+
+    overflow-wrap: anywhere;
+    word-break: break-word;
+  }
+
+
+  /* ----------------------------------------------------------
+     File/download link
+     ---------------------------------------------------------- */
+
+  .record-list__link {
+    display: block;
+
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+
+    box-sizing: border-box;
+
+    padding: 4px 0;
+
+    /*
+       Force the filename to wrap.
+    */
+    white-space: normal;
+    overflow-wrap: anywhere;
+    word-break: break-word;
+
+    line-height: 1.4;
+  }
+
+
+  /* ----------------------------------------------------------
+     Generic filename protection on mobile
+     ---------------------------------------------------------- */
+
+  /*
+     This catches document filenames even when the component
+     uses a different class from .record-list__link.
+  */
+
+  .record-list__row [class*="file"],
+  .record-list__row [class*="filename"],
+  .record-list__row [class*="name"] {
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+
+    box-sizing: border-box;
+
+    white-space: normal;
+    overflow-wrap: anywhere;
+    word-break: break-word;
+  }
+
+
+  /* ----------------------------------------------------------
+     Stacked entries
+     ---------------------------------------------------------- */
+
+  .record-list--stacked .record-list__entry {
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+
+    box-sizing: border-box;
+  }
+
+
+  /* ----------------------------------------------------------
+     Entry header
+     ---------------------------------------------------------- */
+
+  .record-list__entry-header {
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+
+    align-items: flex-start;
+  }
+
+  .record-list__entry-header > * {
+    min-width: 0;
+    max-width: 100%;
+  }
+
+
+  /* ----------------------------------------------------------
+     Content
+     ---------------------------------------------------------- */
+
+  .record-list__content {
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+
+    overflow-wrap: anywhere;
+    word-break: break-word;
+  }
+}
+
+
+/* ============================================================
+   Extra-small mobile — 400px and below
+   ============================================================ */
+
+@media (max-width: 400px) {
+
+  /*
+     Slightly smaller text gives very narrow screens
+     additional breathing room.
+  */
+
+  .record-list__link {
+    font-size: 0.85rem;
+  }
+
+  .record-list__content {
+    font-size: 0.85rem;
+  }
+
+  .record-list__notes {
+    font-size: 0.82rem;
+  }
+}
+
+
+/* ============================================================
+   Reduced motion
+   ============================================================ */
+
+@media (prefers-reduced-motion: reduce) {
+
+  .inline-form__field input,
+  .inline-form__field select,
+  .inline-form__field textarea {
+    /*
+       Remove transitions for users who prefer reduced motion.
+    */
+    transition: none;
+  }
+}
+/* ============================================================
+   Desktop submissions layout
+   ============================================================ */
+
+/*
+   On larger screens, display submissions in two columns.
+   This prevents the dashboard from looking like one long,
+   narrow mobile-style list.
+*/
+@media (min-width: 768px) {
+
+  .record-list {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 16px;
+
+    width: 100%;
+    max-width: 100%;
+  }
+
+  /*
+     Turn each submission into its own card.
+  */
+  .record-list__row {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    justify-content: flex-start;
+
+    width: 100%;
+    min-width: 0;
+    max-width: 100%;
+
+    padding: 16px;
+
+    border: 1px solid var(--line);
+    border-radius: 8px;
+
+    background: var(--paper-raised);
+
+    box-sizing: border-box;
+  }
+
+  /*
+     Remove the normal list divider because each item
+     now has its own card border.
+  */
+  .record-list__row:last-child {
+    border-bottom: 1px solid var(--line);
+  }
+
+  /*
+     Keep every piece of submission information inside
+     the card.
+  */
+  .record-list__row > * {
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+  }
+
+  /*
+     Long filenames must wrap rather than expanding
+     the desktop card.
+  */
+  .record-list__row a,
+  .record-list__row span,
+  .record-list__row p,
+  .record-list__row div {
+    max-width: 100%;
+    min-width: 0;
+
+    overflow-wrap: anywhere;
+    word-break: break-word;
+  }
+
+  /*
+     Submission links.
+  */
+  .record-list__link {
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+
+    font-size: 0.9rem;
+    line-height: 1.45;
+
+    overflow-wrap: anywhere;
+    word-break: break-word;
+  }
+
+  /*
+     Submission metadata.
+  */
+  .record-list__notes {
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+
+    text-align: left;
+
+    overflow-wrap: anywhere;
+    word-break: break-word;
+  }
+}
+
+
+/* ============================================================
+   Large desktop
+   ============================================================ */
+
+/*
+   On very wide screens, prevent the submission cards from
+   becoming unnecessarily huge.
+*/
+@media (min-width: 1200px) {
+
+  .record-list {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+
+    max-width: 1000px;
+  }
+}
+
+
+/* ============================================================
+   Mobile override
+   ============================================================ */
+
+/*
+   Below 768px we return to the single-column mobile layout.
+   This preserves the layout that is already working well
+   on phones.
+*/
+@media (max-width: 767px) {
+
+  .record-list {
+    display: block;
+    width: 100%;
+    max-width: 100%;
+  }
+
+  .record-list__row {
+    display: flex;
+    flex-direction: column;
+
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+
+    border-radius: 0;
+    border-left: none;
+    border-right: none;
+    background: transparent;
+
+    padding: 12px 0;
+  }
 }
