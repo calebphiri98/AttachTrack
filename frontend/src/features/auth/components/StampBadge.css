@@ -1,0 +1,63 @@
+.stamp-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 108px;
+  height: 108px;
+  border-radius: 50%;
+  position: relative;
+  transform: rotate(-9deg) scale(0.4);
+  opacity: 0;
+  animation: stamp-slam 420ms cubic-bezier(0.2, 1.4, 0.4, 1) forwards;
+}
+
+.stamp-badge__ring {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.stamp-badge__ring circle {
+  fill: none;
+  stroke: var(--sage);
+  stroke-width: 2.5;
+}
+
+.stamp-badge__ring circle:first-child {
+  stroke-dasharray: 4 3;
+}
+
+.stamp-badge__label {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 0.82rem;
+  letter-spacing: 0.12em;
+  color: var(--sage);
+  text-align: center;
+  text-transform: uppercase;
+  width: 60px;
+}
+
+@keyframes stamp-slam {
+  0% {
+    transform: rotate(-9deg) scale(0.4);
+    opacity: 0;
+  }
+  60% {
+    transform: rotate(-7deg) scale(1.08);
+    opacity: 1;
+  }
+  100% {
+    transform: rotate(-7deg) scale(1);
+    opacity: 1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .stamp-badge {
+    animation: none;
+    opacity: 1;
+    transform: rotate(-7deg) scale(1);
+  }
+}

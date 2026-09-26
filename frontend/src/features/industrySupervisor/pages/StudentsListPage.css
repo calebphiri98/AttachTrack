@@ -1,0 +1,53 @@
+.student-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.student-list__row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 14px 0;
+  border-bottom: 1px solid var(--line);
+}
+
+.student-list__row:last-child {
+  border-bottom: none;
+  padding-bottom: 0;
+}
+
+.student-list__row:first-child {
+  padding-top: 0;
+}
+
+.student-list__name {
+  margin: 0 0 2px;
+  font-family: var(--font-body);
+  font-weight: 600;
+  font-size: 0.95rem;
+  color: var(--ink);
+}
+
+.student-list__email {
+  margin: 0;
+  font-size: 0.82rem;
+  color: var(--muted);
+}
+
+.student-list__meta {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.student-list__view {
+  border: none;
+  background: none;
+  color: var(--stamp);
+  font-family: var(--font-body);
+  font-size: 0.85rem;
+  font-weight: 500;
+  cursor: pointer;
+  padding: 0;
+}
