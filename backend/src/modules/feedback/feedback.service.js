@@ -32,7 +32,7 @@ async function createFeedback({ industrySupervisorId, studentId, content, flagge
      studentRows[0].name,
      'New feedback received',
      `You have received new feedback from your industry supervisor.\n\n${cleanContent}`,
-     `<div style="font-family:sans-serif;max-width:520px"><h2>New feedback received</h2><p>You have received new feedback from your industry supervisor.</p><p>${cleanContent.replace(/\n/g, '<br />')}</p></div>`
+     `<div style="font-family:sans-serif;max-width:520px"><h2>New feedback received</h2><p>You have received new feedbackfrom your industry supervisor.</p><p>${cleanContent.replace(/\n/g, '<br />')}</p></div>`
     );
   }
 
@@ -46,7 +46,7 @@ async function listForStudent(studentId, requester) {
   const isOwnRecord = requester.role === 'student' && student.user_id === requester.id;
   const isIndustrySupervisor =
     requester.role === 'industry_supervisor' &&
-    requester.supervisorId === student.industry_supervisor_id;
+    (await studentsService.isIndustrySupervisorOf(student, requester.supervisorId));
   const isUniversitySupervisor =
     requester.role === 'university_supervisor' &&
     requester.supervisorId === student.university_supervisor_id;
