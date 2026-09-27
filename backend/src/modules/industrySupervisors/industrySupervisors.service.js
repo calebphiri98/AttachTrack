@@ -1,4 +1,4 @@
-const db = require('../../config/db');
+﻿const db = require('../../config/db');
 const AppError = require('../../utils/AppError');
 const { requireString, requireEmail } = require('../../utils/validators');
 const studentsService = require('../students/students.service');
@@ -33,4 +33,14 @@ async function listStudents(userId) {
   return studentsService.listBySupervisor('industry_supervisor_id', supervisor.id);
 }
 
-module.exports = { addStudent, listStudents, getSupervisorRecordByUserId };
+async function listAll() {
+  const { rows } = await db.query(
+    `SELECT i.id, i.company_name, u.name, u.email
+     FROM industry_supervisors i
+     JOIN users u ON u.id = i.user_id
+     ORDER BY u.name ASC`
+  );
+  return rows;
+}
+
+module.exports = { addStudent, listStudents, listAll, getSupervisorRecordByUserId };

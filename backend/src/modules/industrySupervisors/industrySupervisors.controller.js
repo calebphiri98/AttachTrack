@@ -1,4 +1,4 @@
-const industrySupervisorsService = require('./industrySupervisors.service');
+﻿const industrySupervisorsService = require('./industrySupervisors.service');
 const asyncHandler = require('../../utils/asyncHandler');
 
 const addStudent = asyncHandler(async (req, res) => {
@@ -11,4 +11,9 @@ const listStudents = asyncHandler(async (req, res) => {
   res.status(200).json({ success: true, data: students });
 });
 
-module.exports = { addStudent, listStudents };
+const listAll = asyncHandler(async (req, res) => {
+  const supervisors = await industrySupervisorsService.listAll();
+  res.status(200).json({ success: true, data: supervisors });
+});
+
+module.exports = { addStudent, listStudents, listAll };
