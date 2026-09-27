@@ -33,7 +33,7 @@ async function listForStudent(studentId, requester) {
   const isOwnRecord = requester.role === 'student' && student.user_id === requester.id;
   const isIndustrySupervisor =
     requester.role === 'industry_supervisor' &&
-    requester.supervisorId === student.industry_supervisor_id;
+    (await studentsService.isIndustrySupervisorOf(student, requester.supervisorId));
   const isUniversitySupervisor =
     requester.role === 'university_supervisor' &&
     requester.supervisorId === student.university_supervisor_id;
