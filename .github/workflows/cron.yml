@@ -1,0 +1,21 @@
+name: AttachTrack Scheduled Checks
+
+on:
+  schedule:
+    - cron: '0 21 * * *'
+  workflow_dispatch:
+
+jobs:
+  checks:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check missed submissions
+        run: |
+          curl -f -X GET "https://attachtrack.onrender.com/api/cron/check-submissions" \
+            -H "x-cron-secret: ${{ secrets.CRON_SECRET }}"
+
+      - name: Check attendance
+        run: |
+          curl -f -X GET "https://attachtrack.onrender.com/api/cron/check-attendance" \
+            -H "x-cron-secret: ${{ secrets.CRON_SECRET }}"
