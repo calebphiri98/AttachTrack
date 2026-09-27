@@ -243,6 +243,7 @@ async function requestPasswordReset({ email }) {
 
   if (user) {
     const rawToken = crypto.randomBytes(32).toString('hex');
+    console.log('RESET TOKEN:', rawToken);
     const tokenHash = hashToken(rawToken);
     const expiresAt = new Date(Date.now() + 60 * 60 * 1000);
 
