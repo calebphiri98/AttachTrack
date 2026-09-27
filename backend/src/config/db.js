@@ -1,19 +1,27 @@
 const { Pool } = require('pg');
+const dns = require('dns');
+const net = require('net');
 const env = require('./env');
 
-// Neon requires SSL. rejectUnauthorized:false is the standard setting for
-// Neon's pooled connection string (it presents a cert from a public CA chain
-// but the pg driver's default trust store handling is fussy in some
-// environments, so this avoids false-negative SSL errors).
+dns.setDefaultResultOrder('ipv4first');
+net.setDefaultAutoSelectFamily(false); // Neon's dual-stack racing hangs on this network; force single-family connect
+
 const pool = new Pool({
   connectionString: env.databaseUrl,
-  ssl: { rejectUnauthorized: false },
+  ssl: {
+    rejectUnauthorized: false,
+  },
+  connectionTimeoutMillis: 30000,
+  idleTimeoutMillis: 30000,
+  max: 10,
+});
+
+pool.on('connect', () => {
+  console.log('PostgreSQL connection established');
 });
 
 pool.on('error', (err) => {
-  // Errors on idle clients in the pool (e.g. Neon closing an idle connection)
-  // should not crash the whole process.
-  console.error('Unexpected error on idle Postgres client', err);
+  console.error('PostgreSQL pool error:', err);
 });
 
 module.exports = {
