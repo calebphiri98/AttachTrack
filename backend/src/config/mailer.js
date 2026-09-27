@@ -1,12 +1,5 @@
 const env = require('./env');
 
-// Render (and many hosting platforms) block outbound SMTP connections
-// (ports 587/465/25) as an anti-spam measure — Nodemailer's direct Gmail
-// SMTP transport worked locally but timed out (ETIMEDOUT) in production.
-// Brevo's transactional email HTTP API sends over HTTPS instead, which
-// isn't blocked the same way. Calling the REST API directly (rather than
-// via the @getbrevo/brevo SDK) avoids that package's inconsistent export
-// shape across versions, which crashed the app at startup.
 const BREVO_API_URL = 'https://api.brevo.com/v3/smtp/email';
 
 async function sendVerificationEmail(toEmail, name, code) {
@@ -41,8 +34,6 @@ async function sendVerificationEmail(toEmail, name, code) {
 
   if (!res.ok) {
     const body = await res.json().catch(() => ({}));
-    // Same pattern as before: let the caller (auth.service.js) decide how
-    // to handle this rather than throwing a raw fetch/HTTP error upstream.
     throw new Error(`Failed to send verification email: ${body.message || res.statusText}`);
   }
 }
@@ -82,6 +73,43 @@ async function sendPasswordResetEmail(toEmail, name, resetLink) {
   }
 }
 
+async function sendAccountCreatedEmail(toEmail, name, role, tempPassword) {
+  const res = await fetch(BREVO_API_URL, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Accept: 'application/json',
+      'api-key': env.mail.brevoApiKey,
+    },
+    body: JSON.stringify({
+      sender: { name: 'AttachTrack', email: env.mail.senderEmail },
+      to: [{ email: toEmail, name }],
+      subject: 'Your AttachTrack account has been created',
+      textContent:
+        `Hi ${name},\n\n` +
+        `An AttachTrack account has been created for you with the role: ${role}.\n\n` +
+        `Email: ${toEmail}\n` +
+        `Temporary password: ${tempPassword}\n\n` +
+        `You can log in with this password now, or reset it at any time using the "Forgot password" link on the login page.`,
+      htmlContent: `
+        <div style="font-family: sans-serif; max-width: 480px;">
+          <h2>Your AttachTrack account has been created</h2>
+          <p>Hi ${name},</p>
+          <p>An AttachTrack account has been created for you with the role: <strong>${role}</strong>.</p>
+          <p>Email: ${toEmail}</p>
+          <p>Temporary password: <strong>${tempPassword}</strong></p>
+          <p>You can log in with this password now, or reset it at any time using the "Forgot password" link on the login page.</p>
+        </div>
+      `,
+    }),
+  });
+
+  if (!res.ok) {
+    const body = await res.json().catch(() => ({}));
+    throw new Error(`Failed to send account created email: ${body.message || res.statusText}`);
+  }
+}
+
 async function sendNotificationEmail(toEmail, name, subject, bodyText, bodyHtml) {
   if (env.nodeEnv === 'test' || !env.mail?.brevoApiKey || !env.mail?.senderEmail) {
     return;
@@ -112,5 +140,6 @@ async function sendNotificationEmail(toEmail, name, subject, bodyText, bodyHtml)
 module.exports = {
   sendVerificationEmail,
   sendPasswordResetEmail,
+  sendAccountCreatedEmail,
   sendNotificationEmail,
 };
