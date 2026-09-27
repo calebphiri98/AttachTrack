@@ -21,6 +21,11 @@ export default function AdminDashboardPage() {
   const [assignments, setAssignments] = useState({});
   const [error, setError] = useState('');
 
+  const [newAccount, setNewAccount] = useState({ name: '', email: '', role: 'industry_supervisor' });
+  const [creating, setCreating] = useState(false);
+  const [createError, setCreateError] = useState('');
+  const [createdResult, setCreatedResult] = useState(null);
+
   async function loadDashboard() {
     try {
       const res = await adminApi.getAdminDashboard();
@@ -62,6 +67,23 @@ export default function AdminDashboardPage() {
     }
   }
 
+  async function handleCreateAccount(e) {
+    e.preventDefault();
+    setCreateError('');
+    setCreatedResult(null);
+    if (!newAccount.name.trim() || !newAccount.email.trim()) return;
+    setCreating(true);
+    try {
+      const res = await adminApi.createAccount(newAccount);
+      setCreatedResult(res.data);
+      setNewAccount({ name: '', email: '', role: 'industry_supervisor' });
+    } catch (err) {
+      setCreateError(err.message);
+    } finally {
+      setCreating(false);
+    }
+  }
+
   return (
     <PortalLayout
       eyebrow="Coordinator dashboard"
@@ -70,6 +92,65 @@ export default function AdminDashboardPage() {
     >
       {error && <p style={{ color: 'var(--error)' }}>{error}</p>}
       {loading && <p>Loading dashboard…</p>}
+
+      <div style={{ background: 'var(--panel)', border: '1px solid var(--line)', borderRadius: 18, padding: 20, marginBottom: 24 }}>
+        <h2 style={{ marginTop: 0 }}>Create supervisor account</h2>
+        <form onSubmit={handleCreateAccount} style={{ display: 'flex', flexWrap: 'wrap', gap: 8, alignItems: 'flex-start' }}>
+          <input
+            value={newAccount.name}
+            onChange={(e) => setNewAccount((prev) => ({ ...prev, name: e.target.value }))}
+            placeholder="Full name"
+            required
+            style={{ padding: '8px 10px', borderRadius: 10, border: '1px solid var(--line)' }}
+          />
+          <input
+            value={newAccount.email}
+            onChange={(e) => setNewAccount((prev) => ({ ...prev, email: e.target.value }))}
+            placeholder="Email"
+            type="email"
+            required
+            style={{ padding: '8px 10px', borderRadius: 10, border: '1px solid var(--line)' }}
+          />
+          <select
+            value={newAccount.role}
+            onChange={(e) => setNewAccount((prev) => ({ ...prev, role: e.target.value }))}
+            style={{ padding: '8px 10px', borderRadius: 10, border: '1px solid var(--line)' }}
+          >
+            <option value="industry_supervisor">Industry Supervisor</option>
+            <option value="university_supervisor">University Supervisor</option>
+          </select>
+          <button
+            type="submit"
+            disabled={creating}
+            style={{
+              background: 'var(--stamp)',
+              color: '#fff',
+              border: 'none',
+              borderRadius: 10,
+              padding: '8px 14px',
+              cursor: 'pointer',
+            }}
+          >
+            {creating ? 'Creating…' : 'Create account'}
+          </button>
+        </form>
+
+        {createError && <p style={{ color: 'var(--error)', marginTop: 12 }}>{createError}</p>}
+
+        {createdResult && (
+          <div style={{ marginTop: 16, padding: 12, borderRadius: 12, border: '1px solid var(--line)' }}>
+            <p style={{ margin: '4px 0' }}>Account created for {createdResult.user.email}</p>
+            <p style={{ margin: '4px 0' }}>
+              Temporary password: <strong>{createdResult.tempPassword}</strong>
+            </p>
+            <p style={{ margin: '4px 0', color: createdResult.emailSent ? 'var(--muted)' : 'var(--error)' }}>
+              {createdResult.emailSent
+                ? 'Credentials email sent.'
+                : 'Credentials email failed to send — share the password above manually.'}
+            </p>
+          </div>
+        )}
+      </div>
 
       {dashboard && (
         <>
