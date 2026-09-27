@@ -10,7 +10,7 @@ const { sendVerificationEmail, sendPasswordResetEmail } = require('../../config/
 const studentsService = require('../students/students.service');
 
 const SALT_ROUNDS = 10;
-const VALID_ROLES = ['student', 'industry_supervisor', 'university_supervisor', 'admin'];
+const MUBAS_EMAIL_REGEX = /^[^\s@]+@([a-zA-Z0-9-]+\.)*mubas\.ac\.mw$/i;
 
 function generateCode() {
   return crypto.randomInt(0, 1000000).toString().padStart(6, '0');
@@ -40,13 +40,13 @@ async function issueRefreshToken(userId) {
   return rawToken;
 }
 
-async function signup({ name, email, password, role }) {
-  const cleanName = requireString(name, 'name', { min: 1, max: 150 }); // matches users.name VARCHAR(150)
+async function signup({ name, email, password }) {
+  const cleanName = requireString(name, 'name', { min: 1, max: 150 });
   const cleanEmail = requireEmail(email);
   const cleanPassword = requirePassword(password);
 
-  if (!role || !VALID_ROLES.includes(role)) {
-    throw new AppError('Invalid role', 400);
+  if (!MUBAS_EMAIL_REGEX.test(cleanEmail)) {
+    throw new AppError('Signup is only available for MUBAS email addresses', 400);
   }
 
   const existing = await db.query('SELECT id FROM users WHERE email = $1', [cleanEmail]);
@@ -60,15 +60,9 @@ async function signup({ name, email, password, role }) {
     `INSERT INTO users (name, email, password_hash, role)
      VALUES ($1, $2, $3, $4)
      RETURNING id, name, email, role, email_verified, created_at`,
-    [cleanName, cleanEmail, passwordHash, role]
+    [cleanName, cleanEmail, passwordHash, 'student']
   );
   const user = rows[0];
-
-  if (role === 'industry_supervisor') {
-    await db.query('INSERT INTO industry_supervisors (user_id) VALUES ($1)', [user.id]);
-  } else if (role === 'university_supervisor') {
-    await db.query('INSERT INTO university_supervisors (user_id) VALUES ($1)', [user.id]);
-  }
 
   const code = generateCode();
   const expiresAt = new Date(Date.now() + env.verification.codeExpiryMinutes * 60 * 1000);
@@ -82,11 +76,6 @@ async function signup({ name, email, password, role }) {
   try {
     await sendVerificationEmail(user.email, user.name, code);
   } catch (err) {
-    // The account and verification code both exist in the database at this
-    // point — only the email delivery failed. Don't 500 the whole signup;
-    // the user can still recover via "resend code" once the underlying
-    // email issue is fixed, or in the worst case a re-signup attempt will
-    // correctly 409 rather than crash. Log the real error for debugging.
     console.error('[signup] verification email failed to send:', err.message);
   }
 
