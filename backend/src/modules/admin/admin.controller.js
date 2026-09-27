@@ -21,4 +21,14 @@ const assignStudentSupervisors = asyncHandler(async (req, res) => {
   res.status(200).json({ success: true, data: result });
 });
 
-module.exports = { listStudents, getDashboard, assignStudentSupervisors };
+const createAccount = asyncHandler(async (req, res) => {
+  const result = await adminService.createAccount({
+    name: req.body.name,
+    email: req.body.email,
+    role: req.body.role,
+  });
+
+  res.status(201).json({ success: true, data: result });
+});
+
+module.exports = { listStudents, getDashboard, assignStudentSupervisors, createAccount };

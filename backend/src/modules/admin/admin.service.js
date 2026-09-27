@@ -1,6 +1,13 @@
+const bcrypt = require('bcryptjs');
+const crypto = require('crypto');
 const db = require('../../config/db');
 const AppError = require('../../utils/AppError');
-const { requireUuid } = require('../../utils/validators');
+const { requireUuid, requireString, requireEmail } = require('../../utils/validators');
+const { sendAccountCreatedEmail } = require('../../config/mailer');
+
+const SALT_ROUNDS = 10;
+const TEMP_PASSWORD_ALPHABET = 'ABCDEFGHJKMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789';
+const CREATABLE_ROLES = ['industry_supervisor', 'university_supervisor'];
 
 async function listStudents() {
   const { rows } = await db.query(
@@ -101,4 +108,54 @@ async function assignStudentSupervisors({ studentId, industrySupervisorId, unive
   return rows[0];
 }
 
-module.exports = { listStudents, getDashboard, assignStudentSupervisors };
+function generateTempPassword() {
+  let result = '';
+  for (let i = 0; i < 12; i += 1) {
+    const index = crypto.randomInt(0, TEMP_PASSWORD_ALPHABET.length);
+    result += TEMP_PASSWORD_ALPHABET[index];
+  }
+  return result;
+}
+
+async function createAccount({ name, email, role }) {
+  const cleanName = requireString(name, 'name', { min: 1, max: 150 });
+  const cleanEmail = requireEmail(email);
+
+  if (!role || !CREATABLE_ROLES.includes(role)) {
+    throw new AppError('role must be industry_supervisor or university_supervisor', 400);
+  }
+
+  const existing = await db.query('SELECT id FROM users WHERE email = $1', [cleanEmail]);
+  if (existing.rows.length > 0) {
+    throw new AppError('An account with this email already exists', 409);
+  }
+
+  const tempPassword = generateTempPassword();
+  const passwordHash = await bcrypt.hash(tempPassword, SALT_ROUNDS);
+
+  const { rows } = await db.query(
+    `INSERT INTO users (name, email, password_hash, role, email_verified)
+     VALUES ($1, $2, $3, $4, TRUE)
+     RETURNING id, name, email, role, email_verified, created_at`,
+    [cleanName, cleanEmail, passwordHash, role]
+  );
+  const user = rows[0];
+
+  if (role === 'industry_supervisor') {
+    await db.query('INSERT INTO industry_supervisors (user_id) VALUES ($1)', [user.id]);
+  } else if (role === 'university_supervisor') {
+    await db.query('INSERT INTO university_supervisors (user_id) VALUES ($1)', [user.id]);
+  }
+
+  let emailSent = true;
+  try {
+    await sendAccountCreatedEmail(user.email, user.name, user.role, tempPassword);
+  } catch (err) {
+    emailSent = false;
+    console.error('[createAccount] account created email failed to send:', err.message);
+  }
+
+  return { user, tempPassword, emailSent };
+}
+
+module.exports = { listStudents, getDashboard, assignStudentSupervisors, createAccount };
