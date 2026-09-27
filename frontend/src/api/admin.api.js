@@ -14,3 +14,10 @@ export function assignStudentSupervisors(studentId, { industrySupervisorId, univ
     body: { industrySupervisorId, universitySupervisorId },
   });
 }
+
+export function createAccount({ name, email, role }) {
+  return request('/admin/users', {
+    method: 'POST',
+    body: { name, email, role },
+  });
+}
