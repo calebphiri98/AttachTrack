@@ -15,4 +15,24 @@ router.get(
   submissionsController.listForStudent
 );
 
+router.post(
+  '/requirements',
+  auth,
+  requireRole('industry_supervisor', 'university_supervisor'),
+  submissionsController.createRequirement
+);
+router.post(
+  '/:id/fulfill',
+  auth,
+  requireRole('student'),
+  upload.single('file'),
+  submissionsController.fulfill
+);
+router.post(
+  '/:id/reopen',
+  auth,
+  requireRole('industry_supervisor', 'university_supervisor'),
+  submissionsController.reopen
+);
+
 module.exports = router;
