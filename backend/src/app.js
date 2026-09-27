@@ -18,11 +18,13 @@ const logbooksRoutes = require('./modules/logbooks/logbooks.routes');
 const siteVisitsRoutes = require('./modules/siteVisits/siteVisits.routes');
 const reportsRoutes = require('./modules/reports/reports.routes');
 const { authLimiter, generalLimiter } = require('./middleware/rateLimiters');
+const tempSupervisorsRoutes = require('./modules/tempSupervisors/tempSupervisors.routes');
 
 const app = express();
 
 app.use(cors());
 app.use(express.json());
+
 app.set('trust proxy', 1); // add before the rate limiters, only when actually behind a proxy
 // Rate limiting: a stricter cap on auth endpoints (login/signup/resend-code
 // are brute-force and spam targets), a looser general cap on everything
@@ -48,6 +50,7 @@ app.use('/api/companies', companiesRoutes);
 app.use('/api/logbooks', logbooksRoutes);
 app.use('/api/site-visits', siteVisitsRoutes);
 app.use('/api/reports', reportsRoutes);
+app.use('/api/temp-supervisors', tempSupervisorsRoutes);
 
 // Unmatched routes
 app.use((req, res, next) => {

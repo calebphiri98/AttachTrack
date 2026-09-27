@@ -1,4 +1,4 @@
-import { request } from './httpClient';
+﻿import { request } from './httpClient';
 
 export function listMyStudents() {
   return request('/industry-supervisors/students');
@@ -6,4 +6,8 @@ export function listMyStudents() {
 
 export function addStudent({ name, email }) {
   return request('/industry-supervisors/students', { method: 'POST', body: { name, email } });
+}
+
+export function listAll() {
+  return request('/industry-supervisors');
 }
