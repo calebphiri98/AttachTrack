@@ -2,14 +2,15 @@ import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import AuthShell from '../components/AuthShell';
 import LedgerField from '../components/LedgerField';
-import RoleSelect from '../components/RoleSelect';
 import StampButton from '../components/StampButton';
 import StampBadge from '../components/StampBadge';
 import * as authApi from '../../../api/auth.api';
 
+const MUBAS_EMAIL_REGEX = /^[^\s@]+@([a-zA-Z0-9-]+\.)*mubas\.ac\.mw$/i;
+
 export default function SignupPage() {
   const navigate = useNavigate();
-  const [form, setForm] = useState({ name: '', email: '', password: '', role: 'student' });
+  const [form, setForm] = useState({ name: '', email: '', password: '' });
   const [errors, setErrors] = useState({});
   const [loading, setLoading] = useState(false);
   const [serverError, setServerError] = useState('');
@@ -23,7 +24,11 @@ export default function SignupPage() {
   function validate() {
     const next = {};
     if (!form.name.trim()) next.name = 'Enter your full name';
-    if (!/^\S+@\S+\.\S+$/.test(form.email)) next.email = 'Enter a valid email';
+    if (!/^\S+@\S+\.\S+$/.test(form.email)) {
+      next.email = 'Enter a valid email';
+    } else if (!MUBAS_EMAIL_REGEX.test(form.email)) {
+      next.email = 'Student signup requires a MUBAS email address';
+    }
     if (form.password.length < 8) next.password = 'At least 8 characters';
     setErrors(next);
     return Object.keys(next).length === 0;
@@ -64,12 +69,10 @@ export default function SignupPage() {
   return (
     <AuthShell
       eyebrow="Step 1 of 2"
-      title="Create your account"
-      subtitle="Register once, then verify your email to activate it."
+      title="Create your student account"
+      subtitle="Register with your MUBAS email, then verify it to activate your account. Supervisor accounts are created by an administrator."
     >
       <form onSubmit={handleSubmit} noValidate>
-        <RoleSelect value={form.role} onChange={(role) => updateField('role', role)} />
-
         <LedgerField
           label="Full name"
           type="text"
@@ -79,7 +82,7 @@ export default function SignupPage() {
           autoComplete="name"
         />
         <LedgerField
-          label="Email"
+          label="MUBAS email"
           type="email"
           value={form.email}
           onChange={(e) => updateField('email', e.target.value)}
