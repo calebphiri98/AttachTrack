@@ -2,18 +2,18 @@
 
 :root {
   /* Color */
-  --ink: #1c2333;
-  --ink-soft: #2b3350;
-  --paper: #f6f4ec;
-  --paper-raised: #fffdf7;
-  --stamp: #b23a2e;
-  --stamp-dark: #8f2e24;
-  --sage: #5c7a5e;
-  --sage-soft: #eaf0ea;
-  --line: #c9c2ae;
-  --muted: #6b6559;
-  --error: #a3342a;
-  --error-soft: #f6e6e3;
+  --ink: #0f0f0f;
+  --ink-soft: #262626;
+  --paper: #ffffff;
+  --paper-raised: #f2f2f2;
+  --stamp: #0f0f0f;
+  --stamp-dark: #000000;
+  --sage: #4d4d4d;
+  --sage-soft: #e8e8e8;
+  --line: #dcdcdc;
+  --muted: #6e6e6e;
+  --error: #b3261e;
+  --error-soft: #fbeae8;
 
   /* Type */
   --font-display: 'Zilla Slab', Georgia, serif;
@@ -22,7 +22,7 @@
 
   /* Scale */
   --radius: 10px;
-  --shadow-card: 0 24px 60px -24px rgba(28, 35, 51, 0.35);
+  --shadow-card: 0 24px 60px -24px rgba(15, 15, 15, 0.35);
 }
 
 * {
