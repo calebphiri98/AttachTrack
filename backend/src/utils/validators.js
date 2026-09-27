@@ -60,6 +60,18 @@ function optionalString(value, { max = Infinity } = {}) {
   return value.trim();
 }
 
+function optionalNumber(value, fieldName, { min = -Infinity, max = Infinity } = {}) {
+  if (value === undefined || value === null || value === '') return null;
+  const parsed = Number(value);
+  if (Number.isNaN(parsed)) {
+    throw new AppError(`${fieldName} must be a number`, 400);
+  }
+  if (parsed < min || parsed > max) {
+    throw new AppError(`${fieldName} must be between ${min} and ${max}`, 400);
+  }
+  return parsed;
+}
+
 module.exports = {
   requireString,
   requireEmail,
@@ -67,4 +79,5 @@ module.exports = {
   requireUuid,
   requireDate,
   optionalString,
+  optionalNumber,
 };
