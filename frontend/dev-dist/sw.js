@@ -71,11 +71,7 @@ define(['./workbox-7e5eb42b'], (function (workbox) { 'use strict';
 
   self.skipWaiting();
   workbox.clientsClaim();
-  /**
-   * The precacheAndRoute() method efficiently caches and responds to
-   * requests for URLs in the manifest.
-   * See https://goo.gl/S9QRab
-   */
+
   workbox.precacheAndRoute([{
     "url": "index.html",
     "revision": "0.1sjtprsradk"
