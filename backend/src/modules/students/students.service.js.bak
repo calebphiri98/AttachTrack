@@ -145,41 +145,13 @@ async function updateLocation({ userId, location }) {
   return rows[0] || student;
 }
 
-// True if this industry supervisor currently has an active temporary
-// assignment to this student (temp_supervisor_assignments.end_date IS
-// NULL). Queried directly rather than via the temp-supervisors module to
-// avoid a circular require (that module already depends on this one).
-async function hasActiveTempAssignment(studentId, industrySupervisorId) {
-  const { rows } = await db.query(
-    `SELECT 1 FROM temp_supervisor_assignments
-     WHERE student_id = $1 AND industry_supervisor_id = $2 AND end_date IS NULL`,
-    [studentId, industrySupervisorId]
-  );
-  return rows.length > 0;
-}
-
-// Added: when checking industry_supervisor_id access, a supervisor who
-// isn't the student's permanent industry supervisor can still pass this
-// check if they currently hold an active temp assignment for that
-// student — this is what makes "temporary supervisor" actually functional
-// (able to mark attendance, leave feedback, etc.) rather than just a
-// record-keeping table. University-supervisor checks are unchanged.
 async function assertSupervises(studentId, supervisorColumn, supervisorId) {
   assertValidSupervisorColumn(supervisorColumn);
   const student = await getById(studentId);
-
-  if (student[supervisorColumn] === supervisorId) {
-    return student;
+  if (student[supervisorColumn] !== supervisorId) {
+    throw new AppError('You do not supervise this student', 403);
   }
-
-  if (supervisorColumn === 'industry_supervisor_id') {
-    const isTempSupervisor = await hasActiveTempAssignment(studentId, supervisorId);
-    if (isTempSupervisor) {
-      return student;
-    }
-  }
-
-  throw new AppError('You do not supervise this student', 403);
+  return student;
 }
 
 module.exports = {
