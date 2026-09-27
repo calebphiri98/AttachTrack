@@ -1,4 +1,4 @@
-const express = require('express');
+﻿const express = require('express');
 const cors = require('cors');
 
 const authRoutes = require('./modules/auth/auth.routes');
@@ -19,6 +19,8 @@ const siteVisitsRoutes = require('./modules/siteVisits/siteVisits.routes');
 const reportsRoutes = require('./modules/reports/reports.routes');
 const { authLimiter, generalLimiter } = require('./middleware/rateLimiters');
 const tempSupervisorsRoutes = require('./modules/tempSupervisors/tempSupervisors.routes');
+const notificationsRoutes = require('./modules/notifications/notifications.routes');
+const cronRoutes = require('./modules/cron/cron.routes');
 
 const app = express();
 
@@ -51,6 +53,8 @@ app.use('/api/logbooks', logbooksRoutes);
 app.use('/api/site-visits', siteVisitsRoutes);
 app.use('/api/reports', reportsRoutes);
 app.use('/api/temp-supervisors', tempSupervisorsRoutes);
+app.use('/api/notifications', notificationsRoutes);
+app.use('/api/cron', cronRoutes);
 
 // Unmatched routes
 app.use((req, res, next) => {
@@ -60,3 +64,4 @@ app.use((req, res, next) => {
 app.use(errorHandler);
 
 module.exports = app;
+
