@@ -1,4 +1,4 @@
-﻿import { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Card, EmptyState } from '../../../components/shared/Card';
 import StatusBadge from '../../../components/shared/StatusBadge';
 import * as tempSupervisorsApi from '../../../api/tempSupervisors.api';
@@ -6,6 +6,7 @@ import * as industrySupervisorsApi from '../../../api/industrySupervisors.api';
 
 export default function TempSupervisorSection({ studentId }) {
   const [current, setCurrent] = useState(null);
+  const [loading, setLoading] = useState(true);
   const [industrySupervisors, setIndustrySupervisors] = useState(null);
   const [selectedId, setSelectedId] = useState('');
   const [department, setDepartment] = useState('');
@@ -13,10 +14,12 @@ export default function TempSupervisorSection({ studentId }) {
   const [actionLoading, setActionLoading] = useState(false);
 
   function loadCurrent() {
+    setLoading(true);
     tempSupervisorsApi
       .getCurrentTempSupervisor(studentId)
       .then((res) => setCurrent(res.data))
-      .catch((err) => setError(err.message));
+      .catch((err) => setError(err.message))
+      .finally(() => setLoading(false));
   }
 
   useEffect(() => {
@@ -66,11 +69,9 @@ export default function TempSupervisorSection({ studentId }) {
       <h2 className="section-title">Temporary Supervisor</h2>
       {error && <p style={{ color: 'var(--error)' }}>{error}</p>}
 
-      {current === null && !error && <p style={{ color: 'var(--muted)' }}>Loading...</p>}
+      {loading && <p style={{ color: 'var(--muted)' }}>Loading...</p>}
 
-      {current === undefined && null}
-
-      {current && (
+      {!loading && current && (
         <div style={{ marginBottom: 24 }}>
           <p style={{ marginBottom: 8 }}>
             <StatusBadge>Active</StatusBadge>
@@ -86,9 +87,7 @@ export default function TempSupervisorSection({ studentId }) {
         </div>
       )}
 
-      {!current && industrySupervisors && (
-        <EmptyState>No active temporary supervisor.</EmptyState>
-      )}
+      {!loading && !current && <EmptyState>No active temporary supervisor.</EmptyState>}
 
       {industrySupervisors && (
         <form onSubmit={handleAssign} style={{ marginTop: 16 }}>

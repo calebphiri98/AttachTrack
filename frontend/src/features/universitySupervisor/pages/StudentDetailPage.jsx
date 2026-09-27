@@ -6,6 +6,7 @@ import FeedbackSection from '../components/FeedbackSection';
 import SubmissionsSection from '../components/SubmissionsSection';
 import GradeSection from '../components/GradeSection';
 import SiteVisitSection from '../components/SiteVisitSection';
+import TempSupervisorSection from '../components/TempSupervisorSection';
 import LogbookSection from '../../student/components/LogbookSection';
 import ExportButton from '../../../components/shared/ExportButton';
 import * as reportsApi from '../../../api/reports.api';
@@ -73,6 +74,7 @@ export default function StudentDetailPage() {
       <SubmissionsSection studentId={studentId} />
       <LogbookSection studentId={studentId} />
       <SiteVisitSection studentId={studentId} />
+      <TempSupervisorSection studentId={studentId} />
     </PortalLayout>
   );
 }
