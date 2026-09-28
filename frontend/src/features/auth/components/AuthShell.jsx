@@ -15,7 +15,7 @@ export default function AuthShell({ eyebrow, title, subtitle, children }) {
           <span className="auth-shell__wordmark">AttachTrack</span>
         </div>
         <p className="auth-shell__tagline">
-          One record of your industrial attachment — submissions, feedback,
+          One record of your industrial attachment submissions, feedback,
           and grading, kept in one place from placement to sign-off.
         </p>
       </aside>
