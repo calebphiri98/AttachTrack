@@ -20,6 +20,6 @@
 }
 
 .status-badge--neutral {
-  background: #ece8da;
+  background: var(--neutral-soft);
   color: var(--muted);
 }

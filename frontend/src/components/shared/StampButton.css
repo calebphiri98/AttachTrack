@@ -1,16 +1,19 @@
 .stamp-button {
   width: 100%;
-  padding: 13px 20px;
+  min-height: 46px;
+  padding: 12px 20px;
   border: none;
-  border-radius: 6px;
+  border-radius: 8px;
   background: var(--stamp);
-  color: var(--paper-raised);
+  color: var(--paper);
   font-family: var(--font-display);
   font-weight: 600;
   font-size: 1rem;
   letter-spacing: 0.02em;
   cursor: pointer;
-  transition: background 150ms ease, transform 100ms ease;
+  transition:
+    background 150ms ease,
+    transform 100ms ease;
 }
 
 .stamp-button:hover:not(:disabled) {

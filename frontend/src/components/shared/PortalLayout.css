@@ -1,33 +1,46 @@
 .portal-layout {
   min-height: 100vh;
   background: var(--paper);
+  overflow-x: clip;
 }
 
 .portal-layout__topbar {
-  display: flex;
-  justify-content: space-between;
+  background: var(--navy);
+  color: var(--on-navy);
+  border-bottom: 3px solid var(--gold);
+}
+
+.portal-layout__topbar-inner {
+  max-width: 1040px;
+  margin: 0 auto;
+  padding: 12px 32px;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  grid-template-areas: 'brand nav account';
   align-items: center;
-  padding: 16px 32px;
-  background: var(--ink);
-  color: var(--paper);
-  gap: 12px;
+  column-gap: 36px;
+}
+
+.portal-layout__topbar :focus-visible {
+  outline-color: var(--gold-bright);
 }
 
 .portal-layout__brand {
+  grid-area: brand;
   display: flex;
   align-items: center;
   gap: 10px;
-  flex-shrink: 0;
 }
 
 .portal-layout__mark {
   font-family: var(--font-display);
   font-weight: 700;
   font-size: 0.9rem;
-  border: 1.5px solid var(--paper);
-  border-radius: 5px;
-  width: 30px;
-  height: 30px;
+  color: var(--on-navy);
+  border: 1.5px solid var(--gold);
+  border-radius: 6px;
+  width: 32px;
+  height: 32px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -37,16 +50,44 @@
 .portal-layout__wordmark {
   font-family: var(--font-display);
   font-weight: 600;
-  font-size: 1rem;
+  font-size: 1.05rem;
   white-space: nowrap;
 }
 
+.portal-layout__nav {
+  grid-area: nav;
+  display: flex;
+  align-items: stretch;
+  gap: 22px;
+  min-width: 0;
+}
+
+.portal-layout__nav-link {
+  color: var(--on-navy-muted);
+  font-size: 0.9rem;
+  font-weight: 500;
+  text-decoration: none;
+  padding: 8px 0;
+  border-bottom: 2px solid transparent;
+  white-space: nowrap;
+  transition: color 0.15s ease;
+}
+
+.portal-layout__nav-link:hover {
+  color: var(--on-navy);
+}
+
+.portal-layout__nav-link--active {
+  color: var(--on-navy);
+  border-bottom-color: var(--gold-bright);
+}
+
 .portal-layout__account {
+  grid-area: account;
   display: flex;
   align-items: center;
-  gap: 14px;
-  flex-wrap: wrap;
   justify-content: flex-end;
+  gap: 14px;
   min-width: 0;
 }
 
@@ -55,37 +96,44 @@
   font-size: 0.68rem;
   letter-spacing: 0.1em;
   text-transform: uppercase;
-  color: #a9b0c9;
+  color: var(--on-navy-muted);
   white-space: nowrap;
 }
 
 .portal-layout__name {
-  font-family: var(--font-body);
   font-size: 0.9rem;
+  max-width: 160px;
   white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .portal-layout__logout {
-  border: 1.5px solid #3d445e;
+  border: 1.5px solid rgba(255, 255, 255, 0.4);
   background: transparent;
-  color: var(--paper);
-  border-radius: 6px;
-  padding: 6px 14px;
-  font-family: var(--font-body);
-  font-size: 0.82rem;
+  color: var(--on-navy);
+  border-radius: 8px;
+  padding: 7px 14px;
+  font-size: 0.84rem;
+  font-weight: 500;
   cursor: pointer;
   flex-shrink: 0;
+  transition:
+    background 0.15s ease,
+    border-color 0.15s ease;
 }
 
 .portal-layout__logout:hover {
-  border-color: var(--stamp);
-  color: var(--stamp);
+  background: rgba(255, 255, 255, 0.12);
+  border-color: var(--on-navy);
 }
 
 .portal-layout__content {
-  max-width: 880px;
+  max-width: 1040px;
+  width: 100%;
+  min-width: 0;
   margin: 0 auto;
-  padding: 36px 32px 64px;
+  padding: 36px 32px 72px;
 }
 
 .portal-layout__page-header {
@@ -95,6 +143,16 @@
   flex-wrap: wrap;
   gap: 16px;
   margin-bottom: 28px;
+  padding-bottom: 18px;
+  border-bottom: 1px solid var(--line);
+}
+
+.portal-layout__page-header > * {
+  min-width: 0;
+}
+
+.portal-layout__heading {
+  flex: 1 1 260px;
 }
 
 .portal-layout__eyebrow {
@@ -103,69 +161,84 @@
   font-size: 0.72rem;
   letter-spacing: 0.12em;
   text-transform: uppercase;
-  color: var(--stamp);
+  color: var(--blue-text);
   margin-bottom: 6px;
 }
 
 .portal-layout__title {
   font-family: var(--font-display);
-  font-size: 1.6rem;
-  color: var(--ink);
+  font-size: clamp(1.45rem, 1.15rem + 1.2vw, 1.9rem);
+  color: var(--navy);
   margin: 0;
-  word-break: break-word;
+  overflow-wrap: anywhere;
 }
 
-.portal-layout__nav-link {
-  color: var(--paper);
-  font-family: var(--font-body);
-  font-size: 0.85rem;
-  text-decoration: none;
-  border-bottom: 1px solid transparent;
-  white-space: nowrap;
+.portal-layout__actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  max-width: 100%;
 }
 
-.portal-layout__nav-link:hover,
-.portal-layout__nav-link--active {
-  border-bottom-color: var(--stamp);
-  color: var(--stamp);
-}
-
-/* Tablet-ish: let the account cluster wrap onto its own line under the
-   brand rather than fighting for space, before things get tight enough
-   to hide anything. */
-@media (max-width: 600px) {
-  .portal-layout__topbar {
-    flex-wrap: wrap;
-    padding: 14px 18px;
-  }
-
-  .portal-layout__account {
-    width: 100%;
-    justify-content: space-between;
-  }
-
-  .portal-layout__content {
-    padding: 24px 18px 48px;
+@media (max-width: 860px) {
+  .portal-layout__topbar-inner {
+    column-gap: 24px;
   }
 
   .portal-layout__name {
     display: none;
   }
-
-  .portal-layout__title {
-    font-size: 1.35rem;
-  }
 }
 
-/* Narrow phones: drop the role label too — role is already visible via
-   the page's own eyebrow/title on every portal page, so it's redundant
-   here once space is genuinely tight. */
-@media (max-width: 400px) {
+@media (max-width: 640px) {
+  .portal-layout__topbar-inner {
+    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-areas:
+      'brand account'
+      'nav nav';
+    row-gap: 8px;
+    padding: 10px 16px 0;
+  }
+
   .portal-layout__role {
     display: none;
   }
 
-  .portal-layout__wordmark {
-    display: none;
+  .portal-layout__logout {
+    padding: 6px 12px;
+  }
+
+  .portal-layout__nav {
+    margin: 0 -16px;
+    padding: 0 16px;
+    gap: 0;
+    border-top: 1px solid rgba(255, 255, 255, 0.16);
+  }
+
+  .portal-layout__nav-link {
+    flex: 1 1 0;
+    text-align: center;
+    padding: 12px 4px;
+    border-bottom-width: 3px;
+  }
+
+  .portal-layout__content {
+    padding: 22px 16px 56px;
+  }
+
+  .portal-layout__page-header {
+    margin-bottom: 20px;
+    padding-bottom: 14px;
+  }
+}
+
+@media (max-width: 480px) {
+  .portal-layout__actions {
+    width: 100%;
+  }
+
+  .portal-layout__actions > * {
+    flex: 1 1 auto;
   }
 }

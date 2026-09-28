@@ -1,14 +1,36 @@
 .card {
   background: var(--paper-raised);
   border: 1px solid var(--line);
-  border-radius: var(--radius);
+  border-radius: var(--radius-lg);
   padding: 22px 24px;
   margin-bottom: 20px;
+  min-width: 0;
+  max-width: 100%;
+}
+
+.card .section-title {
+  margin-bottom: 18px;
+}
+
+.card .section-title::after {
+  content: '';
+  display: block;
+  width: 28px;
+  height: 3px;
+  margin-top: 8px;
+  background: var(--gold);
+  border-radius: 2px;
 }
 
 .card__empty {
   color: var(--muted);
   font-size: 0.9rem;
-  font-style: italic;
   margin: 0;
+}
+
+@media (max-width: 600px) {
+  .card {
+    padding: 16px;
+    margin-bottom: 14px;
+  }
 }
