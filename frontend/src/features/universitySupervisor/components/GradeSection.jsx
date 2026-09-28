@@ -4,7 +4,7 @@ import StampButton from '../../../components/shared/StampButton';
 import * as gradesApi from '../../../api/grades.api';
 
 export default function GradeSection({ studentId }) {
-  const [existing, setExisting] = useState(undefined); // undefined = loading, null = none yet
+  const [existing, setExisting] = useState(undefined);
   const [gradeValue, setGradeValue] = useState('');
   const [comments, setComments] = useState('');
   const [error, setError] = useState('');
@@ -14,9 +14,10 @@ export default function GradeSection({ studentId }) {
     gradesApi
       .getGradeForStudent(studentId)
       .then((res) => {
-        setExisting(res.data);
-        setGradeValue(res.data.grade_value || '');
-        setComments(res.data.comments || '');
+        const grade = res.data || null;
+        setExisting(grade);
+        setGradeValue(grade?.grade_value || '');
+        setComments(grade?.comments || '');
       })
       .catch((err) => {
         if (err.statusCode === 404) {
