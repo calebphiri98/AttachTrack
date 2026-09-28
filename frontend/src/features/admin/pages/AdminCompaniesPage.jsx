@@ -1,11 +1,24 @@
 import { useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
 import PortalLayout from '../../../components/shared/PortalLayout';
 import * as companiesApi from '../../../api/companies.api';
+import '../../../styles/portalSections.css';
+import './AdminCompaniesPage.css';
+
+const EMPTY_FORM = { name: '', address: '', industrySector: '', mouStatus: 'pending', mouDate: '' };
+
+function formatDate(value) {
+  if (!value) return 'No date yet';
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return 'No date yet';
+  return date.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
+}
 
 export default function AdminCompaniesPage() {
   const [companies, setCompanies] = useState([]);
-  const [form, setForm] = useState({ name: '', address: '', industrySector: '', mouStatus: 'pending', mouDate: '' });
+  const [form, setForm] = useState(EMPTY_FORM);
   const [editingId, setEditingId] = useState(null);
+  const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
 
   async function loadCompanies() {
@@ -17,19 +30,31 @@ export default function AdminCompaniesPage() {
     loadCompanies().catch((err) => setError(err.message));
   }, []);
 
+  function updateField(field, value) {
+    setForm((prev) => ({ ...prev, [field]: value }));
+  }
+
+  function resetForm() {
+    setForm(EMPTY_FORM);
+    setEditingId(null);
+  }
+
   async function handleSubmit(e) {
     e.preventDefault();
+    setError('');
+    setSaving(true);
     try {
       if (editingId) {
         await companiesApi.updateCompany(editingId, form);
       } else {
         await companiesApi.createCompany(form);
       }
-      setForm({ name: '', address: '', industrySector: '', mouStatus: 'pending', mouDate: '' });
-      setEditingId(null);
+      resetForm();
       await loadCompanies();
     } catch (err) {
       setError(err.message);
+    } finally {
+      setSaving(false);
     }
   }
 
@@ -40,64 +65,96 @@ export default function AdminCompaniesPage() {
       address: company.address || '',
       industrySector: company.industry_sector || '',
       mouStatus: company.mou_status || 'pending',
-      mouDate: company.mou_date || '',
+      mouDate: company.mou_date ? String(company.mou_date).slice(0, 10) : '',
     });
   }
 
   return (
-    <PortalLayout eyebrow="Registry" title="Companies" actions={<a href="/admin/dashboard" style={{ color: 'var(--stamp)', textDecoration: 'none' }}>Return to dashboard</a>}>
-      {error && <p style={{ color: 'var(--error)' }}>{error}</p>}
+    <PortalLayout
+      eyebrow="Registry"
+      title="Companies"
+      actions={
+        <Link to="/admin/dashboard" className="btn btn--ghost">
+          Back to dashboard
+        </Link>
+      }
+    >
+      {error && <p className="companies-error">{error}</p>}
 
-      <div style={{ display: 'grid', gridTemplateColumns: '1.1fr 0.9fr', gap: 24 }}>
-        <div style={{ background: 'var(--panel)', border: '1px solid var(--line)', borderRadius: 20, padding: 20 }}>
-          <h3 style={{ marginTop: 0 }}>Company list</h3>
+      <div className="companies-layout">
+        <section className="companies-panel">
+          <h2 className="companies-panel__title">Company list</h2>
           {companies.length === 0 ? (
-            <p style={{ color: 'var(--muted)' }}>No companies registered yet.</p>
+            <p className="companies-empty">No companies registered yet.</p>
           ) : (
-            <ul style={{ listStyle: 'none', margin: 0, padding: 0, display: 'grid', gap: 12 }}>
-              {companies.map((company) => (
-                <li key={company.id} style={{ border: '1px solid var(--line)', borderRadius: 14, padding: 14 }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12 }}>
-                    <div>
-                      <strong>{company.name}</strong>
-                      <div style={{ color: 'var(--muted)', fontSize: 12 }}>{company.industry_sector || 'General industry'}</div>
+            <ul className="companies-list">
+              {companies.map((company) => {
+                const status = company.mou_status || 'pending';
+                return (
+                  <li key={company.id} className="company-item">
+                    <div className="company-item__head">
+                      <div>
+                        <div className="company-item__name">{company.name}</div>
+                        <div className="company-item__sector">{company.industry_sector || 'General industry'}</div>
+                      </div>
+                      <button type="button" className="btn btn--ghost" onClick={() => startEdit(company)}>
+                        Edit
+                      </button>
                     </div>
-                    <button type="button" onClick={() => startEdit(company)} style={{ background: 'transparent', border: '1px solid var(--line)', padding: '6px 10px', borderRadius: 8 }}>Edit</button>
-                  </div>
-                  <div style={{ color: 'var(--muted)', fontSize: 12, marginTop: 8 }}>{company.address || 'Address not set'}</div>
-                  <div style={{ display: 'flex', gap: 12, fontSize: 12, marginTop: 8 }}>
-                    <span>MOU: {company.mou_status || 'pending'}</span>
-                    <span>{company.mou_date || 'No date yet'}</span>
-                    <span>{company.supervisor_count} supervisors</span>
-                  </div>
-                </li>
-              ))}
+                    <div className="company-item__address">{company.address || 'Address not set'}</div>
+                    <div className="company-item__meta">
+                      <span className={`company-item__mou company-item__mou--${status}`}>MOU {status}</span>
+                      <span>{formatDate(company.mou_date)}</span>
+                      <span>
+                        {company.supervisor_count} {Number(company.supervisor_count) === 1 ? 'supervisor' : 'supervisors'}
+                      </span>
+                    </div>
+                  </li>
+                );
+              })}
             </ul>
           )}
-        </div>
+        </section>
 
-        <div style={{ background: 'var(--panel)', border: '1px solid var(--line)', borderRadius: 20, padding: 20 }}>
-          <h3 style={{ marginTop: 0 }}>{editingId ? 'Edit company' : 'Add company'}</h3>
-          <form onSubmit={handleSubmit} style={{ display: 'grid', gap: 12 }}>
-            <input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} placeholder="Company name" style={{ padding: '10px 12px', borderRadius: 10, border: '1px solid var(--line)' }} required />
-            <input value={form.address} onChange={(e) => setForm({ ...form, address: e.target.value })} placeholder="Address" style={{ padding: '10px 12px', borderRadius: 10, border: '1px solid var(--line)' }} />
-            <input value={form.industrySector} onChange={(e) => setForm({ ...form, industrySector: e.target.value })} placeholder="Industry sector" style={{ padding: '10px 12px', borderRadius: 10, border: '1px solid var(--line)' }} />
-            <select value={form.mouStatus} onChange={(e) => setForm({ ...form, mouStatus: e.target.value })} style={{ padding: '10px 12px', borderRadius: 10, border: '1px solid var(--line)' }}>
-              <option value="pending">Pending</option>
-              <option value="signed">Signed</option>
-              <option value="review">Review</option>
-            </select>
-            <input type="date" value={form.mouDate} onChange={(e) => setForm({ ...form, mouDate: e.target.value })} style={{ padding: '10px 12px', borderRadius: 10, border: '1px solid var(--line)' }} />
-            <button type="submit" style={{ background: 'var(--stamp)', color: '#fff', border: 'none', borderRadius: 12, padding: '11px 14px', cursor: 'pointer' }}>
-              {editingId ? 'Update company' : 'Create company'}
-            </button>
-            {editingId && (
-              <button type="button" onClick={() => { setEditingId(null); setForm({ name: '', address: '', industrySector: '', mouStatus: 'pending', mouDate: '' }); }} style={{ background: 'transparent', border: '1px solid var(--line)', borderRadius: 12, padding: '11px 14px', cursor: 'pointer' }}>
-                Cancel
+        <section className="companies-panel companies-panel--form">
+          <h2 className="companies-panel__title">{editingId ? 'Edit company' : 'Add company'}</h2>
+          <form onSubmit={handleSubmit} className="companies-form">
+            <label className="inline-form__field">
+              <span>Company name</span>
+              <input value={form.name} onChange={(e) => updateField('name', e.target.value)} required />
+            </label>
+            <label className="inline-form__field">
+              <span>Address</span>
+              <input value={form.address} onChange={(e) => updateField('address', e.target.value)} />
+            </label>
+            <label className="inline-form__field">
+              <span>Industry sector</span>
+              <input value={form.industrySector} onChange={(e) => updateField('industrySector', e.target.value)} />
+            </label>
+            <label className="inline-form__field">
+              <span>MOU status</span>
+              <select value={form.mouStatus} onChange={(e) => updateField('mouStatus', e.target.value)}>
+                <option value="pending">Pending</option>
+                <option value="signed">Signed</option>
+                <option value="review">Review</option>
+              </select>
+            </label>
+            <label className="inline-form__field">
+              <span>MOU date</span>
+              <input type="date" value={form.mouDate} onChange={(e) => updateField('mouDate', e.target.value)} />
+            </label>
+            <div className="companies-form__actions">
+              <button type="submit" className="btn btn--primary" disabled={saving}>
+                {saving ? 'Saving…' : editingId ? 'Update company' : 'Create company'}
               </button>
-            )}
+              {editingId && (
+                <button type="button" className="btn btn--ghost" onClick={resetForm}>
+                  Cancel
+                </button>
+              )}
+            </div>
           </form>
-        </div>
+        </section>
       </div>
     </PortalLayout>
   );

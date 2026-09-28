@@ -1,0 +1,142 @@
+.companies-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1.15fr) minmax(0, 0.85fr);
+  gap: 24px;
+  align-items: start;
+}
+
+.companies-panel {
+  background: var(--paper-raised);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  padding: 20px 22px;
+  min-width: 0;
+}
+
+.companies-panel__title {
+  font-family: var(--font-display);
+  font-size: 1.15rem;
+  font-weight: 600;
+  color: var(--navy);
+  margin: 0 0 16px;
+}
+
+.companies-empty {
+  color: var(--muted);
+  margin: 0;
+}
+
+.companies-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 12px;
+}
+
+.company-item {
+  background: var(--paper);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 14px 16px;
+  min-width: 0;
+}
+
+.company-item__head {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.company-item__name {
+  font-weight: 600;
+  color: var(--ink);
+  overflow-wrap: anywhere;
+}
+
+.company-item__sector {
+  color: var(--muted);
+  font-size: 0.82rem;
+  margin-top: 2px;
+}
+
+.company-item__address {
+  color: var(--muted);
+  font-size: 0.85rem;
+  margin-top: 10px;
+  overflow-wrap: anywhere;
+}
+
+.company-item__meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 14px;
+  margin-top: 12px;
+  font-size: 0.8rem;
+  color: var(--ink-soft);
+}
+
+.company-item__mou {
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  padding: 3px 9px;
+  border-radius: 20px;
+  background: var(--neutral-soft);
+  color: var(--muted);
+}
+
+.company-item__mou--signed {
+  background: var(--sage-soft);
+  color: var(--sage);
+}
+
+.company-item__mou--review {
+  background: var(--gold-soft);
+  color: var(--gold-deep);
+}
+
+.companies-form {
+  display: grid;
+  gap: 4px;
+}
+
+.companies-form .inline-form__field {
+  margin-bottom: 10px;
+}
+
+.companies-form__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 6px;
+}
+
+.companies-form__actions .btn {
+  flex: 1 1 140px;
+}
+
+.companies-error {
+  color: var(--error);
+  font-size: 0.9rem;
+  margin: 0 0 16px;
+}
+
+@media (max-width: 900px) {
+  .companies-layout {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .companies-panel--form {
+    order: -1;
+  }
+}
+
+@media (max-width: 560px) {
+  .companies-panel {
+    padding: 16px;
+  }
+}
