@@ -58,7 +58,7 @@ export default function StudentsListPage() {
       {students && students.length === 0 && (
         <Card>
           <EmptyState>
-            No students yet. Add one by name and email — they'll link up automatically once
+            No students yet. Add one by name and email: they'll link up automatically once
             they register.
           </EmptyState>
         </Card>
