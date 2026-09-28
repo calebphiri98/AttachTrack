@@ -5,14 +5,15 @@
 }
 
 .auth-shell__cover {
-  background: var(--ink);
-  color: var(--paper);
+  background: var(--navy);
+  color: var(--on-navy);
   position: relative;
   padding: 48px 40px;
   display: flex;
   flex-direction: column;
   justify-content: space-between;
   overflow: hidden;
+  border-right: 3px solid var(--gold);
 }
 
 .auth-shell__watermark {
@@ -21,12 +22,12 @@
   bottom: -60px;
   width: 280px;
   height: 280px;
-  opacity: 0.14;
+  opacity: 0.22;
 }
 
 .auth-shell__watermark svg circle {
   fill: none;
-  stroke: var(--paper);
+  stroke: var(--gold);
   stroke-width: 1;
 }
 
@@ -40,7 +41,7 @@
   font-family: var(--font-display);
   font-weight: 700;
   font-size: 1.1rem;
-  border: 1.5px solid var(--paper);
+  border: 1.5px solid var(--gold);
   border-radius: 6px;
   width: 40px;
   height: 40px;
@@ -61,7 +62,7 @@
   font-family: var(--font-body);
   font-size: 0.95rem;
   line-height: 1.6;
-  color: #cfd3e0;
+  color: var(--on-navy-muted);
   max-width: 32ch;
   position: relative;
 }
@@ -72,6 +73,7 @@
   align-items: center;
   justify-content: center;
   padding: 40px 24px;
+  min-width: 0;
 }
 
 .auth-shell__form-wrap {
@@ -85,7 +87,7 @@
   font-size: 0.72rem;
   letter-spacing: 0.14em;
   text-transform: uppercase;
-  color: var(--stamp);
+  color: var(--blue-text);
   margin-bottom: 10px;
 }
 
@@ -93,7 +95,7 @@
   font-family: var(--font-display);
   font-size: 1.9rem;
   font-weight: 600;
-  color: var(--ink);
+  color: var(--navy);
   margin: 0 0 8px;
 }
 
@@ -109,11 +111,20 @@
   .auth-shell {
     grid-template-columns: 1fr;
   }
+
   .auth-shell__cover {
-    padding: 32px 24px;
-    min-height: 180px;
+    padding: 28px 24px;
+    min-height: 150px;
+    border-right: none;
+    border-bottom: 3px solid var(--gold);
   }
+
   .auth-shell__tagline {
     display: none;
+  }
+
+  .auth-shell__page {
+    align-items: flex-start;
+    padding: 32px 20px 48px;
   }
 }
