@@ -1,4 +1,4 @@
-const db = require('../../config/db');
+﻿const db = require('../../config/db');
 const AppError = require('../../utils/AppError');
 const { requireUuid, optionalString } = require('../../utils/validators');
 const { sendNotificationEmail } = require('../../config/mailer');
@@ -23,7 +23,28 @@ async function assertCanMessage(sender, recipientId) {
   }
 
   if (sender.role === 'university_supervisor') {
-    return recipient;
+    const own = await universitySupervisorsService.getSupervisorRecordByUserId(sender.id);
+
+    if (recipient.role === 'student') {
+      const { rows } = await db.query(
+        'SELECT id FROM students WHERE user_id = $1 AND university_supervisor_id = $2',
+        [recipient.id, own.id]
+      );
+      if (rows.length) return recipient;
+    }
+    if (recipient.role === 'industry_supervisor') {
+      const industry = await industrySupervisorsService.getSupervisorRecordByUserId(recipient.id);
+      const { rows } = await db.query(
+        `SELECT id FROM students
+         WHERE university_supervisor_id = $1 AND industry_supervisor_id = $2`,
+        [own.id, industry.id]
+      );
+      if (rows.length) return recipient;
+    }
+    throw new AppError(
+      'You can only message your own students or an industry supervisor who shares one',
+      403
+    );
   }
 
   if (sender.role === 'student') {
@@ -185,13 +206,28 @@ async function markRead(messageId, userId) {
 
 async function getContacts(user) {
   if (user.role === 'university_supervisor') {
-    const { rows } = await db.query(
-      `SELECT id, name, role
-       FROM users
-       WHERE role IN ('student', 'industry_supervisor')
-       ORDER BY name`
+    const own = await universitySupervisorsService.getSupervisorRecordByUserId(user.id);
+
+    const { rows: students } = await db.query(
+      `SELECT u.id, u.name, u.role
+       FROM students s
+       JOIN users u ON u.id = s.user_id
+       WHERE s.university_supervisor_id = $1 AND s.user_id IS NOT NULL
+       ORDER BY u.name`,
+      [own.id]
     );
-    return rows;
+
+    const { rows: industrySupervisors } = await db.query(
+      `SELECT DISTINCT u.id, u.name, u.role
+       FROM students s
+       JOIN industry_supervisors isup ON isup.id = s.industry_supervisor_id
+       JOIN users u ON u.id = isup.user_id
+       WHERE s.university_supervisor_id = $1 AND s.industry_supervisor_id IS NOT NULL
+       ORDER BY u.name`,
+      [own.id]
+    );
+
+    return [...students, ...industrySupervisors];
   }
 
   if (user.role === 'student') {

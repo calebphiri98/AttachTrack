@@ -1,4 +1,4 @@
-const db = require('../../config/db');
+﻿const db = require('../../config/db');
 const AppError = require('../../utils/AppError');
 const { requireEmail, requireString, requireUuid, optionalString } = require('../../utils/validators');
 
@@ -33,6 +33,17 @@ async function findOrCreateByEmail(email, name) {
   return inserted[0];
 }
 
+async function assertEmailNotSupervisorOrAdmin(email) {
+  const { rows } = await db.query('SELECT role FROM users WHERE email = $1', [email]);
+  const existing = rows[0];
+  if (existing && existing.role !== 'student') {
+    throw new AppError(
+      'This email belongs to an existing supervisor or admin account and cannot be added as a student',
+      409
+    );
+  }
+}
+
 const VALID_SUPERVISOR_COLUMNS = ['industry_supervisor_id', 'university_supervisor_id'];
 
 function assertValidSupervisorColumn(column) {
@@ -45,6 +56,8 @@ async function assignSupervisor({ email, name, supervisorColumn, supervisorId })
   assertValidSupervisorColumn(supervisorColumn);
   const cleanEmail = requireEmail(email);
   const cleanName = requireString(name, 'name', { min: 1, max: 150 });
+
+  await assertEmailNotSupervisorOrAdmin(cleanEmail);
 
   const student = await findOrCreateByEmail(cleanEmail, cleanName);
 
