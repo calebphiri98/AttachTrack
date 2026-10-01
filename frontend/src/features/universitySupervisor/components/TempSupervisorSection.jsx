@@ -1,8 +1,7 @@
 import { useEffect, useState } from 'react';
-import { Card, EmptyState } from '../../../components/shared/Card';
-import StatusBadge from '../../../components/shared/StatusBadge';
 import * as tempSupervisorsApi from '../../../api/tempSupervisors.api';
 import * as industrySupervisorsApi from '../../../api/industrySupervisors.api';
+import styles from './TempSupervisorSection.module.css';
 
 export default function TempSupervisorSection({ studentId }) {
   const [current, setCurrent] = useState(null);
@@ -65,57 +64,75 @@ export default function TempSupervisorSection({ studentId }) {
   }
 
   return (
-    <Card>
-      <h2 className="section-title">Temporary Supervisor</h2>
-      {error && <p style={{ color: 'var(--error)' }}>{error}</p>}
+    <section className={styles.card}>
+      <h2 className={styles.title}>Temporary Supervisor</h2>
 
-      {loading && <p style={{ color: 'var(--muted)' }}>Loading...</p>}
+      {error && <p className={styles.error}>{error}</p>}
+
+      {loading && <p className={styles.loading}>Loading...</p>}
 
       {!loading && current && (
-        <div style={{ marginBottom: 24 }}>
-          <p style={{ marginBottom: 8 }}>
-            <StatusBadge>Active</StatusBadge>
-          </p>
-          <p style={{ margin: '4px 0' }}>Assigned by {current.assigned_by_name}</p>
-          {current.department && <p style={{ margin: '4px 0' }}>Department: {current.department}</p>}
-          <p style={{ margin: '4px 0', color: 'var(--muted)' }}>
+        <div className={styles.current}>
+          <span className={styles.badge}>Active</span>
+          <p className={styles.detail}>Assigned by {current.assigned_by_name}</p>
+          {current.department && <p className={styles.detail}>Department: {current.department}</p>}
+          <p className={styles.detailMuted}>
             Since {new Date(current.start_date).toLocaleDateString()}
           </p>
-          <button onClick={handleEnd} disabled={actionLoading} style={{ marginTop: 12 }}>
+          <button
+            type="button"
+            className={`${styles.button} ${styles.buttonDanger}`}
+            onClick={handleEnd}
+            disabled={actionLoading}
+          >
+            {actionLoading && <span className={styles.spinner} aria-hidden="true" />}
             End temporary assignment
           </button>
         </div>
       )}
 
-      {!loading && !current && <EmptyState>No active temporary supervisor.</EmptyState>}
+      {!loading && !current && <p className={styles.empty}>No active temporary supervisor.</p>}
 
       {industrySupervisors && (
-        <form onSubmit={handleAssign} style={{ marginTop: 16 }}>
-          <select
-            value={selectedId}
-            onChange={(e) => setSelectedId(e.target.value)}
-            required
-            style={{ marginRight: 8 }}
-          >
-            <option value="">Select industry supervisor</option>
-            {industrySupervisors.map((s) => (
-              <option key={s.id} value={s.id}>
-                {s.name} ({s.email})
-              </option>
-            ))}
-          </select>
-          <input
-            type="text"
-            placeholder="Department (optional)"
-            value={department}
-            onChange={(e) => setDepartment(e.target.value)}
-            style={{ marginRight: 8 }}
-          />
-          <button type="submit" disabled={actionLoading}>
-            {current ? 'Reassign' : 'Assign'}
-          </button>
-        </form>
+        <>
+          <hr className={styles.divider} />
+
+          <form onSubmit={handleAssign} className={styles.form}>
+            <label className={styles.field}>
+              <span className={styles.label}>Industry supervisor</span>
+              <select
+                className={styles.select}
+                value={selectedId}
+                onChange={(e) => setSelectedId(e.target.value)}
+                required
+              >
+                <option value="">Select industry supervisor</option>
+                {industrySupervisors.map((s) => (
+                  <option key={s.id} value={s.id}>
+                    {s.name} ({s.email})
+                  </option>
+                ))}
+              </select>
+            </label>
+
+            <label className={styles.field}>
+              <span className={styles.label}>Department (optional)</span>
+              <input
+                className={styles.input}
+                type="text"
+                placeholder="e.g. Finance"
+                value={department}
+                onChange={(e) => setDepartment(e.target.value)}
+              />
+            </label>
+
+            <button type="submit" className={styles.button} disabled={actionLoading}>
+              {actionLoading && <span className={styles.spinner} aria-hidden="true" />}
+              {current ? 'Reassign' : 'Assign'}
+            </button>
+          </form>
+        </>
       )}
-    </Card>
+    </section>
   );
 }

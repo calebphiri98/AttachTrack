@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react';
-import { Card } from '../../../components/shared/Card';
-import StampButton from '../../../components/shared/StampButton';
 import * as gradesApi from '../../../api/grades.api';
+import styles from './GradeSection.module.css';
 
 export default function GradeSection({ studentId }) {
   const [existing, setExisting] = useState(undefined);
@@ -49,37 +48,58 @@ export default function GradeSection({ studentId }) {
   }
 
   return (
-    <Card>
-      <h2 className="section-title">Grade</h2>
-      {existing === undefined && !error && <p style={{ color: 'var(--muted)' }}>Loading…</p>}
+    <section className={styles.card}>
+      <div className={styles.header}>
+        <h2 className={styles.title}>Grade</h2>
+        {existing !== undefined && (
+          <span
+            className={`${styles.status} ${existing ? styles.statusGraded : styles.statusPending}`}
+          >
+            {existing ? 'Graded' : 'Not graded yet'}
+          </span>
+        )}
+      </div>
+
+      {existing === undefined && !error && <p className={styles.loading}>Loading…</p>}
+
+      {existing === undefined && error && <p className={styles.error}>{error}</p>}
+
       {existing !== undefined && (
-        <form onSubmit={handleSubmit} className="inline-form">
-          <div className="inline-form__row">
-            <label className="inline-form__field">
-              <span>Grade</span>
+        <form onSubmit={handleSubmit} className={styles.form} noValidate>
+          <div className={styles.row}>
+            <label className={styles.field}>
+              <span className={styles.label}>Grade</span>
               <input
+                className={styles.input}
                 type="text"
                 value={gradeValue}
                 onChange={(e) => setGradeValue(e.target.value)}
                 placeholder="e.g. A, B+, 75"
               />
             </label>
+
+            <label className={`${styles.field} ${styles.fieldFull}`}>
+              <span className={styles.label}>Comments (optional)</span>
+              <input
+                className={styles.input}
+                type="text"
+                value={comments}
+                onChange={(e) => setComments(e.target.value)}
+                placeholder="Notes on performance"
+              />
+            </label>
           </div>
-          <label className="inline-form__field inline-form__field--full">
-            <span>Comments (optional)</span>
-            <input
-              type="text"
-              value={comments}
-              onChange={(e) => setComments(e.target.value)}
-              placeholder="Notes on performance"
-            />
-          </label>
-          {error && <p className="inline-form__error">{error}</p>}
-          <StampButton type="submit" loading={saving} style={{ width: 'auto', padding: '9px 20px' }}>
-            {existing ? 'Update grade' : 'Assign grade'}
-          </StampButton>
+
+          {error && <p className={styles.error}>{error}</p>}
+
+          <div className={styles.actions}>
+            <button type="submit" className={styles.button} disabled={saving}>
+              {saving && <span className={styles.spinner} aria-hidden="true" />}
+              {saving ? 'Saving' : existing ? 'Update grade' : 'Assign grade'}
+            </button>
+          </div>
         </form>
       )}
-    </Card>
+    </section>
   );
 }
