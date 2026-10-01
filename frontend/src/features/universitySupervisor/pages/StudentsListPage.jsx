@@ -63,7 +63,6 @@ export default function StudentsListPage() {
           </EmptyState>
         </Card>
       )}
-
       {students && students.length > 0 && (
         <Card>
           <ul className="student-list">
