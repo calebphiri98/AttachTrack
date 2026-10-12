@@ -14,6 +14,8 @@ import UniversityStudentDetailPage from '../features/universitySupervisor/pages/
 import MessagesPage from '../features/shared/pages/MessagesPage';
 import AdminDashboardPage from '../features/admin/pages/AdminDashboardPage';
 import AdminCompaniesPage from '../features/admin/pages/AdminCompaniesPage';
+import HodDashboardPage from '../features/hod/pages/HodDashboardPage';
+import ResultsReleasePage from '../features/results/pages/ResultsReleasePage';
 
 export default function AppRoutes() {
   return (
@@ -108,6 +110,22 @@ export default function AppRoutes() {
         element={
           <ProtectedRoute roles={['admin']}>
             <AdminCompaniesPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/hod/dashboard"
+        element={
+          <ProtectedRoute roles={['hod']}>
+            <HodDashboardPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/results"
+        element={
+          <ProtectedRoute roles={['admin', 'hod']}>
+            <ResultsReleasePage />
           </ProtectedRoute>
         }
       />
