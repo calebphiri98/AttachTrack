@@ -10,10 +10,17 @@ const { sendVerificationEmail, sendPasswordResetEmail } = require('../../config/
 const studentsService = require('../students/students.service');
 
 const SALT_ROUNDS = 10;
+const RESTRICT_TO_MUBAS = true;
 const MUBAS_EMAIL_REGEX = /^[^\s@]+@([a-zA-Z0-9-]+\.)*mubas\.ac\.mw$/i;
 
 function generateCode() {
   return crypto.randomInt(0, 1000000).toString().padStart(6, '0');
+}
+
+function codeExpiryDate() {
+  const configured = Number(env.verification && env.verification.codeExpiryMinutes);
+  const minutes = Number.isFinite(configured) && configured > 0 ? configured : 15;
+  return new Date(Date.now() + minutes * 60 * 1000);
 }
 
 function hashToken(rawToken) {
@@ -45,7 +52,7 @@ async function signup({ name, email, password }) {
   const cleanEmail = requireEmail(email);
   const cleanPassword = requirePassword(password);
 
-  if (!MUBAS_EMAIL_REGEX.test(cleanEmail)) {
+  if (RESTRICT_TO_MUBAS && !MUBAS_EMAIL_REGEX.test(cleanEmail)) {
     throw new AppError('Signup is only available for MUBAS email addresses', 400);
   }
 
@@ -54,6 +61,8 @@ async function signup({ name, email, password }) {
     throw new AppError('An account with this email already exists', 409);
   }
 
+  const code = generateCode();
+  const expiresAt = codeExpiryDate();
   const passwordHash = await bcrypt.hash(cleanPassword, SALT_ROUNDS);
 
   const { rows } = await db.query(
@@ -64,14 +73,16 @@ async function signup({ name, email, password }) {
   );
   const user = rows[0];
 
-  const code = generateCode();
-  const expiresAt = new Date(Date.now() + env.verification.codeExpiryMinutes * 60 * 1000);
-
-  await db.query(
-    `INSERT INTO email_verifications (user_id, code, expires_at)
-     VALUES ($1, $2, $3)`,
-    [user.id, code, expiresAt]
-  );
+  try {
+    await db.query(
+      `INSERT INTO email_verifications (user_id, code, expires_at)
+       VALUES ($1, $2, $3)`,
+      [user.id, code, expiresAt]
+    );
+  } catch (err) {
+    await db.query('DELETE FROM users WHERE id = $1', [user.id]).catch(() => {});
+    throw err;
+  }
 
   try {
     await sendVerificationEmail(user.email, user.name, code);
@@ -143,7 +154,7 @@ async function resendVerificationCode({ email }) {
   }
 
   const code = generateCode();
-  const expiresAt = new Date(Date.now() + env.verification.codeExpiryMinutes * 60 * 1000);
+  const expiresAt = codeExpiryDate();
 
   await db.query(
     `INSERT INTO email_verifications (user_id, code, expires_at)
@@ -181,7 +192,6 @@ async function login({ email, password }) {
     throw new AppError('Invalid email or password', 401);
   }
 
-  // Checked after the password so the account state is not revealed to someone guessing.
   if (user.is_active === false) {
     throw new AppError('This account has been deactivated. Please contact the coordinator.', 403);
   }

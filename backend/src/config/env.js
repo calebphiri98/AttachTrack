@@ -15,6 +15,11 @@ if (missing.length > 0) {
   throw new Error(`Missing required environment variables: ${missing.join(', ')}`);
 }
 
+function boundedInt(value, fallback, max) {
+  const parsed = Number(String(value ?? '').trim());
+  return Number.isInteger(parsed) && parsed > 0 && parsed <= max ? parsed : fallback;
+}
+
 module.exports = {
   port: process.env.PORT || 5000,
   nodeEnv: process.env.NODE_ENV || 'development',
@@ -25,11 +30,11 @@ module.exports = {
     accessSecret: process.env.JWT_ACCESS_SECRET,
     refreshSecret: process.env.JWT_REFRESH_SECRET,
     accessExpiry: process.env.JWT_ACCESS_EXPIRY || '20m',
-    refreshExpiryDays: Number(process.env.JWT_REFRESH_EXPIRY_DAYS || 7),
+    refreshExpiryDays: boundedInt(process.env.JWT_REFRESH_EXPIRY_DAYS, 7, 365),
   },
 
   verification: {
-    codeExpiryMinutes: Number(process.env.VERIFICATION_CODE_EXPIRY_MINUTES || 15),
+    codeExpiryMinutes: boundedInt(process.env.VERIFICATION_CODE_EXPIRY_MINUTES, 15, 1440),
   },
 
   mail: {
