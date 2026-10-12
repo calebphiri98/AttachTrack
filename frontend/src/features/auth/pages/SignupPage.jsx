@@ -59,7 +59,7 @@ export default function SignupPage() {
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 16, padding: '24px 0' }}>
           <StampBadge label="Registered" />
           <p style={{ color: 'var(--muted)', fontSize: '0.92rem', textAlign: 'center' }}>
-            Check your email for a verification code — taking you there now.
+            Check your email for a verification code taking you there now.
           </p>
         </div>
       </AuthShell>
