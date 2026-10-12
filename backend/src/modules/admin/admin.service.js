@@ -17,6 +17,7 @@ const TEMP_PASSWORD_ALPHABET =
 const CREATABLE_ROLES = [
   'industry_supervisor',
   'university_supervisor',
+  'hod',
 ];
 
 async function listStudents() {
@@ -28,8 +29,10 @@ async function listStudents() {
             s.location,
             s.created_at,
             i.id AS industry_supervisor_id,
+            iu.name AS industry_supervisor_name,
             i.company_name AS industry_company_name,
             u.id AS university_supervisor_id,
+            uu.name AS university_supervisor_name,
             u.department AS university_department,
             (SELECT g.grade_value
              FROM grades g
@@ -48,8 +51,12 @@ async function listStudents() {
      FROM students s
      LEFT JOIN industry_supervisors i
        ON i.id = s.industry_supervisor_id
+     LEFT JOIN users iu
+       ON iu.id = i.user_id
      LEFT JOIN university_supervisors u
        ON u.id = s.university_supervisor_id
+     LEFT JOIN users uu
+       ON uu.id = u.user_id
      ORDER BY s.created_at DESC`
   );
 
@@ -92,6 +99,33 @@ async function getDashboard() {
     },
     students,
   };
+}
+
+async function listSupervisors() {
+  const { rows: industry } = await db.query(
+    `SELECT i.id,
+            u.name,
+            u.email,
+            u.is_active,
+            COALESCE(c.name, i.company_name) AS organisation
+     FROM industry_supervisors i
+     JOIN users u ON u.id = i.user_id
+     LEFT JOIN companies c ON c.id = i.company_id
+     ORDER BY u.name`
+  );
+
+  const { rows: university } = await db.query(
+    `SELECT s.id,
+            u.name,
+            u.email,
+            u.is_active,
+            s.department
+     FROM university_supervisors s
+     JOIN users u ON u.id = s.user_id
+     ORDER BY u.name`
+  );
+
+  return { industry, university };
 }
 
 async function assignStudentSupervisors({
@@ -201,7 +235,7 @@ async function createAccount({ name, email, role }) {
 
   if (!role || !CREATABLE_ROLES.includes(role)) {
     throw new AppError(
-      'role must be industry_supervisor or university_supervisor',
+      'role must be industry_supervisor, university_supervisor or hod',
       400
     );
   }
@@ -288,9 +322,55 @@ async function createAccount({ name, email, role }) {
   };
 }
 
+async function listUsers() {
+  const { rows } = await db.query(
+    `SELECT id, name, email, role, email_verified, is_active, created_at
+     FROM users
+     ORDER BY created_at DESC`
+  );
+
+  return rows;
+}
+
+async function setUserActive({ userId, isActive, actingUserId }) {
+  requireUuid(userId, 'userId');
+
+  if (typeof isActive !== 'boolean') {
+    throw new AppError('isActive must be true or false', 400);
+  }
+
+  if (userId === actingUserId && !isActive) {
+    throw new AppError('You cannot deactivate your own account', 400);
+  }
+
+  const { rows } = await db.query(
+    `UPDATE users
+     SET is_active = $1, updated_at = now()
+     WHERE id = $2
+     RETURNING id, name, email, role, email_verified, is_active`,
+    [isActive, userId]
+  );
+
+  if (!rows[0]) {
+    throw new AppError('User not found', 404);
+  }
+
+  if (!isActive) {
+    await db.query(
+      'UPDATE refresh_tokens SET revoked = TRUE WHERE user_id = $1',
+      [userId]
+    );
+  }
+
+  return rows[0];
+}
+
 module.exports = {
   listStudents,
   getDashboard,
+  listSupervisors,
   assignStudentSupervisors,
   createAccount,
+  listUsers,
+  setUserActive,
 };
