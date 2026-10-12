@@ -1,12 +1,15 @@
 import { useEffect, useState } from 'react';
 import PortalLayout from '../../../components/shared/PortalLayout';
 import ExportButton from '../../../components/shared/ExportButton';
+import AccountsPanel from '../components/AccountsPanel';
+import AssignmentCell from '../components/AssignmentCell';
 import * as adminApi from '../../../api/admin.api';
 import * as reportsApi from '../../../api/reports.api';
 import '../../../styles/portalSections.css';
 import './AdminDashboardPage.css';
 
 const EMPTY_ACCOUNT = { name: '', email: '', role: 'industry_supervisor' };
+const EMPTY_SUPERVISORS = { industry: [], university: [] };
 
 function downloadCsv(text, filename) {
   const blob = new Blob([text], { type: 'text/csv;charset=utf-8;' });
@@ -20,15 +23,16 @@ function downloadCsv(text, filename) {
 
 export default function AdminDashboardPage() {
   const [dashboard, setDashboard] = useState(null);
+  const [supervisors, setSupervisors] = useState(EMPTY_SUPERVISORS);
   const [loading, setLoading] = useState(true);
   const [savingId, setSavingId] = useState(null);
-  const [assignments, setAssignments] = useState({});
   const [error, setError] = useState('');
 
   const [newAccount, setNewAccount] = useState(EMPTY_ACCOUNT);
   const [creating, setCreating] = useState(false);
   const [createError, setCreateError] = useState('');
   const [createdResult, setCreatedResult] = useState(null);
+  const [accountsVersion, setAccountsVersion] = useState(0);
 
   async function loadDashboard() {
     try {
@@ -41,9 +45,22 @@ export default function AdminDashboardPage() {
     }
   }
 
+  async function loadSupervisors() {
+    try {
+      const res = await adminApi.listSupervisors();
+      setSupervisors(res.data);
+    } catch (err) {
+      setError(err.message);
+    }
+  }
+
   useEffect(() => {
     loadDashboard();
   }, []);
+
+  useEffect(() => {
+    loadSupervisors();
+  }, [accountsVersion]);
 
   async function handleExport() {
     try {
@@ -54,19 +71,11 @@ export default function AdminDashboardPage() {
     }
   }
 
-  function updateAssignment(studentId, field, value) {
-    setAssignments((prev) => ({ ...prev, [studentId]: { ...prev[studentId], [field]: value } }));
-  }
-
-  async function handleAssign(studentId) {
-    const assignment = assignments[studentId] || {};
-    if (!assignment.industrySupervisorId && !assignment.universitySupervisorId) return;
+  async function handleAssign(studentId, payload) {
     setSavingId(studentId);
+    setError('');
     try {
-      await adminApi.assignStudentSupervisors(studentId, {
-        industrySupervisorId: assignment.industrySupervisorId || null,
-        universitySupervisorId: assignment.universitySupervisorId || null,
-      });
+      await adminApi.assignStudentSupervisors(studentId, payload);
       await loadDashboard();
     } catch (err) {
       setError(err.message);
@@ -85,6 +94,7 @@ export default function AdminDashboardPage() {
       const res = await adminApi.createAccount(newAccount);
       setCreatedResult(res.data);
       setNewAccount(EMPTY_ACCOUNT);
+      setAccountsVersion((version) => version + 1);
     } catch (err) {
       setCreateError(err.message);
     } finally {
@@ -108,12 +118,12 @@ export default function AdminDashboardPage() {
       actions={<ExportButton onClick={handleExport}>Export cohort CSV</ExportButton>}
     >
       {error && <p className="admin-error">{error}</p>}
-      {loading && <p className="admin-empty">Loading dashboard…</p>}
+      {loading && <p className="admin-empty">Loading dashboard...</p>}
 
       <section className="admin-panel">
-        <h2 className="admin-panel__title">Create supervisor account</h2>
+        <h2 className="admin-panel__title">Create account</h2>
         <p className="admin-panel__hint">
-          The new supervisor receives a temporary password by email and can change it any time.
+          The new user receives a temporary password by email and can change it any time.
         </p>
 
         <form onSubmit={handleCreateAccount} className="admin-form">
@@ -142,10 +152,11 @@ export default function AdminDashboardPage() {
             >
               <option value="industry_supervisor">Industry Supervisor</option>
               <option value="university_supervisor">University Supervisor</option>
+              <option value="hod">Head of Department</option>
             </select>
           </label>
           <button type="submit" className="btn btn--primary" disabled={creating}>
-            {creating ? 'Creating…' : 'Create account'}
+            {creating ? 'Creating...' : 'Create account'}
           </button>
         </form>
 
@@ -168,6 +179,8 @@ export default function AdminDashboardPage() {
         )}
       </section>
 
+      <AccountsPanel refreshKey={accountsVersion} />
+
       {dashboard && (
         <>
           <div className="stat-grid">
@@ -185,12 +198,12 @@ export default function AdminDashboardPage() {
             <div className="data-table-wrap">
               <table className="data-table">
                 <colgroup>
-                  <col style={{ width: '18%' }} />
-                  <col style={{ width: '24%' }} />
-                  <col style={{ width: '13%' }} />
-                  <col style={{ width: '13%' }} />
-                  <col style={{ width: '10%' }} />
-                  <col style={{ width: '22%' }} />
+                  <col style={{ width: '16%' }} />
+                  <col style={{ width: '20%' }} />
+                  <col style={{ width: '12%' }} />
+                  <col style={{ width: '12%' }} />
+                  <col style={{ width: '8%' }} />
+                  <col style={{ width: '32%' }} />
                 </colgroup>
                 <thead>
                   <tr>
@@ -212,42 +225,40 @@ export default function AdminDashboardPage() {
                         </div>
                       </td>
                       <td data-label="Email">{student.email}</td>
-                      <td
-                        data-label="Industry"
-                        className={!student.industry_company_name && student.industry_supervisor_id ? 'data-table__id' : ''}
-                      >
-                        {student.industry_company_name || student.industry_supervisor_id || 'Unassigned'}
+                      <td data-label="Industry">
+                        {student.industry_supervisor_id ? (
+                          <div>
+                            <div style={{ fontWeight: 700 }}>{student.industry_supervisor_name}</div>
+                            <div style={{ color: 'var(--muted)', fontSize: 12 }}>
+                              {student.industry_company_name || 'No company'}
+                            </div>
+                          </div>
+                        ) : (
+                          'Unassigned'
+                        )}
                       </td>
-                      <td
-                        data-label="University"
-                        className={!student.university_department && student.university_supervisor_id ? 'data-table__id' : ''}
-                      >
-                        {student.university_department || student.university_supervisor_id || 'Unassigned'}
+                      <td data-label="University">
+                        {student.university_supervisor_id ? (
+                          <div>
+                            <div style={{ fontWeight: 700 }}>{student.university_supervisor_name}</div>
+                            <div style={{ color: 'var(--muted)', fontSize: 12 }}>
+                              {student.university_department || 'No department'}
+                            </div>
+                          </div>
+                        ) : (
+                          'Unassigned'
+                        )}
                       </td>
                       <td data-label="Grade">{student.current_grade || 'Not graded'}</td>
                       <td className="data-table__full">
-                        <div className="admin-assign">
-                          <input
-                            aria-label="Industry supervisor ID"
-                            placeholder="Industry supervisor ID"
-                            value={assignments[student.id]?.industrySupervisorId ?? student.industry_supervisor_id ?? ''}
-                            onChange={(e) => updateAssignment(student.id, 'industrySupervisorId', e.target.value)}
-                          />
-                          <input
-                            aria-label="University supervisor ID"
-                            placeholder="University supervisor ID"
-                            value={assignments[student.id]?.universitySupervisorId ?? student.university_supervisor_id ?? ''}
-                            onChange={(e) => updateAssignment(student.id, 'universitySupervisorId', e.target.value)}
-                          />
-                          <button
-                            type="button"
-                            className="btn btn--primary btn--block"
-                            onClick={() => handleAssign(student.id)}
-                            disabled={savingId === student.id}
-                          >
-                            {savingId === student.id ? 'Saving…' : 'Save'}
-                          </button>
-                        </div>
+                        <AssignmentCell
+                          key={`${student.id}-${student.industry_supervisor_id}-${student.university_supervisor_id}`}
+                          student={student}
+                          industrySupervisors={supervisors.industry}
+                          universitySupervisors={supervisors.university}
+                          saving={savingId === student.id}
+                          onSave={handleAssign}
+                        />
                       </td>
                     </tr>
                   ))}
