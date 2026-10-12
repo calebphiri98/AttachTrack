@@ -5,6 +5,14 @@ import LedgerField from '../components/LedgerField';
 import StampButton from '../components/StampButton';
 import { useAuth } from '../../../context/AuthContext';
 
+const DESTINATIONS = {
+  industry_supervisor: '/industry/students',
+  student: '/student/dashboard',
+  university_supervisor: '/university/students',
+  admin: '/admin/dashboard',
+  hod: '/hod/dashboard',
+};
+
 export default function LoginPage() {
   const navigate = useNavigate();
   const location = useLocation();
@@ -13,7 +21,7 @@ export default function LoginPage() {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
-  const [notice, setNotice] = useState(location.state?.message || '');
+  const [notice] = useState(location.state?.message || '');
 
   async function handleSubmit(e) {
     e.preventDefault();
@@ -26,17 +34,7 @@ export default function LoginPage() {
     setLoading(true);
     try {
       const user = await login(email, password);
-      const destination =
-        user.role === 'industry_supervisor'
-          ? '/industry/students'
-          : user.role === 'student'
-            ? '/student/dashboard'
-            : user.role === 'university_supervisor'
-              ? '/university/students'
-              : user.role === 'admin'
-                ? '/admin/dashboard'
-                : '/dashboard';
-      navigate(destination, { replace: true });
+      navigate(DESTINATIONS[user.role] || '/dashboard', { replace: true });
     } catch (err) {
       setError(err.message);
     } finally {
@@ -91,4 +89,4 @@ export default function LoginPage() {
       </p>
     </AuthShell>
   );
-}  
+}
