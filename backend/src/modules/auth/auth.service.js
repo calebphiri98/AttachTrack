@@ -181,6 +181,11 @@ async function login({ email, password }) {
     throw new AppError('Invalid email or password', 401);
   }
 
+  // Checked after the password so the account state is not revealed to someone guessing.
+  if (user.is_active === false) {
+    throw new AppError('This account has been deactivated. Please contact the coordinator.', 403);
+  }
+
   if (!user.email_verified) {
     throw new AppError('Please verify your email before logging in', 403);
   }
@@ -220,6 +225,9 @@ async function refresh({ refreshToken }) {
   if (!user) {
     throw new AppError('User no longer exists', 401);
   }
+  if (user.is_active === false) {
+    throw new AppError('This account has been deactivated', 401);
+  }
 
   const newAccessToken = signAccessToken(user);
   const newRefreshToken = await issueRefreshToken(user.id);
@@ -241,9 +249,8 @@ async function requestPasswordReset({ email }) {
   const { rows } = await db.query('SELECT * FROM users WHERE email = $1', [cleanEmail]);
   const user = rows[0];
 
-  if (user) {
+  if (user && user.is_active !== false) {
     const rawToken = crypto.randomBytes(32).toString('hex');
-    console.log('RESET TOKEN:', rawToken);
     const tokenHash = hashToken(rawToken);
     const expiresAt = new Date(Date.now() + 60 * 60 * 1000);
 
