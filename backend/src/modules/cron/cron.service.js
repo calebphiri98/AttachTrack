@@ -1,19 +1,19 @@
 ﻿const db = require('../../config/db');
 const notificationsService = require('../notifications/notifications.service');
-const { sendNotificationEmail } = require('../../config/mailer');
+
+const MAX_NAMES_LISTED = 10;
 
 async function checkMissedSubmissions() {
   const { rows } = await db.query(
-    `SELECT s.id AS submission_id, s.due_date, s.recipient_role,
-            st.id AS student_id, st.name AS student_name,
-            iu.id AS industry_user_id, iu.name AS industry_name, iu.email AS industry_email,
-            uu.id AS university_user_id, uu.name AS university_name, uu.email AS university_email
+    `SELECT s.id AS submission_id,
+            s.recipient_role,
+            st.name AS student_name,
+            isup.user_id AS industry_user_id,
+            usup.user_id AS university_user_id
      FROM submissions s
      JOIN students st ON st.id = s.student_id
      LEFT JOIN industry_supervisors isup ON isup.id = st.industry_supervisor_id
-     LEFT JOIN users iu ON iu.id = isup.user_id
      LEFT JOIN university_supervisors usup ON usup.id = st.university_supervisor_id
-     LEFT JOIN users uu ON uu.id = usup.user_id
      WHERE s.file_url IS NULL
        AND s.due_date IS NOT NULL
        AND s.due_date < now()
@@ -25,30 +25,19 @@ async function checkMissedSubmissions() {
   for (const row of rows) {
     const isIndustry = row.recipient_role === 'industry_supervisor';
     const supervisorUserId = isIndustry ? row.industry_user_id : row.university_user_id;
-    const supervisorName = isIndustry ? row.industry_name : row.university_name;
-    const supervisorEmail = isIndustry ? row.industry_email : row.university_email;
 
     if (supervisorUserId) {
-      const title = `Missed submission: ${row.student_name}`;
-      const body = `${row.student_name} did not submit their required document by the due date.`;
-
-      await notificationsService.create({
+      const sent = await notificationsService.notifySafe({
         userId: supervisorUserId,
         type: 'missed_submission',
-        title,
-        body,
+        title: `Missed submission: ${row.student_name}`,
+        body: `${row.student_name} did not submit their required document by the due date.`,
         relatedId: row.submission_id,
       });
 
-      await sendNotificationEmail(
-        supervisorEmail,
-        supervisorName,
-        title,
-        body,
-        `<div style="font-family:sans-serif;max-width:520px"><h2>${title}</h2><p>${body}</p></div>`
-      );
-
-      notifiedCount += 1;
+      if (sent) {
+        notifiedCount += 1;
+      }
     }
 
     await db.query('UPDATE submissions SET notified_at = now() WHERE id = $1', [row.submission_id]);
@@ -59,11 +48,21 @@ async function checkMissedSubmissions() {
 
 async function checkMissedAttendance() {
   const { rows } = await db.query(
-    `SELECT st.id AS student_id, st.user_id, u.name AS student_name, u.email AS student_email
+    `SELECT u.id AS user_id,
+            array_agg(DISTINCT st.name ORDER BY st.name) AS student_names
      FROM students st
-     JOIN users u ON u.id = st.user_id
-     WHERE st.industry_supervisor_id IS NOT NULL
-       AND st.user_id IS NOT NULL
+     JOIN industry_supervisors isup
+       ON isup.id = st.industry_supervisor_id
+       OR EXISTS (
+            SELECT 1
+            FROM temp_supervisor_assignments t
+            WHERE t.student_id = st.id
+              AND t.industry_supervisor_id = isup.id
+              AND t.start_date <= CURRENT_DATE
+              AND (t.end_date IS NULL OR t.end_date >= CURRENT_DATE)
+          )
+     JOIN users u ON u.id = isup.user_id AND u.is_active = TRUE
+     WHERE st.user_id IS NOT NULL
        AND NOT EXISTS (
          SELECT 1 FROM attendance a
          WHERE a.student_id = st.id
@@ -71,34 +70,35 @@ async function checkMissedAttendance() {
        )
        AND NOT EXISTS (
          SELECT 1 FROM notifications n
-         WHERE n.user_id = st.user_id
+         WHERE n.user_id = u.id
            AND n.type = 'missed_attendance'
            AND n.created_at >= date_trunc('week', now())
-       )`
+       )
+     GROUP BY u.id`
   );
 
-  for (const row of rows) {
-    const title = 'Attendance reminder';
-    const body = 'You have not marked your attendance for this week yet.';
+  let notifiedCount = 0;
 
-    await notificationsService.create({
+  for (const row of rows) {
+    const names = row.student_names;
+    const listed = names.slice(0, MAX_NAMES_LISTED).join(', ');
+    const remaining = names.length - MAX_NAMES_LISTED;
+    const suffix = remaining > 0 ? ` and ${remaining} more` : '';
+    const count = names.length;
+
+    const sent = await notificationsService.notifySafe({
       userId: row.user_id,
       type: 'missed_attendance',
-      title,
-      body,
-      relatedId: row.student_id,
+      title: 'Attendance not marked',
+      body: `${count} student${count === 1 ? ' has' : 's have'} no attendance recorded for this week: ${listed}${suffix}.`,
     });
 
-    await sendNotificationEmail(
-      row.student_email,
-      row.student_name,
-      title,
-      body,
-      `<div style="font-family:sans-serif;max-width:520px"><h2>${title}</h2><p>${body}</p></div>`
-    );
+    if (sent) {
+      notifiedCount += 1;
+    }
   }
 
-  return { checked: rows.length, notified: rows.length };
+  return { checked: rows.length, notified: notifiedCount };
 }
 
 module.exports = { checkMissedSubmissions, checkMissedAttendance };

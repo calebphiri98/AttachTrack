@@ -93,22 +93,20 @@ async function listResultsOverview() {
 
 async function notifyStudents(studentIds) {
   if (studentIds.length === 0) return;
+
   const { rows } = await db.query(
     `SELECT id, user_id FROM students WHERE id = ANY($1::uuid[]) AND user_id IS NOT NULL`,
     [studentIds]
   );
+
   for (const row of rows) {
-    try {
-      await notificationsService.create({
-        userId: row.user_id,
-        type: 'result_released',
-        title: 'Your final result is available',
-        body: 'Your end-of-semester attachment result has been released.',
-        relatedId: row.id,
-      });
-    } catch (err) {
-      console.error('[notifyStudents] failed for student', row.id, err.message);
-    }
+    await notificationsService.notifySafe({
+      userId: row.user_id,
+      type: 'result_released',
+      title: 'Your final result is available',
+      body: 'Your end-of-semester attachment result has been released.',
+      relatedId: row.id,
+    });
   }
 }
 

@@ -16,10 +16,19 @@ import AdminDashboardPage from '../features/admin/pages/AdminDashboardPage';
 import AdminCompaniesPage from '../features/admin/pages/AdminCompaniesPage';
 import HodDashboardPage from '../features/hod/pages/HodDashboardPage';
 import ResultsReleasePage from '../features/results/pages/ResultsReleasePage';
+import NotificationSettingsPage from '../features/settings/pages/NotificationSettingsPage';
 
 export default function AppRoutes() {
   return (
     <Routes>
+            <Route
+        path="/settings/notifications"
+        element={
+          <ProtectedRoute>
+            <NotificationSettingsPage />
+          </ProtectedRoute>
+        }
+      />
       <Route path="/signup" element={<SignupPage />} />
       <Route path="/verify-email" element={<VerifyEmailPage />} />
       <Route path="/login" element={<LoginPage />} />

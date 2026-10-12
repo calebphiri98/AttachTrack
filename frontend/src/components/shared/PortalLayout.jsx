@@ -1,5 +1,6 @@
 import { Link, useLocation } from 'react-router-dom';
 import './PortalLayout.css';
+import NotificationBell from './NotificationBell';
 import { useAuth } from '../../context/AuthContext';
 
 const ROLE_LABELS = {
@@ -29,6 +30,8 @@ const RESULTS_PATH = {
   hod: '/results',
 };
 
+const SETTINGS_PATH = '/settings/notifications';
+
 function navClass(location, path) {
   return `portal-layout__nav-link${location.pathname === path ? ' portal-layout__nav-link--active' : ''}`;
 }
@@ -40,37 +43,47 @@ export default function PortalLayout({ eyebrow, title, actions, children }) {
   return (
     <div className="portal-layout">
       <header className="portal-layout__topbar">
-        <div className="portal-layout__brand">
-          <span className="portal-layout__mark">AT</span>
-          <span className="portal-layout__wordmark">AttachTrack</span>
-        </div>
-        <div className="portal-layout__account">
-          {DASHBOARD_PATH[user?.role] && (
-            <Link to={DASHBOARD_PATH[user.role]} className={navClass(location, DASHBOARD_PATH[user.role])}>
-              Dashboard
+        <div className="portal-layout__topbar-inner">
+          <div className="portal-layout__brand">
+            <span className="portal-layout__mark">AT</span>
+            <span className="portal-layout__wordmark">AttachTrack</span>
+          </div>
+
+          <nav className="portal-layout__nav">
+            {DASHBOARD_PATH[user?.role] && (
+              <Link to={DASHBOARD_PATH[user.role]} className={navClass(location, DASHBOARD_PATH[user.role])}>
+                Dashboard
+              </Link>
+            )}
+            {RESULTS_PATH[user?.role] && (
+              <Link to={RESULTS_PATH[user.role]} className={navClass(location, RESULTS_PATH[user.role])}>
+                Results
+              </Link>
+            )}
+            {MESSAGES_PATH[user?.role] && (
+              <Link to={MESSAGES_PATH[user.role]} className={navClass(location, MESSAGES_PATH[user.role])}>
+                Messages
+              </Link>
+            )}
+            <Link to={SETTINGS_PATH} className={navClass(location, SETTINGS_PATH)}>
+              Settings
             </Link>
-          )}
-          {RESULTS_PATH[user?.role] && (
-            <Link to={RESULTS_PATH[user.role]} className={navClass(location, RESULTS_PATH[user.role])}>
-              Results
-            </Link>
-          )}
-          {MESSAGES_PATH[user?.role] && (
-            <Link to={MESSAGES_PATH[user.role]} className={navClass(location, MESSAGES_PATH[user.role])}>
-              Messages
-            </Link>
-          )}
-          <span className="portal-layout__role">{ROLE_LABELS[user?.role]}</span>
-          <span className="portal-layout__name">{user?.name}</span>
-          <button className="portal-layout__logout" onClick={logout}>
-            Log out
-          </button>
+          </nav>
+
+          <div className="portal-layout__account">
+            <NotificationBell />
+            <span className="portal-layout__role">{ROLE_LABELS[user?.role]}</span>
+            <span className="portal-layout__name">{user?.name}</span>
+            <button className="portal-layout__logout" onClick={logout}>
+              Log out
+            </button>
+          </div>
         </div>
       </header>
 
       <main className="portal-layout__content">
         <div className="portal-layout__page-header">
-          <div>
+          <div className="portal-layout__heading">
             {eyebrow && <span className="portal-layout__eyebrow">{eyebrow}</span>}
             <h1 className="portal-layout__title">{title}</h1>
           </div>
