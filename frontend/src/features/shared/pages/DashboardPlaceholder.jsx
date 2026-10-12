@@ -8,6 +8,8 @@ const ROLE_LABELS = {
   student: 'Student',
   industry_supervisor: 'Industry Supervisor',
   university_supervisor: 'University Supervisor',
+  admin: 'Coordinator',
+  hod: 'Head of Department',
 };
 
 export default function DashboardPlaceholder() {
@@ -35,6 +37,14 @@ export default function DashboardPlaceholder() {
     return <Navigate to="/university/students" replace />;
   }
 
+  if (user?.role === 'admin') {
+    return <Navigate to="/admin/dashboard" replace />;
+  }
+
+  if (user?.role === 'hod') {
+    return <Navigate to="/hod/dashboard" replace />;
+  }
+
   return (
     <div className="dashboard-placeholder">
       <header className="dashboard-placeholder__header">
@@ -52,7 +62,7 @@ export default function DashboardPlaceholder() {
       {user?.role === 'student' && (
         <div className="dashboard-placeholder__card">
           {loadingProfile ? (
-            <p>Loading your status…</p>
+            <p>Loading your status...</p>
           ) : studentProfile ? (
             <>
               <span
@@ -69,11 +79,6 @@ export default function DashboardPlaceholder() {
           )}
         </div>
       )}
-
-      <p className="dashboard-placeholder__note">
-        Auth is fully wired up. The rest of this dashboard — submissions, attendance,
-        feedback, grades, messaging — is built out next.
-      </p>
     </div>
   );
 }
