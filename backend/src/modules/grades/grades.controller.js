@@ -14,15 +14,35 @@ const assign = asyncHandler(async (req, res) => {
 });
 
 const getForStudent = asyncHandler(async (req, res) => {
-  let requester = { role: req.user.role, id: req.user.id };
+  const requester = { role: req.user.role, id: req.user.id };
 
   if (req.user.role !== 'student') {
     const supervisorContext = await resolveSupervisorContext(req.user);
-    requester.supervisorId = supervisorContext.id;
+    if (supervisorContext) {
+      requester.supervisorId = supervisorContext.id;
+    }
   }
 
   const record = await gradesService.getForStudent(req.params.studentId, requester);
   res.status(200).json({ success: true, data: record });
 });
 
-module.exports = { assign, getForStudent };
+const overview = asyncHandler(async (req, res) => {
+  const rows = await gradesService.listResultsOverview();
+  res.status(200).json({ success: true, data: rows });
+});
+
+const release = asyncHandler(async (req, res) => {
+  const record = await gradesService.releaseGrade({
+    studentId: req.params.studentId,
+    releasedBy: req.user.id,
+  });
+  res.status(200).json({ success: true, data: record });
+});
+
+const releaseAll = asyncHandler(async (req, res) => {
+  const result = await gradesService.releaseAll({ releasedBy: req.user.id });
+  res.status(200).json({ success: true, data: result });
+});
+
+module.exports = { assign, getForStudent, overview, release, releaseAll };
