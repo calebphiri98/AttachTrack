@@ -6,7 +6,8 @@ const ROLE_LABELS = {
   student: 'Student',
   industry_supervisor: 'Industry Supervisor',
   university_supervisor: 'University Supervisor',
-  admin: 'Administrator',
+  admin: 'Coordinator',
+  hod: 'Head of Department',
 };
 
 const DASHBOARD_PATH = {
@@ -14,6 +15,7 @@ const DASHBOARD_PATH = {
   industry_supervisor: '/industry/students',
   university_supervisor: '/university/students',
   admin: '/admin/dashboard',
+  hod: '/hod/dashboard',
 };
 
 const MESSAGES_PATH = {
@@ -21,6 +23,15 @@ const MESSAGES_PATH = {
   industry_supervisor: '/industry/messages',
   university_supervisor: '/university/messages',
 };
+
+const RESULTS_PATH = {
+  admin: '/results',
+  hod: '/results',
+};
+
+function navClass(location, path) {
+  return `portal-layout__nav-link${location.pathname === path ? ' portal-layout__nav-link--active' : ''}`;
+}
 
 export default function PortalLayout({ eyebrow, title, actions, children }) {
   const { user, logout } = useAuth();
@@ -35,18 +46,17 @@ export default function PortalLayout({ eyebrow, title, actions, children }) {
         </div>
         <div className="portal-layout__account">
           {DASHBOARD_PATH[user?.role] && (
-            <Link
-              to={DASHBOARD_PATH[user.role]}
-              className={`portal-layout__nav-link${location.pathname === DASHBOARD_PATH[user.role] ? ' portal-layout__nav-link--active' : ''}`}
-            >
+            <Link to={DASHBOARD_PATH[user.role]} className={navClass(location, DASHBOARD_PATH[user.role])}>
               Dashboard
             </Link>
           )}
+          {RESULTS_PATH[user?.role] && (
+            <Link to={RESULTS_PATH[user.role]} className={navClass(location, RESULTS_PATH[user.role])}>
+              Results
+            </Link>
+          )}
           {MESSAGES_PATH[user?.role] && (
-            <Link
-              to={MESSAGES_PATH[user.role]}
-              className={`portal-layout__nav-link${location.pathname === MESSAGES_PATH[user.role] ? ' portal-layout__nav-link--active' : ''}`}
-            >
+            <Link to={MESSAGES_PATH[user.role]} className={navClass(location, MESSAGES_PATH[user.role])}>
               Messages
             </Link>
           )}
