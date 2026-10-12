@@ -11,6 +11,11 @@ const getDashboard = asyncHandler(async (req, res) => {
   res.status(200).json({ success: true, data: dashboard });
 });
 
+const listSupervisors = asyncHandler(async (req, res) => {
+  const supervisors = await adminService.listSupervisors();
+  res.status(200).json({ success: true, data: supervisors });
+});
+
 const assignStudentSupervisors = asyncHandler(async (req, res) => {
   const result = await adminService.assignStudentSupervisors({
     studentId: req.params.studentId,
@@ -31,4 +36,27 @@ const createAccount = asyncHandler(async (req, res) => {
   res.status(201).json({ success: true, data: result });
 });
 
-module.exports = { listStudents, getDashboard, assignStudentSupervisors, createAccount };
+const listUsers = asyncHandler(async (req, res) => {
+  const users = await adminService.listUsers();
+  res.status(200).json({ success: true, data: users });
+});
+
+const setUserActive = asyncHandler(async (req, res) => {
+  const user = await adminService.setUserActive({
+    userId: req.params.userId,
+    isActive: req.body.isActive,
+    actingUserId: req.user.id,
+  });
+
+  res.status(200).json({ success: true, data: user });
+});
+
+module.exports = {
+  listStudents,
+  getDashboard,
+  listSupervisors,
+  assignStudentSupervisors,
+  createAccount,
+  listUsers,
+  setUserActive,
+};
