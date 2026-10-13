@@ -2,6 +2,7 @@ const crypto = require('crypto');
 const db = require('../../config/db');
 const AppError = require('../../utils/AppError');
 const studentsService = require('../students/students.service');
+const notificationsService = require('../notifications/notifications.service');
 const { requireUuid, requireDate, optionalNumber } = require('../../utils/validators');
 const { uploadBuffer } = require('../../utils/uploadToCloudinary');
 
@@ -23,6 +24,72 @@ function deriveState(row) {
 
 function withState(row) {
   return { ...row, state: deriveState(row) };
+}
+
+function formatDate(value) {
+  return new Date(value).toLocaleDateString('en-GB', {
+    day: 'numeric',
+    month: 'short',
+    year: 'numeric',
+    timeZone: 'UTC',
+  });
+}
+
+async function findRecipientUserIds(student, recipientRole) {
+  if (recipientRole === 'university_supervisor') {
+    if (!student.university_supervisor_id) return [];
+    const { rows } = await db.query(
+      'SELECT user_id FROM university_supervisors WHERE id = $1',
+      [student.university_supervisor_id]
+    );
+    return rows.map((row) => row.user_id);
+  }
+
+  const { rows } = await db.query(
+    `SELECT DISTINCT isup.user_id
+     FROM industry_supervisors isup
+     WHERE isup.id = $1
+        OR isup.id IN (
+          SELECT t.industry_supervisor_id
+          FROM temp_supervisor_assignments t
+          WHERE t.student_id = $2
+            AND t.start_date <= CURRENT_DATE
+            AND (t.end_date IS NULL OR t.end_date >= CURRENT_DATE)
+        )`,
+    [student.industry_supervisor_id, student.id]
+  );
+  return rows.map((row) => row.user_id);
+}
+
+async function notifySubmissionReceived(student, recipientRole, submission) {
+  try {
+    const userIds = await findRecipientUserIds(student, recipientRole);
+    for (const userId of userIds) {
+      await notificationsService.notifySafe({
+        userId,
+        type: 'submission_received',
+        title: `New submission from ${student.name}`,
+        body: `${student.name} submitted ${submission.file_name || 'a document'}.`,
+        relatedId: submission.id,
+      });
+    }
+  } catch (err) {
+    console.error('[notifySubmissionReceived] failed:', err.message);
+  }
+}
+
+async function notifyStudent(studentId, payload) {
+  try {
+    const { rows } = await db.query(
+      'SELECT user_id FROM students WHERE id = $1 AND user_id IS NOT NULL',
+      [studentId]
+    );
+    if (rows[0]) {
+      await notificationsService.notifySafe({ userId: rows[0].user_id, ...payload });
+    }
+  } catch (err) {
+    console.error('[notifyStudent] failed:', err.message);
+  }
 }
 
 async function createSubmission({ studentUserId, file, clientUuid, recipientRole }) {
@@ -74,6 +141,9 @@ async function createSubmission({ studentUserId, file, clientUuid, recipientRole
         submittedAt,
       ]
     );
+
+    await notifySubmissionReceived(student, recipientRole, rows[0]);
+
     return withState(rows[0]);
   } catch (err) {
     if (err.code === '23505') {
@@ -110,6 +180,13 @@ async function createRequirement({ studentId, dueDate, supervisorContext }) {
      RETURNING *`,
     [finalClientUuid, student.id, recipientRole, dueDate]
   );
+
+  await notifyStudent(student.id, {
+    type: 'submission_requested',
+    title: 'New submission requested',
+    body: `Your supervisor has asked you to submit a document by ${formatDate(rows[0].due_date)}.`,
+    relatedId: rows[0].id,
+  });
 
   return withState(rows[0]);
 }
@@ -164,6 +241,8 @@ async function fulfillRequirement({ submissionId, studentUserId, file }) {
     [uploadResult.secure_url, file.originalname, file.mimetype, submissionId]
   );
 
+  await notifySubmissionReceived(student, submission.recipient_role, rows[0]);
+
   return withState(rows[0]);
 }
 
@@ -211,6 +290,16 @@ async function reopenRequirement({ submissionId, supervisorContext, reopenedByUs
      RETURNING *`,
     [reopenedByUserId, cleanPenalty, submissionId]
   );
+
+  const penaltyText =
+    Number(cleanPenalty) > 0 ? `, with a ${Number(cleanPenalty)}% mark deduction` : '';
+
+  await notifyStudent(submission.student_id, {
+    type: 'submission_reopened',
+    title: 'A submission was reopened',
+    body: `Your supervisor reopened a submission that was past its due date. You can now submit it${penaltyText}.`,
+    relatedId: submissionId,
+  });
 
   return withState(rows[0]);
 }

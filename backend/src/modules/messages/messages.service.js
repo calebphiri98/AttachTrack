@@ -1,11 +1,18 @@
 ﻿const db = require('../../config/db');
 const AppError = require('../../utils/AppError');
 const { requireUuid, optionalString } = require('../../utils/validators');
-const { sendNotificationEmail } = require('../../config/mailer');
 const studentsService = require('../students/students.service');
 const industrySupervisorsService = require('../industrySupervisors/industrySupervisors.service');
 const universitySupervisorsService = require('../universitySupervisors/universitySupervisors.service');
+const notificationsService = require('../notifications/notifications.service');
 const { uploadBuffer } = require('../../utils/uploadToCloudinary');
+
+const PREVIEW_LENGTH = 300;
+
+function preview(text) {
+  if (text.length <= PREVIEW_LENGTH) return text;
+  return `${text.slice(0, PREVIEW_LENGTH - 3)}...`;
+}
 
 async function getUserBasic(userId) {
   const { rows } = await db.query('SELECT id, name, role FROM users WHERE id = $1', [userId]);
@@ -119,21 +126,17 @@ async function sendMessage({ sender, recipientId, content, file }) {
   );
 
   const message = rows[0];
-  const { rows: userRows } = await db.query('SELECT id, name, email FROM users WHERE id = $1', [recipientId]);
 
-  if (userRows[0]) {
-    const { rows: senderRows } = await db.query('SELECT name FROM users WHERE id = $1', [sender.id]);
-    const senderName = senderRows[0]?.name || 'AttachTrack user';
-    const messageBody = cleanContent || 'You received a new message with an attachment.';
+  const { rows: senderRows } = await db.query('SELECT name FROM users WHERE id = $1', [sender.id]);
+  const senderName = senderRows[0]?.name || 'an AttachTrack user';
 
-    await sendNotificationEmail(
-     userRows[0].email,
-     userRows[0].name,
-     `New message from ${senderName}`,
-     `${senderName} sent you a new message.\n\n${messageBody}`,
-     `<div style="font-family:sans-serif;max-width:520px"><h2>New message from ${senderName}</h2><p>${messageBody.replace(/\n/g, '<br />')}</p></div>`
-    );
-  }
+  await notificationsService.notifySafe({
+    userId: recipientId,
+    type: 'new_message',
+    title: `New message from ${senderName}`,
+    body: cleanContent ? preview(cleanContent) : 'Sent you an attachment.',
+    relatedId: sender.id,
+  });
 
   return message;
 }
