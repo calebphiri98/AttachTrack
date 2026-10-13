@@ -4,6 +4,11 @@ import PortalLayout from '../../../components/shared/PortalLayout';
 import * as assessmentsApi from '../../../api/assessments.api';
 import './AssessmentPages.css';
 
+const EYEBROWS = {
+  industry: 'Industrial supervisor',
+  university: 'University supervisor',
+};
+
 function toDraft(data) {
   const marks = {};
   const remarks = {};
@@ -14,7 +19,7 @@ function toDraft(data) {
   return { marks, remarks, comments: data.comments || '' };
 }
 
-export default function AssessmentFormPage() {
+export default function AssessmentFormPage({ kind }) {
   const { studentId } = useParams();
   const [data, setData] = useState(null);
   const [marks, setMarks] = useState({});
@@ -35,12 +40,13 @@ export default function AssessmentFormPage() {
 
   useEffect(() => {
     setLoading(true);
+    setError('');
     assessmentsApi
-      .getIndustryAssessment(studentId)
+      .getAssessment(kind, studentId)
       .then((res) => applyData(res.data))
       .catch((err) => setError(err.message))
       .finally(() => setLoading(false));
-  }, [studentId]);
+  }, [kind, studentId]);
 
   const locked = data?.status === 'submitted';
   const items = data?.items || [];
@@ -49,7 +55,9 @@ export default function AssessmentFormPage() {
     const value = marks[item.criterion_id];
     return value === '' || value === undefined ? sum : sum + Number(value);
   }, 0);
-  const missingCount = items.filter((item) => marks[item.criterion_id] === '' || marks[item.criterion_id] === undefined).length;
+  const missingCount = items.filter(
+    (item) => marks[item.criterion_id] === '' || marks[item.criterion_id] === undefined
+  ).length;
 
   function validate(requireAll) {
     for (const item of items) {
@@ -99,7 +107,7 @@ export default function AssessmentFormPage() {
 
     setSaving(true);
     try {
-      const res = await assessmentsApi.saveIndustryAssessment(studentId, buildPayload(submit));
+      const res = await assessmentsApi.saveAssessment(kind, studentId, buildPayload(submit));
       applyData(res.data);
       setMessage(submit ? 'Assessment submitted.' : 'Draft saved.');
     } catch (err) {
@@ -111,10 +119,10 @@ export default function AssessmentFormPage() {
 
   return (
     <PortalLayout
-      eyebrow="Industrial supervisor"
+      eyebrow={EYEBROWS[kind]}
       title={data ? `Assessment: ${data.student.name}` : 'Assessment'}
       actions={
-        <Link to="/industry/assessments" className="btn btn--ghost">
+        <Link to={`/${kind}/assessments`} className="btn btn--ghost">
           Back to students
         </Link>
       }
@@ -187,7 +195,8 @@ export default function AssessmentFormPage() {
               <div className="assess-total">
                 <span>{locked ? 'Final score' : 'Total so far'}</span>
                 <strong>
-                  {locked && data.totalMarks !== null ? data.totalMarks : enteredTotal} / {locked && data.maxTotal !== null ? data.maxTotal : maxTotal}
+                  {locked && data.totalMarks !== null ? data.totalMarks : enteredTotal} /{' '}
+                  {locked && data.maxTotal !== null ? data.maxTotal : maxTotal}
                 </strong>
               </div>
             )}
