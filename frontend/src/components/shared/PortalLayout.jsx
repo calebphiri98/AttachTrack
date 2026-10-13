@@ -23,6 +23,7 @@ const NAV = {
   ],
   university_supervisor: [
     { to: '/university/students', label: 'Dashboard' },
+    { to: '/university/assessments', label: 'Assessments' },
     { to: '/university/messages', label: 'Messages' },
   ],
   admin: [
