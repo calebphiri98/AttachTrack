@@ -13,6 +13,7 @@ const createCompany = asyncHandler(async (req, res) => {
     industrySector: req.body.industrySector,
     mouStatus: req.body.mouStatus,
     mouDate: req.body.mouDate,
+    availablePlaces: req.body.availablePlaces,
   });
   res.status(201).json({ success: true, data: company });
 });
@@ -24,6 +25,7 @@ const updateCompany = asyncHandler(async (req, res) => {
     industrySector: req.body.industrySector,
     mouStatus: req.body.mouStatus,
     mouDate: req.body.mouDate,
+    availablePlaces: req.body.availablePlaces,
   });
 
   res.status(200).json({ success: true, data: company });
