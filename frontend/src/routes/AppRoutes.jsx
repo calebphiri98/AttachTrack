@@ -17,18 +17,14 @@ import AdminCompaniesPage from '../features/admin/pages/AdminCompaniesPage';
 import HodDashboardPage from '../features/hod/pages/HodDashboardPage';
 import ResultsReleasePage from '../features/results/pages/ResultsReleasePage';
 import NotificationSettingsPage from '../features/settings/pages/NotificationSettingsPage';
+import PlacementsPage from '../features/placements/pages/PlacementsPage';
+import AssessmentFormsPage from '../features/assessments/pages/AssessmentFormsPage';
+import IndustryAssessmentsPage from '../features/assessments/pages/IndustryAssessmentsPage';
+import AssessmentFormPage from '../features/assessments/pages/AssessmentFormPage';
 
 export default function AppRoutes() {
   return (
     <Routes>
-            <Route
-        path="/settings/notifications"
-        element={
-          <ProtectedRoute>
-            <NotificationSettingsPage />
-          </ProtectedRoute>
-        }
-      />
       <Route path="/signup" element={<SignupPage />} />
       <Route path="/verify-email" element={<VerifyEmailPage />} />
       <Route path="/login" element={<LoginPage />} />
@@ -63,6 +59,22 @@ export default function AppRoutes() {
         element={
           <ProtectedRoute roles={['industry_supervisor']}>
             <StudentDetailPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/industry/assessments"
+        element={
+          <ProtectedRoute roles={['industry_supervisor']}>
+            <IndustryAssessmentsPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/industry/assessments/:studentId"
+        element={
+          <ProtectedRoute roles={['industry_supervisor']}>
+            <AssessmentFormPage />
           </ProtectedRoute>
         }
       />
@@ -123,6 +135,14 @@ export default function AppRoutes() {
         }
       />
       <Route
+        path="/assessments/forms"
+        element={
+          <ProtectedRoute roles={['admin']}>
+            <AssessmentFormsPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
         path="/hod/dashboard"
         element={
           <ProtectedRoute roles={['hod']}>
@@ -135,6 +155,22 @@ export default function AppRoutes() {
         element={
           <ProtectedRoute roles={['admin', 'hod']}>
             <ResultsReleasePage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/placements"
+        element={
+          <ProtectedRoute roles={['admin', 'hod']}>
+            <PlacementsPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/settings/notifications"
+        element={
+          <ProtectedRoute>
+            <NotificationSettingsPage />
           </ProtectedRoute>
         }
       />
