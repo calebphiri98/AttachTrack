@@ -33,16 +33,16 @@ export function confirmForm(kind) {
   return request(`/assessments/forms/${kind}/confirm`, { method: 'POST', body: {} });
 }
 
-export function listIndustryStudents() {
-  return request('/assessments/industry/students');
+export function listAssessableStudents(kind) {
+  return request(`/assessments/${kind}/students`);
 }
 
-export function getIndustryAssessment(studentId) {
-  return request(`/assessments/industry/students/${studentId}`);
+export function getAssessment(kind, studentId) {
+  return request(`/assessments/${kind}/students/${studentId}`);
 }
 
-export function saveIndustryAssessment(studentId, { scores, comments, submit }) {
-  return request(`/assessments/industry/students/${studentId}`, {
+export function saveAssessment(kind, studentId, { scores, comments, submit }) {
+  return request(`/assessments/${kind}/students/${studentId}`, {
     method: 'PUT',
     body: { scores, comments, submit },
   });
