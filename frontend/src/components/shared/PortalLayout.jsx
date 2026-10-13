@@ -11,34 +11,43 @@ const ROLE_LABELS = {
   hod: 'Head of Department',
 };
 
-const DASHBOARD_PATH = {
-  student: '/student/dashboard',
-  industry_supervisor: '/industry/students',
-  university_supervisor: '/university/students',
-  admin: '/admin/dashboard',
-  hod: '/hod/dashboard',
+const NAV = {
+  student: [
+    { to: '/student/dashboard', label: 'Dashboard' },
+    { to: '/student/messages', label: 'Messages' },
+  ],
+  industry_supervisor: [
+    { to: '/industry/students', label: 'Dashboard' },
+    { to: '/industry/assessments', label: 'Assessments' },
+    { to: '/industry/messages', label: 'Messages' },
+  ],
+  university_supervisor: [
+    { to: '/university/students', label: 'Dashboard' },
+    { to: '/university/messages', label: 'Messages' },
+  ],
+  admin: [
+    { to: '/admin/dashboard', label: 'Dashboard' },
+    { to: '/placements', label: 'Placements' },
+    { to: '/assessments/forms', label: 'Assessment forms' },
+    { to: '/results', label: 'Results' },
+  ],
+  hod: [
+    { to: '/hod/dashboard', label: 'Dashboard' },
+    { to: '/placements', label: 'Placements' },
+    { to: '/results', label: 'Results' },
+  ],
 };
 
-const MESSAGES_PATH = {
-  student: '/student/messages',
-  industry_supervisor: '/industry/messages',
-  university_supervisor: '/university/messages',
-};
+const SETTINGS_LINK = { to: '/settings/notifications', label: 'Settings' };
 
-const RESULTS_PATH = {
-  admin: '/results',
-  hod: '/results',
-};
-
-const SETTINGS_PATH = '/settings/notifications';
-
-function navClass(location, path) {
-  return `portal-layout__nav-link${location.pathname === path ? ' portal-layout__nav-link--active' : ''}`;
+function isActive(location, path) {
+  return location.pathname === path || location.pathname.startsWith(`${path}/`);
 }
 
 export default function PortalLayout({ eyebrow, title, actions, children }) {
   const { user, logout } = useAuth();
   const location = useLocation();
+  const links = [...(NAV[user?.role] || []), SETTINGS_LINK];
 
   return (
     <div className="portal-layout">
@@ -50,24 +59,15 @@ export default function PortalLayout({ eyebrow, title, actions, children }) {
           </div>
 
           <nav className="portal-layout__nav">
-            {DASHBOARD_PATH[user?.role] && (
-              <Link to={DASHBOARD_PATH[user.role]} className={navClass(location, DASHBOARD_PATH[user.role])}>
-                Dashboard
+            {links.map((link) => (
+              <Link
+                key={link.to}
+                to={link.to}
+                className={`portal-layout__nav-link${isActive(location, link.to) ? ' portal-layout__nav-link--active' : ''}`}
+              >
+                {link.label}
               </Link>
-            )}
-            {RESULTS_PATH[user?.role] && (
-              <Link to={RESULTS_PATH[user.role]} className={navClass(location, RESULTS_PATH[user.role])}>
-                Results
-              </Link>
-            )}
-            {MESSAGES_PATH[user?.role] && (
-              <Link to={MESSAGES_PATH[user.role]} className={navClass(location, MESSAGES_PATH[user.role])}>
-                Messages
-              </Link>
-            )}
-            <Link to={SETTINGS_PATH} className={navClass(location, SETTINGS_PATH)}>
-              Settings
-            </Link>
+            ))}
           </nav>
 
           <div className="portal-layout__account">
