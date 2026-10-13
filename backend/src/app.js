@@ -21,16 +21,16 @@ const { authLimiter, generalLimiter } = require('./middleware/rateLimiters');
 const tempSupervisorsRoutes = require('./modules/tempSupervisors/tempSupervisors.routes');
 const notificationsRoutes = require('./modules/notifications/notifications.routes');
 const cronRoutes = require('./modules/cron/cron.routes');
+const placementsRoutes = require('./modules/placements/placements.routes');
+const assessmentsRoutes = require('./modules/assessments/assessments.routes');
 
 const app = express();
 
 app.use(cors());
 app.use(express.json());
 
-app.set('trust proxy', 1); // add before the rate limiters, only when actually behind a proxy
-// Rate limiting: a stricter cap on auth endpoints (login/signup/resend-code
-// are brute-force and spam targets), a looser general cap on everything
-// else. Applied after cors/json parsing, before any routes.
+app.set('trust proxy', 1);
+
 app.use('/api/auth', authLimiter);
 app.use('/api', generalLimiter);
 
@@ -55,8 +55,9 @@ app.use('/api/reports', reportsRoutes);
 app.use('/api/temp-supervisors', tempSupervisorsRoutes);
 app.use('/api/notifications', notificationsRoutes);
 app.use('/api/cron', cronRoutes);
+app.use('/api/placements', placementsRoutes);
+app.use('/api/assessments', assessmentsRoutes);
 
-// Unmatched routes
 app.use((req, res, next) => {
   next(new AppError(`Route not found: ${req.method} ${req.originalUrl}`, 404));
 });
@@ -64,4 +65,3 @@ app.use((req, res, next) => {
 app.use(errorHandler);
 
 module.exports = app;
-
