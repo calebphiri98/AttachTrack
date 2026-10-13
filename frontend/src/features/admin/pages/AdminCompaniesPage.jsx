@@ -5,13 +5,27 @@ import * as companiesApi from '../../../api/companies.api';
 import '../../../styles/portalSections.css';
 import './AdminCompaniesPage.css';
 
-const EMPTY_FORM = { name: '', address: '', industrySector: '', mouStatus: 'pending', mouDate: '' };
+const EMPTY_FORM = {
+  name: '',
+  address: '',
+  industrySector: '',
+  mouStatus: 'pending',
+  mouDate: '',
+  availablePlaces: '',
+};
 
 function formatDate(value) {
   if (!value) return 'No date yet';
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return 'No date yet';
   return date.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
+}
+
+function placesText(company) {
+  if (company.available_places === null || company.available_places === undefined) {
+    return 'Places: no limit';
+  }
+  return `${company.placement_count}/${company.available_places} places used`;
 }
 
 export default function AdminCompaniesPage() {
@@ -66,6 +80,10 @@ export default function AdminCompaniesPage() {
       industrySector: company.industry_sector || '',
       mouStatus: company.mou_status || 'pending',
       mouDate: company.mou_date ? String(company.mou_date).slice(0, 10) : '',
+      availablePlaces:
+        company.available_places === null || company.available_places === undefined
+          ? ''
+          : String(company.available_places),
     });
   }
 
@@ -74,9 +92,14 @@ export default function AdminCompaniesPage() {
       eyebrow="Registry"
       title="Companies"
       actions={
-        <Link to="/admin/dashboard" className="btn btn--ghost">
-          Back to dashboard
-        </Link>
+        <>
+          <Link to="/placements" className="btn btn--ghost">
+            Placements
+          </Link>
+          <Link to="/admin/dashboard" className="btn btn--ghost">
+            Back to dashboard
+          </Link>
+        </>
       }
     >
       {error && <p className="companies-error">{error}</p>}
@@ -108,6 +131,7 @@ export default function AdminCompaniesPage() {
                       <span>
                         {company.supervisor_count} {Number(company.supervisor_count) === 1 ? 'supervisor' : 'supervisors'}
                       </span>
+                      <span>{placesText(company)}</span>
                     </div>
                   </li>
                 );
@@ -132,6 +156,17 @@ export default function AdminCompaniesPage() {
               <input value={form.industrySector} onChange={(e) => updateField('industrySector', e.target.value)} />
             </label>
             <label className="inline-form__field">
+              <span>Places available</span>
+              <input
+                type="number"
+                min="0"
+                step="1"
+                value={form.availablePlaces}
+                onChange={(e) => updateField('availablePlaces', e.target.value)}
+                placeholder="Leave empty for no limit"
+              />
+            </label>
+            <label className="inline-form__field">
               <span>MOU status</span>
               <select value={form.mouStatus} onChange={(e) => updateField('mouStatus', e.target.value)}>
                 <option value="pending">Pending</option>
@@ -145,7 +180,7 @@ export default function AdminCompaniesPage() {
             </label>
             <div className="companies-form__actions">
               <button type="submit" className="btn btn--primary" disabled={saving}>
-                {saving ? 'Saving…' : editingId ? 'Update company' : 'Create company'}
+                {saving ? 'Saving...' : editingId ? 'Update company' : 'Create company'}
               </button>
               {editingId && (
                 <button type="button" className="btn btn--ghost" onClick={resetForm}>
