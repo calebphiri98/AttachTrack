@@ -19,7 +19,7 @@ import ResultsReleasePage from '../features/results/pages/ResultsReleasePage';
 import NotificationSettingsPage from '../features/settings/pages/NotificationSettingsPage';
 import PlacementsPage from '../features/placements/pages/PlacementsPage';
 import AssessmentFormsPage from '../features/assessments/pages/AssessmentFormsPage';
-import IndustryAssessmentsPage from '../features/assessments/pages/IndustryAssessmentsPage';
+import AssessmentsListPage from '../features/assessments/pages/AssessmentsListPage';
 import AssessmentFormPage from '../features/assessments/pages/AssessmentFormPage';
 
 export default function AppRoutes() {
@@ -66,7 +66,7 @@ export default function AppRoutes() {
         path="/industry/assessments"
         element={
           <ProtectedRoute roles={['industry_supervisor']}>
-            <IndustryAssessmentsPage />
+            <AssessmentsListPage kind="industry" />
           </ProtectedRoute>
         }
       />
@@ -74,7 +74,7 @@ export default function AppRoutes() {
         path="/industry/assessments/:studentId"
         element={
           <ProtectedRoute roles={['industry_supervisor']}>
-            <AssessmentFormPage />
+            <AssessmentFormPage kind="industry" />
           </ProtectedRoute>
         }
       />
@@ -91,6 +91,22 @@ export default function AppRoutes() {
         element={
           <ProtectedRoute roles={['university_supervisor']}>
             <UniversityStudentDetailPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/university/assessments"
+        element={
+          <ProtectedRoute roles={['university_supervisor']}>
+            <AssessmentsListPage kind="university" />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/university/assessments/:studentId"
+        element={
+          <ProtectedRoute roles={['university_supervisor']}>
+            <AssessmentFormPage kind="university" />
           </ProtectedRoute>
         }
       />
