@@ -6,10 +6,24 @@ const notificationsService = require('../notifications/notifications.service');
 
 const KINDS = ['industry', 'university'];
 
+const KIND_CONFIG = {
+  industry: { column: 'industry_supervisor_id', label: 'industrial supervisor' },
+  university: { column: 'university_supervisor_id', label: 'university supervisor' },
+};
+
 function assertKind(kind) {
   if (!KINDS.includes(kind)) {
     throw new AppError('kind must be industry or university', 400);
   }
+}
+
+function requireKindContext(kind, supervisorContext) {
+  assertKind(kind);
+  const config = KIND_CONFIG[kind];
+  if (!supervisorContext || supervisorContext.column !== config.column) {
+    throw new AppError(`Only ${config.label}s can use this`, 403);
+  }
+  return config;
 }
 
 function parseNumber(value, name, min, max) {
@@ -27,12 +41,6 @@ function parseNumber(value, name, min, max) {
     throw new AppError(`${name} must be at most ${max}`, 400);
   }
   return Math.round(number * 100) / 100;
-}
-
-function requireIndustryContext(supervisorContext) {
-  if (!supervisorContext || supervisorContext.column !== 'industry_supervisor_id') {
-    throw new AppError('Only industrial supervisors can use this', 403);
-  }
 }
 
 async function loadForm(kind) {
@@ -211,8 +219,19 @@ async function confirmForm(kind, userId) {
   return loadForm(kind);
 }
 
-async function listIndustryStudents(supervisorContext) {
-  requireIndustryContext(supervisorContext);
+async function listStudents(kind, supervisorContext) {
+  const config = requireKindContext(kind, supervisorContext);
+
+  const tempClause =
+    kind === 'industry'
+      ? `OR EXISTS (
+             SELECT 1
+             FROM temp_supervisor_assignments t
+             WHERE t.student_id = s.id
+               AND t.industry_supervisor_id = $1
+               AND t.end_date IS NULL
+           )`
+      : '';
 
   const { rows } = await db.query(
     `SELECT s.id AS student_id,
@@ -227,17 +246,11 @@ async function listIndustryStudents(supervisorContext) {
      FROM students s
      LEFT JOIN placements p ON p.student_id = s.id
      LEFT JOIN companies c ON c.id = p.company_id
-     LEFT JOIN assessments a ON a.student_id = s.id AND a.kind = 'industry'
-     WHERE s.industry_supervisor_id = $1
-        OR EXISTS (
-             SELECT 1
-             FROM temp_supervisor_assignments t
-             WHERE t.student_id = s.id
-               AND t.industry_supervisor_id = $1
-               AND t.end_date IS NULL
-           )
+     LEFT JOIN assessments a ON a.student_id = s.id AND a.kind = $2
+     WHERE s.${config.column} = $1
+        ${tempClause}
      ORDER BY s.name`,
-    [supervisorContext.id]
+    [supervisorContext.id, kind]
   );
 
   return rows.map((row) => ({
@@ -247,21 +260,21 @@ async function listIndustryStudents(supervisorContext) {
   }));
 }
 
-async function getIndustryAssessment(studentId, supervisorContext) {
+async function getAssessment(kind, studentId, supervisorContext) {
   requireUuid(studentId, 'studentId');
-  requireIndustryContext(supervisorContext);
+  const config = requireKindContext(kind, supervisorContext);
 
   const student = await studentsService.assertSupervises(
     studentId,
-    'industry_supervisor_id',
+    config.column,
     supervisorContext.id
   );
 
-  const form = await loadForm('industry');
+  const form = await loadForm(kind);
 
   const { rows: assessmentRows } = await db.query(
     'SELECT * FROM assessments WHERE student_id = $1 AND kind = $2',
-    [studentId, 'industry']
+    [studentId, kind]
   );
   const assessment = assessmentRows[0] || null;
 
@@ -328,29 +341,38 @@ async function getIndustryAssessment(studentId, supervisorContext) {
   };
 }
 
-async function notifyAssessmentSubmitted(studentId) {
+async function notifyAssessmentSubmitted(kind, studentId) {
   try {
     const { rows: studentRows } = await db.query('SELECT name FROM students WHERE id = $1', [
       studentId,
     ]);
     const studentName = studentRows[0]?.name || 'a student';
 
-    const { rows: recipients } = await db.query(
-      `SELECT usup.user_id
-       FROM students s
-       JOIN university_supervisors usup ON usup.id = s.university_supervisor_id
-       WHERE s.id = $1
-       UNION
-       SELECT id FROM users WHERE role = 'admin' AND is_active = TRUE`,
-      [studentId]
-    );
+    let recipients;
+    if (kind === 'industry') {
+      const result = await db.query(
+        `SELECT usup.user_id
+         FROM students s
+         JOIN university_supervisors usup ON usup.id = s.university_supervisor_id
+         WHERE s.id = $1
+         UNION
+         SELECT id FROM users WHERE role = 'admin' AND is_active = TRUE`,
+        [studentId]
+      );
+      recipients = result.rows;
+    } else {
+      const result = await db.query(
+        `SELECT id AS user_id FROM users WHERE role = 'admin' AND is_active = TRUE`
+      );
+      recipients = result.rows;
+    }
 
     for (const recipient of recipients) {
       await notificationsService.notifySafe({
         userId: recipient.user_id,
         type: 'assessment_submitted',
         title: `Assessment submitted: ${studentName}`,
-        body: `The industrial supervisor has submitted the assessment for ${studentName}.`,
+        body: `The ${KIND_CONFIG[kind].label} has submitted the assessment for ${studentName}.`,
         relatedId: studentId,
       });
     }
@@ -359,7 +381,8 @@ async function notifyAssessmentSubmitted(studentId) {
   }
 }
 
-async function saveIndustryAssessment({
+async function saveAssessment({
+  kind,
   studentId,
   supervisorContext,
   userId,
@@ -368,16 +391,16 @@ async function saveIndustryAssessment({
   submit,
 }) {
   requireUuid(studentId, 'studentId');
-  requireIndustryContext(supervisorContext);
+  const config = requireKindContext(kind, supervisorContext);
 
-  await studentsService.assertSupervises(studentId, 'industry_supervisor_id', supervisorContext.id);
+  await studentsService.assertSupervises(studentId, config.column, supervisorContext.id);
 
   const cleanComments = optionalString(comments, { max: 3000 });
   if (!Array.isArray(scores)) {
     throw new AppError('scores must be a list', 400);
   }
 
-  const form = await loadForm('industry');
+  const form = await loadForm(kind);
   const active = new Map(
     form.criteria.filter((criterion) => criterion.is_active).map((criterion) => [criterion.id, criterion])
   );
@@ -417,14 +440,14 @@ async function saveIndustryAssessment({
 
   const { rows: assessmentRows } = await db.query(
     `INSERT INTO assessments (student_id, kind, assessor_user_id, comments, status)
-     VALUES ($1, 'industry', $2, $3, 'draft')
+     VALUES ($1, $2, $3, $4, 'draft')
      ON CONFLICT (student_id, kind)
      DO UPDATE SET assessor_user_id = EXCLUDED.assessor_user_id,
                    comments = EXCLUDED.comments,
                    updated_at = now()
      WHERE assessments.status = 'draft'
      RETURNING *`,
-    [studentId, userId, cleanComments]
+    [studentId, kind, userId, cleanComments]
   );
 
   if (assessmentRows.length === 0) {
@@ -456,7 +479,7 @@ async function saveIndustryAssessment({
   }
 
   if (!submit) {
-    return getIndustryAssessment(studentId, supervisorContext);
+    return getAssessment(kind, studentId, supervisorContext);
   }
 
   await db.query(
@@ -481,8 +504,8 @@ async function saveIndustryAssessment({
     throw new AppError('This assessment has already been submitted', 409);
   }
 
-  await notifyAssessmentSubmitted(studentId);
-  return getIndustryAssessment(studentId, supervisorContext);
+  await notifyAssessmentSubmitted(kind, studentId);
+  return getAssessment(kind, studentId, supervisorContext);
 }
 
 module.exports = {
@@ -492,7 +515,7 @@ module.exports = {
   updateCriterion,
   deleteCriterion,
   confirmForm,
-  listIndustryStudents,
-  getIndustryAssessment,
-  saveIndustryAssessment,
+  listStudents,
+  getAssessment,
+  saveAssessment,
 };
