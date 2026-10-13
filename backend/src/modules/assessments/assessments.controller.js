@@ -44,24 +44,26 @@ const confirmForm = asyncHandler(async (req, res) => {
   res.status(200).json({ success: true, data: form });
 });
 
-const listIndustryStudents = asyncHandler(async (req, res) => {
+const listStudents = asyncHandler(async (req, res) => {
   const supervisorContext = await resolveSupervisorContext(req.user);
-  const students = await assessmentsService.listIndustryStudents(supervisorContext);
+  const students = await assessmentsService.listStudents(req.params.kind, supervisorContext);
   res.status(200).json({ success: true, data: students });
 });
 
-const getIndustryAssessment = asyncHandler(async (req, res) => {
+const getAssessment = asyncHandler(async (req, res) => {
   const supervisorContext = await resolveSupervisorContext(req.user);
-  const result = await assessmentsService.getIndustryAssessment(
+  const result = await assessmentsService.getAssessment(
+    req.params.kind,
     req.params.studentId,
     supervisorContext
   );
   res.status(200).json({ success: true, data: result });
 });
 
-const saveIndustryAssessment = asyncHandler(async (req, res) => {
+const saveAssessment = asyncHandler(async (req, res) => {
   const supervisorContext = await resolveSupervisorContext(req.user);
-  const result = await assessmentsService.saveIndustryAssessment({
+  const result = await assessmentsService.saveAssessment({
+    kind: req.params.kind,
     studentId: req.params.studentId,
     supervisorContext,
     userId: req.user.id,
@@ -79,7 +81,7 @@ module.exports = {
   updateCriterion,
   deleteCriterion,
   confirmForm,
-  listIndustryStudents,
-  getIndustryAssessment,
-  saveIndustryAssessment,
+  listStudents,
+  getAssessment,
+  saveAssessment,
 };
