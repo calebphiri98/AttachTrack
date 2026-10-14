@@ -195,20 +195,11 @@ export default function AdminDashboardPage() {
           {dashboard.students.length === 0 ? (
             <p className="admin-empty">No students registered yet.</p>
           ) : (
-            <div className="data-table-wrap">
-              <table className="data-table">
-                <colgroup>
-                  <col style={{ width: '16%' }} />
-                  <col style={{ width: '20%' }} />
-                  <col style={{ width: '12%' }} />
-                  <col style={{ width: '12%' }} />
-                  <col style={{ width: '8%' }} />
-                  <col style={{ width: '32%' }} />
-                </colgroup>
+            <div className="data-table-wrap admin-table-wrap">
+              <table className="data-table data-table--stack admin-table admin-table--students">
                 <thead>
                   <tr>
                     <th>Student</th>
-                    <th>Email</th>
                     <th>Industry</th>
                     <th>University</th>
                     <th>Grade</th>
@@ -219,38 +210,50 @@ export default function AdminDashboardPage() {
                   {dashboard.students.map((student) => (
                     <tr key={student.id}>
                       <td data-label="Student">
-                        <div>
-                          <div style={{ fontWeight: 700 }}>{student.name}</div>
-                          <div style={{ color: 'var(--muted)', fontSize: 12 }}>{student.link_status}</div>
+                        <div className="admin-person">
+                          <div className="admin-person__name">
+                            {student.name}
+                            <span
+                              className={`admin-pill ${student.link_status === 'linked' ? 'admin-pill--ok' : 'admin-pill--neutral'}`}
+                            >
+                              {student.link_status}
+                            </span>
+                          </div>
+                          <div className="admin-person__sub">{student.email}</div>
                         </div>
                       </td>
-                      <td data-label="Email">{student.email}</td>
                       <td data-label="Industry">
                         {student.industry_supervisor_id ? (
-                          <div>
-                            <div style={{ fontWeight: 700 }}>{student.industry_supervisor_name}</div>
-                            <div style={{ color: 'var(--muted)', fontSize: 12 }}>
+                          <div className="admin-person">
+                            <div className="admin-person__name">{student.industry_supervisor_name}</div>
+                            <div className="admin-person__sub">
                               {student.industry_company_name || 'No company'}
                             </div>
                           </div>
                         ) : (
-                          'Unassigned'
+                          <span className="admin-unassigned">Unassigned</span>
                         )}
                       </td>
                       <td data-label="University">
                         {student.university_supervisor_id ? (
-                          <div>
-                            <div style={{ fontWeight: 700 }}>{student.university_supervisor_name}</div>
-                            <div style={{ color: 'var(--muted)', fontSize: 12 }}>
+                          <div className="admin-person">
+                            <div className="admin-person__name">{student.university_supervisor_name}</div>
+                            <div className="admin-person__sub">
                               {student.university_department || 'No department'}
                             </div>
                           </div>
                         ) : (
-                          'Unassigned'
+                          <span className="admin-unassigned">Unassigned</span>
                         )}
                       </td>
-                      <td data-label="Grade">{student.current_grade || 'Not graded'}</td>
-                      <td className="data-table__full">
+                      <td data-label="Grade">
+                        {student.current_grade ? (
+                          <span className="admin-grade">{student.current_grade}</span>
+                        ) : (
+                          <span className="admin-unassigned">Not graded</span>
+                        )}
+                      </td>
+                      <td className="data-table__full" data-label="Assignments">
                         <AssignmentCell
                           key={`${student.id}-${student.industry_supervisor_id}-${student.university_supervisor_id}`}
                           student={student}
