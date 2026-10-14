@@ -37,3 +37,126 @@
   overflow-wrap: anywhere;
   word-break: break-all;
 }
+
+.data-table-wrap,
+.table-scroll {
+  width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  border-radius: var(--radius);
+}
+
+.inline-form__field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--ink-soft);
+}
+
+.inline-form__field input,
+.inline-form__field select {
+  width: 100%;
+}
+
+.portal-layout input:not([type='checkbox']):not([type='radio']):not([type='file']):not([type='range']),
+.portal-layout select,
+.portal-layout textarea {
+  min-height: 40px;
+  max-width: 100%;
+  padding: 8px 12px;
+  border: 1.5px solid var(--line);
+  border-radius: 8px;
+  background: var(--paper);
+  color: var(--ink);
+  font-size: 0.9rem;
+  line-height: 1.3;
+}
+
+.portal-layout input:focus,
+.portal-layout select:focus,
+.portal-layout textarea:focus {
+  outline: none;
+  border-color: var(--blue);
+  box-shadow: 0 0 0 3px var(--blue-soft);
+}
+
+.filter-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.filter-bar label {
+  display: flex;
+  flex: 1 1 180px;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--ink-soft);
+}
+
+.filter-bar input,
+.filter-bar select {
+  width: 100%;
+}
+
+@media (max-width: 640px) {
+  .portal-layout input:not([type='checkbox']):not([type='radio']):not([type='file']):not([type='range']),
+  .portal-layout select,
+  .portal-layout textarea {
+    font-size: 16px;
+  }
+
+  .data-table--stack {
+    display: block;
+    min-width: 0;
+    background: transparent;
+  }
+
+  .data-table--stack thead {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+  }
+
+  .data-table--stack tbody,
+  .data-table--stack tr,
+  .data-table--stack td {
+    display: block;
+  }
+
+  .data-table--stack tbody tr {
+    margin-bottom: 12px;
+    padding: 6px 0;
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    background: var(--paper-raised);
+  }
+
+  .data-table--stack td {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 16px;
+    padding: 8px 14px;
+    text-align: right;
+    overflow-wrap: anywhere;
+  }
+
+  .data-table--stack td::before {
+    content: attr(data-label);
+    flex-shrink: 0;
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: var(--muted);
+    text-align: left;
+  }
+}
