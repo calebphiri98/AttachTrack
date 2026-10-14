@@ -276,8 +276,8 @@ export default function ResultsCompilePage() {
           {visible.length === 0 ? (
             <p className="assess-empty">No students match.</p>
           ) : (
-            <div className="assess-table-wrap">
-              <table className="assess-table">
+            <div className="assess-table-wrap assess-table-wrap--stack">
+              <table className="assess-table assess-table--stack">
                 <thead>
                   <tr>
                     <th>Student</th>
@@ -293,26 +293,32 @@ export default function ResultsCompilePage() {
                     const rowBusy = busy === `row:${row.student_id}`;
                     return (
                       <tr key={row.student_id}>
-                        <td>
-                          <div style={{ fontWeight: 600 }}>{row.name}</div>
-                          <div className="assess-table__muted">{row.programme || row.email}</div>
+                        <td data-label="Student">
+                          <div>
+                            <div style={{ fontWeight: 600 }}>{row.name}</div>
+                            <div className="assess-table__muted">{row.programme || row.email}</div>
+                          </div>
                         </td>
-                        <td>
+                        <td data-label="Industrial">
                           <AssessmentCell assessment={row.industry} />
                         </td>
-                        <td>
+                        <td data-label="University">
                           <AssessmentCell assessment={row.university} />
                         </td>
-                        <td>{row.result ? percentText(row.result.final_percent) : '-'}</td>
-                        <td>
-                          <span className={`assess-chip assess-chip--${STAGE_CHIPS[row.stage]}`}>
-                            {STAGE_LABELS[row.stage]}
-                          </span>
-                          {row.needs_recompile && (
-                            <div className="assess-table__muted">An assessment changed. Recompile.</div>
-                          )}
+                        <td data-label="Final result">
+                          {row.result ? percentText(row.result.final_percent) : '-'}
                         </td>
-                        <td>
+                        <td data-label="Stage">
+                          <div>
+                            <span className={`assess-chip assess-chip--${STAGE_CHIPS[row.stage]}`}>
+                              {STAGE_LABELS[row.stage]}
+                            </span>
+                            {row.needs_recompile && (
+                              <div className="assess-table__muted">An assessment changed. Recompile.</div>
+                            )}
+                          </div>
+                        </td>
+                        <td data-label="Action">
                           {row.stage === 'incomplete' && (
                             <div>
                               <button
