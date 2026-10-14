@@ -34,11 +34,9 @@ async function listStudents() {
             u.id AS university_supervisor_id,
             uu.name AS university_supervisor_name,
             u.department AS university_department,
-            (SELECT g.grade_value
-             FROM grades g
-             WHERE g.student_id = s.id
-             ORDER BY g.updated_at DESC
-             LIMIT 1) AS current_grade,
+            (SELECT r.final_percent
+             FROM results r
+             WHERE r.student_id = s.id) AS current_grade,
             (SELECT COUNT(*)
              FROM attendance a
              WHERE a.student_id = s.id) AS attendance_count,
