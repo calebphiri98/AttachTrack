@@ -55,6 +55,7 @@
   display: flex;
   flex-direction: column;
   gap: 6px;
+  min-width: 0;
   font-size: 0.82rem;
   font-weight: 600;
   color: var(--ink-soft);
@@ -88,6 +89,7 @@
 
 .assess-table-wrap {
   overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
   border: 1px solid var(--line);
   border-radius: var(--radius);
   background: var(--paper);
@@ -252,7 +254,64 @@
     padding: 16px;
   }
 
+  .assess-grid {
+    grid-template-columns: 1fr;
+  }
+
   .assess-criterion {
     grid-template-columns: 1fr;
+  }
+
+  .assess-table-wrap--stack {
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+    overflow-x: visible;
+  }
+
+  .assess-table--stack {
+    display: block;
+  }
+
+  .assess-table--stack thead {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+  }
+
+  .assess-table--stack tbody,
+  .assess-table--stack tr,
+  .assess-table--stack td {
+    display: block;
+  }
+
+  .assess-table--stack tbody tr {
+    margin-bottom: 12px;
+    padding: 6px 0;
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    background: var(--paper);
+  }
+
+  .assess-table--stack td {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 16px;
+    padding: 8px 14px;
+    border-top: 0;
+    text-align: right;
+    overflow-wrap: anywhere;
+  }
+
+  .assess-table--stack td::before {
+    content: attr(data-label);
+    flex-shrink: 0;
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: var(--muted);
+    text-align: left;
   }
 }
