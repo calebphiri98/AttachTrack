@@ -1,5 +1,6 @@
 ﻿const db = require('../../config/db');
 const notificationsService = require('../notifications/notifications.service');
+const attendanceService = require('../attendance/attendance.service');
 
 const MAX_NAMES_LISTED = 10;
 
@@ -47,6 +48,11 @@ async function checkMissedSubmissions() {
 }
 
 async function checkMissedAttendance() {
+  const reminderDays = await attendanceService.getSettingNumber('attendance_reminder_days', 7);
+  if (reminderDays <= 0) {
+    return { checked: 0, notified: 0 };
+  }
+
   const { rows } = await db.query(
     `SELECT u.id AS user_id,
             array_agg(DISTINCT st.name ORDER BY st.name) AS student_names
@@ -62,19 +68,22 @@ async function checkMissedAttendance() {
               AND (t.end_date IS NULL OR t.end_date >= CURRENT_DATE)
           )
      JOIN users u ON u.id = isup.user_id AND u.is_active = TRUE
+     LEFT JOIN LATERAL (
+       SELECT MAX(a.attendance_date) AS last_date
+       FROM attendance a
+       WHERE a.student_id = st.id
+     ) la ON TRUE
      WHERE st.user_id IS NOT NULL
+       AND COALESCE(la.last_date, st.created_at::date) <= CURRENT_DATE - $1::int
        AND NOT EXISTS (
-         SELECT 1 FROM attendance a
-         WHERE a.student_id = st.id
-           AND a.week_start_date = date_trunc('week', CURRENT_DATE)::date
-       )
-       AND NOT EXISTS (
-         SELECT 1 FROM notifications n
+         SELECT 1
+         FROM notifications n
          WHERE n.user_id = u.id
            AND n.type = 'missed_attendance'
-           AND n.created_at >= date_trunc('week', now())
+           AND n.created_at >= now() - make_interval(days => $1::int)
        )
-     GROUP BY u.id`
+     GROUP BY u.id`,
+    [reminderDays]
   );
 
   let notifiedCount = 0;
@@ -89,8 +98,8 @@ async function checkMissedAttendance() {
     const sent = await notificationsService.notifySafe({
       userId: row.user_id,
       type: 'missed_attendance',
-      title: 'Attendance not marked',
-      body: `${count} student${count === 1 ? ' has' : 's have'} no attendance recorded for this week: ${listed}${suffix}.`,
+      title: 'Attendance not recorded',
+      body: `${count} student${count === 1 ? ' has' : 's have'} had no attendance recorded for ${reminderDays} days or more: ${listed}${suffix}.`,
     });
 
     if (sent) {
