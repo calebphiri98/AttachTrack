@@ -5,6 +5,8 @@
 }
 
 .portal-layout__topbar {
+  position: relative;
+  z-index: 40;
   background: var(--navy);
   color: var(--on-navy);
   border-bottom: 3px solid var(--gold);
@@ -80,6 +82,18 @@
 .portal-layout__nav-link--active {
   color: var(--on-navy);
   border-bottom-color: var(--gold-bright);
+}
+
+.portal-layout__panel-account {
+  display: none;
+}
+
+.portal-layout__backdrop {
+  display: none;
+}
+
+.portal-layout__toggle {
+  display: none;
 }
 
 .portal-layout__account {
@@ -191,36 +205,149 @@
   }
 }
 
-@media (max-width: 640px) {
+@media (max-width: 768px) {
   .portal-layout__topbar-inner {
     grid-template-columns: minmax(0, 1fr) auto;
-    grid-template-areas:
-      'brand account'
-      'nav nav';
-    row-gap: 8px;
-    padding: 10px 16px 0;
+    grid-template-areas: 'brand account';
+    padding: 10px 16px;
   }
 
-  .portal-layout__role {
+  .portal-layout__role,
+  .portal-layout__logout--desktop {
     display: none;
   }
 
-  .portal-layout__logout {
-    padding: 6px 12px;
+  .portal-layout__account {
+    gap: 8px;
+  }
+
+  .portal-layout__toggle {
+    display: inline-flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    gap: 5px;
+    width: 42px;
+    height: 42px;
+    padding: 0;
+    border: 1.5px solid rgba(255, 255, 255, 0.4);
+    border-radius: 8px;
+    background: transparent;
+    cursor: pointer;
+    transition: background 0.15s ease;
+  }
+
+  .portal-layout__toggle:hover,
+  .portal-layout__toggle--open {
+    background: rgba(255, 255, 255, 0.12);
+  }
+
+  .portal-layout__toggle-bar {
+    display: block;
+    width: 20px;
+    height: 2px;
+    border-radius: 2px;
+    background: var(--on-navy);
+    transition:
+      transform 0.2s ease,
+      opacity 0.2s ease;
+  }
+
+  .portal-layout__toggle--open .portal-layout__toggle-bar:nth-child(1) {
+    transform: translateY(7px) rotate(45deg);
+  }
+
+  .portal-layout__toggle--open .portal-layout__toggle-bar:nth-child(2) {
+    opacity: 0;
+  }
+
+  .portal-layout__toggle--open .portal-layout__toggle-bar:nth-child(3) {
+    transform: translateY(-7px) rotate(-45deg);
   }
 
   .portal-layout__nav {
-    margin: 0 -16px;
-    padding: 0 16px;
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    z-index: 50;
+    grid-area: auto;
+    flex-direction: column;
+    align-items: stretch;
     gap: 0;
-    border-top: 1px solid rgba(255, 255, 255, 0.16);
+    padding: 6px 16px 16px;
+    background: var(--navy);
+    border-bottom: 3px solid var(--gold);
+    box-shadow: 0 18px 32px -12px rgba(0, 20, 50, 0.55);
+    max-height: calc(100vh - 70px);
+    overflow-y: auto;
+    visibility: hidden;
+    opacity: 0;
+    transform: translateY(-8px);
+    pointer-events: none;
+    transition:
+      opacity 0.18s ease,
+      transform 0.18s ease,
+      visibility 0.18s;
+  }
+
+  .portal-layout__nav--open {
+    visibility: visible;
+    opacity: 1;
+    transform: translateY(0);
+    pointer-events: auto;
   }
 
   .portal-layout__nav-link {
-    flex: 1 1 0;
-    text-align: center;
-    padding: 12px 4px;
-    border-bottom-width: 3px;
+    padding: 14px 12px;
+    font-size: 1rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+    border-left: 3px solid transparent;
+  }
+
+  .portal-layout__nav-link--active {
+    border-bottom-color: rgba(255, 255, 255, 0.12);
+    border-left-color: var(--gold-bright);
+    background: rgba(255, 255, 255, 0.07);
+  }
+
+  .portal-layout__panel-account {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 16px 12px 0;
+  }
+
+  .portal-layout__panel-identity {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+  }
+
+  .portal-layout__panel-name {
+    font-size: 0.95rem;
+    font-weight: 600;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .portal-layout__panel-role {
+    font-family: var(--font-mono);
+    font-size: 0.68rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--on-navy-muted);
+  }
+
+  .portal-layout__backdrop {
+    display: block;
+    position: fixed;
+    inset: 0;
+    z-index: 45;
+    background: rgba(0, 20, 50, 0.45);
   }
 
   .portal-layout__content {
