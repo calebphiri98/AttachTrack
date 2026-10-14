@@ -195,8 +195,8 @@ export default function ResultsApprovePage() {
               {rows.length === 0 ? 'No results have been sent to you yet.' : 'No results match.'}
             </p>
           ) : (
-            <div className="assess-table-wrap">
-              <table className="assess-table">
+            <div className="assess-table-wrap assess-table-wrap--stack">
+              <table className="assess-table assess-table--stack">
                 <thead>
                   <tr>
                     <th>Student</th>
@@ -212,24 +212,28 @@ export default function ResultsApprovePage() {
                     const rowBusy = busy === `row:${row.id}`;
                     return (
                       <tr key={row.id}>
-                        <td>
-                          <div style={{ fontWeight: 600 }}>{row.name}</div>
-                          <div className="assess-table__muted">{row.programme || row.email}</div>
-                        </td>
-                        <td>{row.industry_percent}%</td>
-                        <td>{row.university_percent}%</td>
-                        <td>
-                          <div style={{ fontWeight: 600 }}>{row.final_percent}%</div>
-                          <div className="assess-table__muted">
-                            {row.industry_weight}% + {row.university_weight}% weights
+                        <td data-label="Student">
+                          <div>
+                            <div style={{ fontWeight: 600 }}>{row.name}</div>
+                            <div className="assess-table__muted">{row.programme || row.email}</div>
                           </div>
                         </td>
-                        <td>
+                        <td data-label="Industrial">{row.industry_percent}%</td>
+                        <td data-label="University">{row.university_percent}%</td>
+                        <td data-label="Final result">
+                          <div>
+                            <div style={{ fontWeight: 600 }}>{row.final_percent}%</div>
+                            <div className="assess-table__muted">
+                              {row.industry_weight}% + {row.university_weight}% weights
+                            </div>
+                          </div>
+                        </td>
+                        <td data-label="Status">
                           <span className={`assess-chip assess-chip--${STAGE_CHIPS[row.stage]}`}>
                             {STAGE_LABELS[row.stage]}
                           </span>
                         </td>
-                        <td>
+                        <td data-label="Action">
                           {row.stage === 'awaiting' && (
                             <button
                               type="button"
