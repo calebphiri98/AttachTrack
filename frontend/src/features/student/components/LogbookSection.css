@@ -1,0 +1,113 @@
+.logbook-error {
+  margin: 0 0 16px;
+  padding: 10px 14px;
+  border-radius: 8px;
+  background: var(--error-soft);
+  color: var(--error);
+  font-size: 0.9rem;
+}
+
+.logbook-loading {
+  color: var(--muted);
+}
+
+.logbook-form {
+  display: grid;
+  gap: 14px;
+  margin-bottom: 24px;
+  padding-bottom: 24px;
+  border-bottom: 1px solid var(--line);
+}
+
+.logbook-form__field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--ink-soft);
+}
+
+.logbook-form__field input:not([type='file']),
+.logbook-form__field textarea {
+  width: 100%;
+}
+
+.logbook-form__field textarea {
+  resize: vertical;
+  line-height: 1.5;
+}
+
+.logbook-form__field input[type='file'] {
+  width: 100%;
+  max-width: 100%;
+  padding: 8px;
+  border: 1.5px dashed var(--line);
+  border-radius: 8px;
+  background: var(--paper);
+  font-size: 0.85rem;
+}
+
+.logbook-form__actions .stamp-button {
+  width: auto;
+  padding: 10px 24px;
+}
+
+.logbook-list {
+  display: grid;
+  gap: 12px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.logbook-entry {
+  padding: 14px 16px;
+  border: 1px solid var(--line);
+  border-left: 3px solid var(--gold);
+  border-radius: var(--radius);
+  background: var(--paper);
+  min-width: 0;
+}
+
+.logbook-entry__head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px 12px;
+  margin-bottom: 8px;
+}
+
+.logbook-entry__date {
+  font-family: var(--font-display);
+  font-size: 1rem;
+  color: var(--navy);
+}
+
+.logbook-entry__link {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--blue-text);
+}
+
+.logbook-entry__activity,
+.logbook-entry__notes {
+  margin: 0;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  line-height: 1.5;
+}
+
+.logbook-entry__notes {
+  margin-top: 8px;
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+
+@media (max-width: 640px) {
+  .logbook-form__actions .stamp-button {
+    width: 100%;
+  }
+}
