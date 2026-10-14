@@ -23,6 +23,7 @@ const notificationsRoutes = require('./modules/notifications/notifications.route
 const cronRoutes = require('./modules/cron/cron.routes');
 const placementsRoutes = require('./modules/placements/placements.routes');
 const assessmentsRoutes = require('./modules/assessments/assessments.routes');
+const resultsRoutes = require('./modules/results/results.routes');
 
 const app = express();
 
@@ -57,6 +58,7 @@ app.use('/api/notifications', notificationsRoutes);
 app.use('/api/cron', cronRoutes);
 app.use('/api/placements', placementsRoutes);
 app.use('/api/assessments', assessmentsRoutes);
+app.use('/api/results', resultsRoutes);
 
 app.use((req, res, next) => {
   next(new AppError(`Route not found: ${req.method} ${req.originalUrl}`, 404));
