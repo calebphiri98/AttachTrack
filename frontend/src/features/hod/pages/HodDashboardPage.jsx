@@ -67,12 +67,11 @@ export default function HodDashboardPage() {
           {dashboard.students.length === 0 ? (
             <p className="admin-empty">No students registered yet.</p>
           ) : (
-            <div className="data-table-wrap">
-              <table className="data-table">
+            <div className="data-table-wrap admin-table-wrap">
+              <table className="data-table data-table--stack admin-table admin-table--hod">
                 <thead>
                   <tr>
                     <th>Student</th>
-                    <th>Email</th>
                     <th>Industry</th>
                     <th>University</th>
                     <th>Grade</th>
@@ -82,19 +81,49 @@ export default function HodDashboardPage() {
                   {dashboard.students.map((student) => (
                     <tr key={student.id}>
                       <td data-label="Student">
-                        <div>
-                          <div style={{ fontWeight: 700 }}>{student.name}</div>
-                          <div style={{ color: 'var(--muted)', fontSize: 12 }}>{student.link_status}</div>
+                        <div className="admin-person">
+                          <div className="admin-person__name">
+                            {student.name}
+                            <span
+                              className={`admin-pill ${student.link_status === 'linked' ? 'admin-pill--ok' : 'admin-pill--neutral'}`}
+                            >
+                              {student.link_status}
+                            </span>
+                          </div>
+                          <div className="admin-person__sub">{student.email}</div>
                         </div>
                       </td>
-                      <td data-label="Email">{student.email}</td>
                       <td data-label="Industry">
-                        {student.industry_supervisor_name || (student.industry_supervisor_id ? 'Assigned' : 'Unassigned')}
+                        {student.industry_supervisor_id ? (
+                          <div className="admin-person">
+                            <div className="admin-person__name">{student.industry_supervisor_name}</div>
+                            <div className="admin-person__sub">
+                              {student.industry_company_name || 'No company'}
+                            </div>
+                          </div>
+                        ) : (
+                          <span className="admin-unassigned">Unassigned</span>
+                        )}
                       </td>
                       <td data-label="University">
-                        {student.university_supervisor_name || (student.university_supervisor_id ? 'Assigned' : 'Unassigned')}
+                        {student.university_supervisor_id ? (
+                          <div className="admin-person">
+                            <div className="admin-person__name">{student.university_supervisor_name}</div>
+                            <div className="admin-person__sub">
+                              {student.university_department || 'No department'}
+                            </div>
+                          </div>
+                        ) : (
+                          <span className="admin-unassigned">Unassigned</span>
+                        )}
                       </td>
-                      <td data-label="Grade">{student.current_grade || 'Not graded'}</td>
+                      <td data-label="Grade">
+                        {student.current_grade ? (
+                          <span className="admin-grade">{student.current_grade}</span>
+                        ) : (
+                          <span className="admin-unassigned">Not graded</span>
+                        )}
+                      </td>
                     </tr>
                   ))}
                 </tbody>

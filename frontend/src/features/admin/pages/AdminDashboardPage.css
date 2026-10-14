@@ -315,6 +315,30 @@
   .admin-table--students th:nth-child(5) {
     width: 29%;
   }
+
+  .data-table.admin-table--hod {
+    min-width: 760px;
+  }
+
+  .admin-table--hod td {
+    vertical-align: top;
+  }
+
+  .admin-table--hod th:nth-child(1) {
+    width: 34%;
+  }
+
+  .admin-table--hod th:nth-child(2) {
+    width: 26%;
+  }
+
+  .admin-table--hod th:nth-child(3) {
+    width: 26%;
+  }
+
+  .admin-table--hod th:nth-child(4) {
+    width: 14%;
+  }
 }
 
 @media (max-width: 900px) {
