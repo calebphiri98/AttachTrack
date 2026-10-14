@@ -1,23 +1,5 @@
 import { useState } from 'react';
 
-const selectStyle = {
-  width: '100%',
-  padding: '10px 12px',
-  borderRadius: 8,
-  border: '1px solid var(--border, #d5d9e0)',
-  background: 'var(--surface, #ffffff)',
-  color: 'var(--ink)',
-  fontSize: 14,
-};
-
-const fieldStyle = {
-  display: 'flex',
-  flexDirection: 'column',
-  gap: 4,
-  fontSize: 12,
-  color: 'var(--muted)',
-};
-
 function visibleOptions(options, currentId) {
   return options.filter((option) => option.is_active || option.id === currentId);
 }
@@ -55,15 +37,10 @@ export default function AssignmentCell({
   }
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-      <label style={fieldStyle}>
+    <div className="admin-assign">
+      <label className="admin-assign__field">
         <span>Industry supervisor</span>
-        <select
-          style={selectStyle}
-          value={industryId}
-          onChange={(e) => setIndustryId(e.target.value)}
-          disabled={saving}
-        >
+        <select value={industryId} onChange={(e) => setIndustryId(e.target.value)} disabled={saving}>
           <option value="">No industry supervisor</option>
           {visibleOptions(industrySupervisors, currentIndustry).map((option) => (
             <option key={option.id} value={option.id}>
@@ -73,14 +50,9 @@ export default function AssignmentCell({
         </select>
       </label>
 
-      <label style={fieldStyle}>
+      <label className="admin-assign__field">
         <span>University supervisor</span>
-        <select
-          style={selectStyle}
-          value={universityId}
-          onChange={(e) => setUniversityId(e.target.value)}
-          disabled={saving}
-        >
+        <select value={universityId} onChange={(e) => setUniversityId(e.target.value)} disabled={saving}>
           <option value="">No university supervisor</option>
           {visibleOptions(universitySupervisors, currentUniversity).map((option) => (
             <option key={option.id} value={option.id}>
