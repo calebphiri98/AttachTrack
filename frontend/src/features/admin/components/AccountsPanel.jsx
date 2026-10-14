@@ -79,7 +79,7 @@ export default function AccountsPanel({ refreshKey }) {
         Deactivated accounts cannot log in. Their records are kept.
       </p>
 
-      <div className="admin-form">
+      <div className="admin-toolbar">
         <label className="inline-form__field">
           <span>Search</span>
           <input
@@ -105,8 +105,8 @@ export default function AccountsPanel({ refreshKey }) {
       {!loading && visible.length === 0 && <p className="admin-empty">No accounts match.</p>}
 
       {visible.length > 0 && (
-        <div className="data-table-wrap">
-          <table className="data-table">
+        <div className="data-table-wrap admin-table-wrap">
+          <table className="data-table data-table--stack admin-table admin-table--accounts">
             <thead>
               <tr>
                 <th>Name</th>
@@ -121,15 +121,20 @@ export default function AccountsPanel({ refreshKey }) {
                 const isSelf = account.id === user?.id;
                 return (
                   <tr key={account.id}>
-                    <td data-label="Name">{account.name}</td>
-                    <td data-label="Email">{account.email}</td>
-                    <td data-label="Role">{ROLE_LABELS[account.role] || account.role}</td>
+                    <td data-label="Name" className="admin-cell-strong">
+                      {account.name}
+                    </td>
+                    <td data-label="Email" className="admin-cell-muted">
+                      {account.email}
+                    </td>
+                    <td data-label="Role">
+                      <span className="admin-pill admin-pill--role">
+                        {ROLE_LABELS[account.role] || account.role}
+                      </span>
+                    </td>
                     <td data-label="Status">
                       <span
-                        style={{
-                          fontWeight: 700,
-                          color: account.is_active ? 'var(--stamp)' : 'var(--error)',
-                        }}
+                        className={`admin-pill ${account.is_active ? 'admin-pill--ok' : 'admin-pill--bad'}`}
                       >
                         {account.is_active ? 'Active' : 'Deactivated'}
                       </span>
@@ -137,8 +142,7 @@ export default function AccountsPanel({ refreshKey }) {
                     <td data-label="Action">
                       <button
                         type="button"
-                        className={account.is_active ? 'btn' : 'btn btn--primary'}
-                        style={account.is_active ? { color: 'var(--error)' } : undefined}
+                        className={account.is_active ? 'btn btn--danger' : 'btn btn--primary'}
                         onClick={() => handleToggle(account)}
                         disabled={busyId === account.id || isSelf}
                         title={isSelf ? 'You cannot deactivate your own account' : undefined}
