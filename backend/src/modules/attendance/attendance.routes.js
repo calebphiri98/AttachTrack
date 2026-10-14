@@ -5,11 +5,12 @@ const requireRole = require('../../middleware/requireRole');
 
 const router = express.Router();
 
+router.get('/students', auth, requireRole('industry_supervisor'), attendanceController.listMyStudents);
 router.post('/', auth, requireRole('industry_supervisor'), attendanceController.mark);
 router.get(
   '/student/:studentId',
   auth,
-  requireRole('student', 'industry_supervisor', 'university_supervisor'),
+  requireRole('student', 'industry_supervisor', 'university_supervisor', 'admin', 'hod'),
   attendanceController.listForStudent
 );
 
