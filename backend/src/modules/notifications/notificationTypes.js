@@ -1,5 +1,19 @@
 const NOTIFICATION_TYPES = [
   {
+    type: 'results_ready',
+    label: 'Results ready for approval',
+    description: 'The Coordinator sent compiled results for your approval.',
+    roles: ['hod'],
+    defaults: { inApp: true, email: true },
+  },
+  {
+    type: 'assessment_reminder',
+    label: 'Assessment reminder',
+    description: 'The Coordinator asked you to complete a pending student assessment.',
+    roles: ['industry_supervisor', 'university_supervisor'],
+    defaults: { inApp: true, email: true },
+  },
+  {
     type: 'assessment_submitted',
     label: 'Assessment submitted',
     description: 'An industrial supervisor submitted an assessment for a student.',
@@ -50,8 +64,8 @@ const NOTIFICATION_TYPES = [
   },
   {
     type: 'missed_attendance',
-    label: 'Attendance not marked',
-    description: 'Students you supervise have no attendance recorded for this week.',
+    label: 'Attendance not recorded',
+    description: 'Students you supervise have had no attendance recorded for several days.',
     roles: ['industry_supervisor'],
     defaults: { inApp: true, email: true },
   },
