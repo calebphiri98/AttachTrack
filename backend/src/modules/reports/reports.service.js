@@ -24,15 +24,18 @@ async function generateStudentCsv(studentId, requester) {
   }
 
   const { rows: attendanceRows } = await db.query(
-    `SELECT week_start_date, status, notes FROM attendance WHERE student_id = $1 ORDER BY week_start_date DESC`,
+    `SELECT to_char(attendance_date, 'YYYY-MM-DD') AS attendance_date, status, reason, notes
+     FROM attendance
+     WHERE student_id = $1
+     ORDER BY attendance_date DESC`,
     [studentId]
   );
   const { rows: feedbackRows } = await db.query(
     `SELECT content, flagged_concern, created_at FROM feedback WHERE student_id = $1 ORDER BY created_at DESC`,
     [studentId]
   );
-  const { rows: gradeRows } = await db.query(
-    `SELECT grade_value, comments, updated_at FROM grades WHERE student_id = $1`,
+  const { rows: resultRows } = await db.query(
+    `SELECT final_percent FROM results WHERE student_id = $1 AND released_at IS NOT NULL`,
     [studentId]
   );
   const { rows: submissionRows } = await db.query(
@@ -40,15 +43,15 @@ async function generateStudentCsv(studentId, requester) {
     [studentId]
   );
 
-  const grade = gradeRows[0] || {};
-  const header = ['Student', 'Email', 'Status', 'Industry Supervisor', 'University Supervisor', 'Grade', 'Attendance', 'Submissions', 'Feedback'];
+  const finalResult = resultRows[0] ? resultRows[0].final_percent : '';
+  const header = ['Student', 'Email', 'Status', 'Industry Supervisor', 'University Supervisor', 'Final result (%)', 'Attendance days recorded', 'Submissions', 'Feedback'];
   const body = [
     student.name,
     student.email,
     student.link_status,
     student.industry_supervisor_id || '',
     student.university_supervisor_id || '',
-    grade.grade_value || '',
+    finalResult,
     attendanceRows.length,
     submissionRows.length,
     feedbackRows.length,
@@ -59,8 +62,10 @@ async function generateStudentCsv(studentId, requester) {
     body.map(toCsvValue).join(','),
     '',
     'Attendance records',
-    'week_start_date,status,notes',
-    ...attendanceRows.map((row) => [row.week_start_date, row.status, row.notes || ''].map(toCsvValue).join(',')),
+    'attendance_date,status,reason,notes',
+    ...attendanceRows.map((row) =>
+      [row.attendance_date, row.status, row.reason || '', row.notes || ''].map(toCsvValue).join(',')
+    ),
     '',
     'Submissions',
     'file_name,submitted_at,status',
@@ -84,7 +89,14 @@ async function generateCohortCsv(requester) {
             s.email,
             s.link_status,
             s.location,
-            (SELECT grade_value FROM grades g WHERE g.student_id = s.id ORDER BY g.updated_at DESC LIMIT 1) AS grade_value,
+            (SELECT r.final_percent FROM results r WHERE r.student_id = s.id) AS final_percent,
+            (SELECT CASE
+                      WHEN r.released_at IS NOT NULL THEN 'released'
+                      WHEN r.status = 'approved' THEN 'approved'
+                      ELSE 'compiled'
+                    END
+             FROM results r
+             WHERE r.student_id = s.id) AS result_status,
             (SELECT COUNT(*) FROM attendance a WHERE a.student_id = s.id) AS attendance_count,
             (SELECT COUNT(*) FROM submissions sub WHERE sub.student_id = s.id) AS submission_count,
             (SELECT COUNT(*) FROM feedback f WHERE f.student_id = s.id) AS feedback_count
@@ -92,13 +104,14 @@ async function generateCohortCsv(requester) {
      ORDER BY s.name ASC`
   );
 
-  const header = ['Student', 'Email', 'Link status', 'Location', 'Current grade', 'Attendance count', 'Submission count', 'Feedback count'];
+  const header = ['Student', 'Email', 'Link status', 'Location', 'Final result (%)', 'Result status', 'Attendance days recorded', 'Submission count', 'Feedback count'];
   const body = rows.map((row) => [
     row.name,
     row.email,
     row.link_status,
     row.location || '',
-    row.grade_value || '',
+    row.final_percent === null || row.final_percent === undefined ? '' : row.final_percent,
+    row.result_status || '',
     row.attendance_count || 0,
     row.submission_count || 0,
     row.feedback_count || 0,
