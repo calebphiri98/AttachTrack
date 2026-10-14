@@ -15,12 +15,13 @@ import MessagesPage from '../features/shared/pages/MessagesPage';
 import AdminDashboardPage from '../features/admin/pages/AdminDashboardPage';
 import AdminCompaniesPage from '../features/admin/pages/AdminCompaniesPage';
 import HodDashboardPage from '../features/hod/pages/HodDashboardPage';
-import ResultsReleasePage from '../features/results/pages/ResultsReleasePage';
+import ResultsPage from '../features/results/pages/ResultsPage';
 import NotificationSettingsPage from '../features/settings/pages/NotificationSettingsPage';
 import PlacementsPage from '../features/placements/pages/PlacementsPage';
 import AssessmentFormsPage from '../features/assessments/pages/AssessmentFormsPage';
 import AssessmentsListPage from '../features/assessments/pages/AssessmentsListPage';
 import AssessmentFormPage from '../features/assessments/pages/AssessmentFormPage';
+import AttendancePage from '../features/attendance/pages/AttendancePage';
 
 export default function AppRoutes() {
   return (
@@ -59,6 +60,14 @@ export default function AppRoutes() {
         element={
           <ProtectedRoute roles={['industry_supervisor']}>
             <StudentDetailPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/industry/attendance"
+        element={
+          <ProtectedRoute roles={['industry_supervisor']}>
+            <AttendancePage />
           </ProtectedRoute>
         }
       />
@@ -170,7 +179,7 @@ export default function AppRoutes() {
         path="/results"
         element={
           <ProtectedRoute roles={['admin', 'hod']}>
-            <ResultsReleasePage />
+            <ResultsPage />
           </ProtectedRoute>
         }
       />
