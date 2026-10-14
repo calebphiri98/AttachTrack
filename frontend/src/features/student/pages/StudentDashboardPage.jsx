@@ -3,20 +3,31 @@ import PortalLayout from '../../../components/shared/PortalLayout';
 import StatusBadge from '../../../components/shared/StatusBadge';
 import LedgerField from '../../../components/shared/LedgerField';
 import StampButton from '../../../components/shared/StampButton';
+import ExportButton from '../../../components/shared/ExportButton';
+import SectionTabs from '../../../components/shared/SectionTabs';
 import FeedbackSection from '../components/FeedbackSection';
 import AttendanceSection from '../components/AttendanceSection';
 import SubmissionsSection from '../components/SubmissionsSection';
 import GradesSection from '../components/GradesSection';
 import LogbookSection from '../components/LogbookSection';
-import ExportButton from '../../../components/shared/ExportButton';
 import * as studentsApi from '../../../api/students.api';
 import * as reportsApi from '../../../api/reports.api';
 import '../../../styles/portalSections.css';
+import './StudentDashboardPage.css';
+
+const SECTIONS = [
+  { id: 'submissions', label: 'Submissions' },
+  { id: 'attendance', label: 'Attendance' },
+  { id: 'feedback', label: 'Feedback' },
+  { id: 'grades', label: 'Final result' },
+  { id: 'logbook', label: 'Logbook' },
+];
 
 export default function StudentDashboardPage() {
   const [profile, setProfile] = useState(null);
   const [location, setLocation] = useState('');
   const [savingLocation, setSavingLocation] = useState(false);
+  const [activeSection, setActiveSection] = useState(SECTIONS[0].id);
   const [error, setError] = useState('');
 
   function loadProfile() {
@@ -76,36 +87,47 @@ export default function StudentDashboardPage() {
         ) : null
       }
     >
-      {error && <p style={{ color: 'var(--error)' }}>{error}</p>}
+      {error && <p className="student-error">{error}</p>}
 
       {profile && profile.link_status !== 'linked' && (
-        <p style={{ color: 'var(--muted)', marginTop: -16, marginBottom: 24 }}>
+        <p className="student-notice">
           Waiting to be linked to a supervisor. Once your industry or university supervisor
           adds you, this will update automatically.
         </p>
       )}
 
       {profile && (
-        <form onSubmit={handleLocationSave} className="inline-form" style={{ marginBottom: 24 }}>
-          <LedgerField
-            label="Placement location"
-            value={location}
-            onChange={(e) => setLocation(e.target.value)}
-            placeholder="Add your site address or location"
-          />
-          <StampButton type="submit" loading={savingLocation} style={{ width: 'auto', padding: '9px 20px' }}>
-            Save location
-          </StampButton>
-        </form>
+        <section className="student-location">
+          <form onSubmit={handleLocationSave} className="student-location__form">
+            <LedgerField
+              label="Placement location"
+              value={location}
+              onChange={(e) => setLocation(e.target.value)}
+              placeholder="Add your site address or location"
+            />
+            <StampButton type="submit" loading={savingLocation}>
+              Save location
+            </StampButton>
+          </form>
+        </section>
       )}
 
       {profile && (
         <>
-          <SubmissionsSection canSubmit={profile.link_status === 'linked'} />
-          <AttendanceSection studentId={profile.id} />
-          <FeedbackSection studentId={profile.id} />
-          <GradesSection studentId={profile.id} />
-          <LogbookSection />
+          <SectionTabs
+            items={SECTIONS}
+            activeId={activeSection}
+            onChange={setActiveSection}
+            label="Student sections"
+          />
+
+          {activeSection === 'submissions' && (
+            <SubmissionsSection canSubmit={profile.link_status === 'linked'} />
+          )}
+          {activeSection === 'attendance' && <AttendanceSection studentId={profile.id} />}
+          {activeSection === 'feedback' && <FeedbackSection studentId={profile.id} />}
+          {activeSection === 'grades' && <GradesSection studentId={profile.id} />}
+          {activeSection === 'logbook' && <LogbookSection />}
         </>
       )}
     </PortalLayout>
