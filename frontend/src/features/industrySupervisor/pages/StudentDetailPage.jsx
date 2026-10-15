@@ -1,4 +1,4 @@
-import { useLocation, useParams, useNavigate } from 'react-router-dom';
+import { Link, useLocation, useParams, useNavigate } from 'react-router-dom';
 import PortalLayout from '../../../components/shared/PortalLayout';
 import StatusBadge from '../../../components/shared/StatusBadge';
 import AttendanceSection from '../components/AttendanceSection';
@@ -51,6 +51,9 @@ export default function StudentDetailPage() {
         student ? (
           <>
             <StatusBadge>{student.link_status}</StatusBadge>
+            <Link to={`/industry/assessments/${studentId}`} className="btn btn--ghost">
+              Assessment
+            </Link>
             <ExportButton onClick={handleExport}>Export report</ExportButton>
           </>
         ) : null
