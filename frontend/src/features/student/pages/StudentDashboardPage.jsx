@@ -5,6 +5,7 @@ import LedgerField from '../../../components/shared/LedgerField';
 import StampButton from '../../../components/shared/StampButton';
 import ExportButton from '../../../components/shared/ExportButton';
 import SectionTabs from '../../../components/shared/SectionTabs';
+import { Card, EmptyState } from '../../../components/shared/Card';
 import FeedbackSection from '../components/FeedbackSection';
 import AttendanceSection from '../components/AttendanceSection';
 import SubmissionsSection from '../components/SubmissionsSection';
@@ -12,6 +13,7 @@ import GradesSection from '../components/GradesSection';
 import LogbookSection from '../components/LogbookSection';
 import * as studentsApi from '../../../api/students.api';
 import * as reportsApi from '../../../api/reports.api';
+import * as placementsApi from '../../../api/placements.api';
 import '../../../styles/portalSections.css';
 import './StudentDashboardPage.css';
 
@@ -25,6 +27,7 @@ const SECTIONS = [
 
 export default function StudentDashboardPage() {
   const [profile, setProfile] = useState(null);
+  const [placement, setPlacement] = useState(undefined);
   const [location, setLocation] = useState('');
   const [savingLocation, setSavingLocation] = useState(false);
   const [activeSection, setActiveSection] = useState(SECTIONS[0].id);
@@ -58,6 +61,10 @@ export default function StudentDashboardPage() {
 
   useEffect(() => {
     loadProfile();
+    placementsApi
+      .getMyPlacement()
+      .then((res) => setPlacement(res.data))
+      .catch(() => setPlacement(null));
   }, []);
 
   async function handleLocationSave(e) {
@@ -94,6 +101,36 @@ export default function StudentDashboardPage() {
           Waiting to be linked to a supervisor. Once your industry or university supervisor
           adds you, this will update automatically.
         </p>
+      )}
+
+      {profile && (
+        <Card>
+          <h2 className="section-title">Your placement</h2>
+          {placement === undefined && <p style={{ color: 'var(--muted)' }}>Loading...</p>}
+          {placement === null && (
+            <EmptyState>Your placement has not been confirmed yet.</EmptyState>
+          )}
+          {placement && (
+            <div>
+              <p style={{ fontWeight: 700, margin: '0 0 4px', color: 'var(--ink)' }}>
+                {placement.company_name}
+              </p>
+              {placement.industry_sector && (
+                <p style={{ margin: '0 0 4px', color: 'var(--muted)' }}>
+                  {placement.industry_sector}
+                </p>
+              )}
+              {placement.address && (
+                <p style={{ margin: '0 0 4px', color: 'var(--muted)' }}>{placement.address}</p>
+              )}
+              {placement.confirmed_at && (
+                <p style={{ margin: 0, color: 'var(--muted)', fontSize: '0.85rem' }}>
+                  Confirmed on {new Date(placement.confirmed_at).toLocaleDateString()}
+                </p>
+              )}
+            </div>
+          )}
+        </Card>
       )}
 
       {profile && (
