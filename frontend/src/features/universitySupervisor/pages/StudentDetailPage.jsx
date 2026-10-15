@@ -1,10 +1,9 @@
-import { useLocation, useParams, useNavigate } from 'react-router-dom';
+import { Link, useLocation, useParams, useNavigate } from 'react-router-dom';
 import PortalLayout from '../../../components/shared/PortalLayout';
 import StatusBadge from '../../../components/shared/StatusBadge';
 import AttendanceSection from '../components/AttendanceSection';
 import FeedbackSection from '../components/FeedbackSection';
 import SubmissionsSection from '../components/SubmissionsSection';
-import GradeSection from '../components/GradeSection';
 import SiteVisitSection from '../components/SiteVisitSection';
 import TempSupervisorSection from '../components/TempSupervisorSection';
 import LogbookSection from '../../student/components/LogbookSection';
@@ -54,6 +53,9 @@ export default function StudentDetailPage() {
         student ? (
           <>
             <StatusBadge>{student.link_status}</StatusBadge>
+            <Link to={`/university/assessments/${studentId}`} className="btn btn--ghost">
+              Assessment
+            </Link>
             <ExportButton onClick={handleExport}>Export report</ExportButton>
           </>
         ) : null
@@ -68,7 +70,6 @@ export default function StudentDetailPage() {
         </>
       )}
 
-      <GradeSection studentId={studentId} />
       <AttendanceSection studentId={studentId} />
       <FeedbackSection studentId={studentId} />
       <SubmissionsSection studentId={studentId} />
