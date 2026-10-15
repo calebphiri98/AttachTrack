@@ -4,19 +4,17 @@ const resolveSupervisorContext = require('../../utils/resolveSupervisorContext')
 
 const mark = asyncHandler(async (req, res) => {
   const supervisorContext = await resolveSupervisorContext(req.user);
-  const legacy = req.body.dateFrom === undefined;
 
   const result = await attendanceService.markAttendance({
     supervisorContext,
     userId: req.user.id,
     studentId: req.body.studentId,
-    dateFrom: legacy ? req.body.weekStartDate : req.body.dateFrom,
-    dateTo: legacy ? undefined : req.body.dateTo,
+    dateFrom: req.body.dateFrom,
+    dateTo: req.body.dateTo,
     status: req.body.status,
     reason: req.body.reason,
     notes: req.body.notes,
-    weekdaysOnly: legacy ? false : req.body.weekdaysOnly !== false,
-    requireReason: !legacy,
+    weekdaysOnly: req.body.weekdaysOnly !== false,
   });
 
   res.status(201).json({ success: true, data: result });
