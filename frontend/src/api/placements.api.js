@@ -4,6 +4,10 @@ export function getPlacementOverview() {
   return request('/placements/overview');
 }
 
+export function getMyPlacement() {
+  return request('/placements/mine');
+}
+
 export function allocatePlacement({ studentId, companyId, preferenceNote }) {
   return request('/placements', {
     method: 'POST',
