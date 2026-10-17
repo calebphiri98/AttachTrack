@@ -1,0 +1,160 @@
+.logbook-message {
+  margin: 0 0 16px;
+  padding: 10px 14px;
+  border-radius: 8px;
+  background: var(--sage-soft);
+  color: var(--navy);
+  font-size: 0.9rem;
+}
+
+.logbook-form__row {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.logbook-form__field input[type='time'],
+.logbook-form__field input[type='date'],
+.logbook-form__field input[type='text'] {
+  width: 100%;
+  min-height: 42px;
+}
+
+.logbook-form__existing {
+  display: grid;
+  gap: 6px;
+  padding: 10px 12px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--paper-raised);
+  font-size: 0.88rem;
+}
+
+.logbook-form__existing label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 400;
+  overflow-wrap: anywhere;
+}
+
+.logbook-form__buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.logbook-week {
+  margin-top: 24px;
+}
+
+.logbook-week__head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px 16px;
+  margin-bottom: 12px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid var(--line);
+}
+
+.logbook-week__title {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 1.05rem;
+  color: var(--navy);
+}
+
+.logbook-week__meta {
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+
+.logbook-week__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.logbook-return {
+  display: grid;
+  gap: 10px;
+  margin-bottom: 12px;
+  padding: 14px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--paper-raised);
+}
+
+.logbook-return textarea {
+  width: 100%;
+  min-height: 80px;
+  padding: 10px 12px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  font-size: 0.95rem;
+  resize: vertical;
+}
+
+.logbook-entry__time {
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+
+.logbook-entry__task {
+  margin: 0;
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
+.logbook-entry__details {
+  display: grid;
+  gap: 4px;
+  margin-top: 8px;
+  font-size: 0.9rem;
+  overflow-wrap: anywhere;
+}
+
+.logbook-entry__label {
+  font-weight: 600;
+  color: var(--ink-soft);
+}
+
+.logbook-entry__files {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 14px;
+  margin-top: 8px;
+  font-size: 0.85rem;
+}
+
+.logbook-entry__review {
+  margin-top: 8px;
+  padding: 8px 12px;
+  border-radius: 8px;
+  background: var(--gold-soft);
+  color: var(--gold-deep);
+  font-size: 0.88rem;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.logbook-entry__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+@media (max-width: 640px) {
+  .logbook-week__actions,
+  .logbook-form__buttons {
+    width: 100%;
+  }
+
+  .logbook-week__actions .btn,
+  .logbook-form__buttons .btn {
+    flex: 1 1 auto;
+  }
+}
