@@ -3,7 +3,7 @@ import PortalLayout from '../../../components/shared/PortalLayout';
 import * as attendanceApi from '../../../api/attendanceLog.api';
 import '../../../styles/portalSections.css';
 import '../../assessments/pages/AssessmentPages.css';
-
+import { useSearchParams } from 'react-router-dom';
 const STATUS_OPTIONS = [
   { value: 'present', label: 'Present' },
   { value: 'absent', label: 'Absent' },
@@ -85,7 +85,8 @@ function buildEmptyForm() {
 export default function AttendancePage() {
   const [students, setStudents] = useState([]);
   const [settings, setSettings] = useState({ correctionDays: 7, backfillDays: 31, reminderDays: 7 });
-  const [selectedId, setSelectedId] = useState('');
+  const [searchParams] = useSearchParams();
+  const [selectedId, setSelectedId] = useState(searchParams.get('student') || '');
   const [records, setRecords] = useState([]);
   const [form, setForm] = useState(buildEmptyForm);
   const [loading, setLoading] = useState(true);
