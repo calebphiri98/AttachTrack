@@ -1,5 +1,19 @@
 const NOTIFICATION_TYPES = [
   {
+    type: 'logbook_submitted',
+    label: 'Logbook entries submitted',
+    description: 'A student submitted logbook entries for your review.',
+    roles: ['industry_supervisor'],
+    defaults: { inApp: true, email: true },
+  },
+  {
+    type: 'logbook_reviewed',
+    label: 'Logbook reviewed',
+    description: 'Your industrial supervisor approved or returned your logbook entries.',
+    roles: ['student'],
+    defaults: { inApp: true, email: true },
+  },
+  {
     type: 'results_ready',
     label: 'Results ready for approval',
     description: 'The Coordinator sent compiled results for your approval.',
