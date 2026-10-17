@@ -1,28 +1,72 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Card, EmptyState } from '../../../components/shared/Card';
-import StampButton from '../../../components/shared/StampButton';
+import StatusBadge from '../../../components/shared/StatusBadge';
+import { useAuth } from '../../../context/AuthContext';
 import * as logbooksApi from '../../../api/logbooks.api';
 import './LogbookSection.css';
+import './LogbookWeeks.css';
+
+const STATUS_LABELS = {
+  draft: 'Draft',
+  submitted: 'Submitted',
+  approved: 'Approved',
+  returned: 'Returned',
+};
 
 function todayValue() {
-  return new Date().toISOString().slice(0, 10);
+  return new Date().toLocaleDateString('en-CA');
 }
 
-function formatEntryDate(value) {
+function formatDay(value) {
   if (!value) return '';
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return String(value);
-  return date.toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' });
+  return new Date(`${value}T00:00:00Z`).toLocaleDateString('en-GB', {
+    weekday: 'short',
+    day: 'numeric',
+    month: 'short',
+    year: 'numeric',
+    timeZone: 'UTC',
+  });
+}
+
+function entryHours(entry) {
+  if (!entry.start_time || !entry.end_time) return 0;
+  const [startHour, startMinute] = entry.start_time.split(':').map(Number);
+  const [endHour, endMinute] = entry.end_time.split(':').map(Number);
+  return Math.max(0, (endHour * 60 + endMinute - (startHour * 60 + startMinute)) / 60);
+}
+
+function emptyForm() {
+  return {
+    entryDate: todayValue(),
+    startTime: '',
+    endTime: '',
+    activity: '',
+    description: '',
+    skillsLearned: '',
+    challenges: '',
+    toolsUsed: '',
+  };
 }
 
 export default function LogbookSection({ studentId = null }) {
+  const { user } = useAuth();
+  const isOwner = !studentId;
+  const canReview = Boolean(studentId) && user?.role === 'industry_supervisor';
+
   const [entries, setEntries] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-  const [form, setForm] = useState({ entryDate: todayValue(), activity: '', notes: '' });
-  const [file, setFile] = useState(null);
+  const [message, setMessage] = useState('');
+  const [form, setForm] = useState(emptyForm);
+  const [files, setFiles] = useState([]);
   const [fileKey, setFileKey] = useState(0);
+  const [editingId, setEditingId] = useState(null);
+  const [existingFiles, setExistingFiles] = useState([]);
+  const [removeIds, setRemoveIds] = useState([]);
   const [saving, setSaving] = useState(false);
+  const [busyKey, setBusyKey] = useState('');
+  const [returning, setReturning] = useState(null);
+  const formRef = useRef(null);
 
   async function loadEntries() {
     try {
@@ -41,16 +85,83 @@ export default function LogbookSection({ studentId = null }) {
     loadEntries();
   }, [studentId]);
 
-  async function handleSubmit(e) {
-    e.preventDefault();
-    if (studentId) return;
-    setSaving(true);
+  const weeks = useMemo(() => {
+    const map = new Map();
+    entries.forEach((entry) => {
+      if (!map.has(entry.week_start)) map.set(entry.week_start, []);
+      map.get(entry.week_start).push(entry);
+    });
+    return Array.from(map, ([weekStart, items]) => ({ weekStart, items }));
+  }, [entries]);
+
+  function updateForm(field, value) {
+    setForm((prev) => ({ ...prev, [field]: value }));
+  }
+
+  function resetForm() {
+    setForm(emptyForm());
+    setFiles([]);
+    setFileKey((key) => key + 1);
+    setEditingId(null);
+    setExistingFiles([]);
+    setRemoveIds([]);
+  }
+
+  function startEdit(entry) {
+    setEditingId(entry.id);
+    setForm({
+      entryDate: entry.entry_date,
+      startTime: entry.start_time || '',
+      endTime: entry.end_time || '',
+      activity: entry.activity || '',
+      description: entry.description || '',
+      skillsLearned: entry.skills_learned || '',
+      challenges: entry.challenges || '',
+      toolsUsed: entry.tools_used || '',
+    });
+    setExistingFiles(entry.files || []);
+    setRemoveIds([]);
+    setFiles([]);
+    setFileKey((key) => key + 1);
     setError('');
+    setMessage('');
+    setTimeout(() => formRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 50);
+  }
+
+  function toggleRemove(fileId) {
+    setRemoveIds((prev) =>
+      prev.includes(fileId) ? prev.filter((id) => id !== fileId) : [...prev, fileId]
+    );
+  }
+
+  async function handleSave(submit) {
+    setError('');
+    setMessage('');
+
+    if (!form.activity.trim()) {
+      setError('Describe the task you worked on');
+      return;
+    }
+    if (submit && !form.description.trim()) {
+      setError('Add a description before submitting');
+      return;
+    }
+    if (form.startTime && form.endTime && form.endTime <= form.startTime) {
+      setError('The end time must be after the start time');
+      return;
+    }
+
+    const payload = { ...form, files, removeFileIds: removeIds, submit };
+
+    setSaving(true);
     try {
-      await logbooksApi.createLogbookEntry({ ...form, file });
-      setForm({ entryDate: todayValue(), activity: '', notes: '' });
-      setFile(null);
-      setFileKey((key) => key + 1);
+      if (editingId) {
+        await logbooksApi.updateLogbookEntry(editingId, payload);
+      } else {
+        await logbooksApi.createLogbookEntry(payload);
+      }
+      setMessage(submit ? 'Entry submitted for review.' : 'Draft saved.');
+      resetForm();
       await loadEntries();
     } catch (err) {
       setError(err.message);
@@ -59,58 +170,210 @@ export default function LogbookSection({ studentId = null }) {
     }
   }
 
+  async function run(key, action, successText) {
+    setBusyKey(key);
+    setError('');
+    setMessage('');
+    try {
+      const res = await action();
+      setMessage(typeof successText === 'function' ? successText(res.data) : successText);
+      await loadEntries();
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setBusyKey('');
+    }
+  }
+
+  function handleDelete(entry) {
+    if (!window.confirm('Delete this draft entry?')) return;
+    run(`entry:${entry.id}`, () => logbooksApi.deleteLogbookEntry(entry.id), 'Draft deleted.');
+  }
+
+  function handleSubmitEntry(entry) {
+    run(
+      `entry:${entry.id}`,
+      () => logbooksApi.submitLogbookEntry(entry.id),
+      'Entry submitted for review.'
+    );
+  }
+
+  function handleSubmitWeek(week) {
+    if (!window.confirm('Submit all ready entries for this week?')) return;
+    run(
+      `week:${week.weekStart}`,
+      () => logbooksApi.submitLogbookWeek(week.weekStart),
+      (data) =>
+        `${data.submitted} entr${data.submitted === 1 ? 'y' : 'ies'} submitted${data.skipped ? `, ${data.skipped} skipped for missing descriptions` : ''}.`
+    );
+  }
+
+  function handleApprove(week) {
+    if (!window.confirm('Approve all submitted entries for this week?')) return;
+    run(
+      `week:${week.weekStart}`,
+      () => logbooksApi.reviewLogbookWeek(studentId, week.weekStart, { decision: 'approve' }),
+      (data) => `${data.reviewed} entr${data.reviewed === 1 ? 'y' : 'ies'} approved.`
+    );
+  }
+
+  async function handleReturn(week) {
+    if (!returning || !returning.comment.trim()) {
+      setError('Add a comment explaining what needs to be fixed');
+      return;
+    }
+    await run(
+      `week:${week.weekStart}`,
+      () =>
+        logbooksApi.reviewLogbookWeek(studentId, week.weekStart, {
+          decision: 'return',
+          comment: returning.comment,
+        }),
+      (data) => `${data.reviewed} entr${data.reviewed === 1 ? 'y' : 'ies'} returned to the student.`
+    );
+    setReturning(null);
+  }
+
   return (
     <Card>
       <h2 className="section-title">Logbook</h2>
 
       {error && <p className="logbook-error">{error}</p>}
+      {message && <p className="logbook-message">{message}</p>}
 
-      {!studentId && (
-        <form onSubmit={handleSubmit} className="logbook-form">
+      {isOwner && (
+        <form
+          ref={formRef}
+          className="logbook-form"
+          onSubmit={(e) => {
+            e.preventDefault();
+            handleSave(true);
+          }}
+        >
           <label className="logbook-form__field">
             <span>Date</span>
             <input
               type="date"
               value={form.entryDate}
-              onChange={(e) => setForm({ ...form, entryDate: e.target.value })}
+              max={todayValue()}
+              onChange={(e) => updateForm('entryDate', e.target.value)}
               required
             />
           </label>
 
+          <div className="logbook-form__row">
+            <label className="logbook-form__field">
+              <span>Start time</span>
+              <input
+                type="time"
+                value={form.startTime}
+                onChange={(e) => updateForm('startTime', e.target.value)}
+              />
+            </label>
+            <label className="logbook-form__field">
+              <span>End time</span>
+              <input
+                type="time"
+                value={form.endTime}
+                onChange={(e) => updateForm('endTime', e.target.value)}
+              />
+            </label>
+          </div>
+
           <label className="logbook-form__field">
-            <span>Activities</span>
-            <textarea
+            <span>Task or activity performed</span>
+            <input
+              type="text"
               value={form.activity}
-              onChange={(e) => setForm({ ...form, activity: e.target.value })}
-              placeholder="Describe activities or tasks completed"
-              rows={3}
+              maxLength={500}
+              onChange={(e) => updateForm('activity', e.target.value)}
+              placeholder="For example, site survey of the east block"
               required
             />
           </label>
 
           <label className="logbook-form__field">
-            <span>Notes (optional)</span>
+            <span>Description of the activity</span>
             <textarea
-              value={form.notes}
-              onChange={(e) => setForm({ ...form, notes: e.target.value })}
-              placeholder="Notes or reflections"
-              rows={3}
+              value={form.description}
+              onChange={(e) => updateForm('description', e.target.value)}
+              placeholder="What you did, step by step"
+              rows={4}
             />
           </label>
 
           <label className="logbook-form__field">
-            <span>Attachment (optional)</span>
+            <span>Skills learned (optional)</span>
+            <textarea
+              value={form.skillsLearned}
+              onChange={(e) => updateForm('skillsLearned', e.target.value)}
+              rows={2}
+            />
+          </label>
+
+          <label className="logbook-form__field">
+            <span>Challenges encountered (optional)</span>
+            <textarea
+              value={form.challenges}
+              onChange={(e) => updateForm('challenges', e.target.value)}
+              rows={2}
+            />
+          </label>
+
+          <label className="logbook-form__field">
+            <span>Materials or tools used (optional)</span>
+            <input
+              type="text"
+              value={form.toolsUsed}
+              maxLength={1000}
+              onChange={(e) => updateForm('toolsUsed', e.target.value)}
+            />
+          </label>
+
+          {existingFiles.length > 0 && (
+            <div className="logbook-form__existing">
+              <strong>Current evidence</strong>
+              {existingFiles.map((file) => (
+                <label key={file.id}>
+                  <input
+                    type="checkbox"
+                    checked={removeIds.includes(file.id)}
+                    onChange={() => toggleRemove(file.id)}
+                  />
+                  Remove {file.name}
+                </label>
+              ))}
+            </div>
+          )}
+
+          <label className="logbook-form__field">
+            <span>Evidence: photos or documents (optional, up to 5 files of 10 MB)</span>
             <input
               key={fileKey}
               type="file"
-              onChange={(e) => setFile(e.target.files?.[0] || null)}
+              multiple
+              accept="image/*,.pdf,.doc,.docx"
+              onChange={(e) => setFiles(Array.from(e.target.files || []))}
             />
           </label>
 
-          <div className="logbook-form__actions">
-            <StampButton type="submit" loading={saving}>
-              Add logbook entry
-            </StampButton>
+          <div className="logbook-form__buttons">
+            <button type="submit" className="btn btn--primary" disabled={saving}>
+              {saving ? 'Saving...' : 'Submit entry'}
+            </button>
+            <button
+              type="button"
+              className="btn btn--ghost"
+              onClick={() => handleSave(false)}
+              disabled={saving}
+            >
+              Save draft
+            </button>
+            {editingId && (
+              <button type="button" className="btn btn--ghost" onClick={resetForm} disabled={saving}>
+                Cancel
+              </button>
+            )}
           </div>
         </form>
       )}
@@ -119,29 +382,186 @@ export default function LogbookSection({ studentId = null }) {
 
       {!loading && entries.length === 0 && <EmptyState>No logbook entries yet.</EmptyState>}
 
-      {!loading && entries.length > 0 && (
-        <ul className="logbook-list">
-          {entries.map((entry) => (
-            <li key={entry.id} className="logbook-entry">
-              <div className="logbook-entry__head">
-                <strong className="logbook-entry__date">{formatEntryDate(entry.entry_date)}</strong>
-                {entry.attachment_url && (
-                  <a
-                    href={entry.attachment_url}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="logbook-entry__link"
+      {weeks.map((week) => {
+        const hours = week.items.reduce((sum, entry) => sum + entryHours(entry), 0);
+        const draftCount = week.items.filter((entry) =>
+          ['draft', 'returned'].includes(entry.status)
+        ).length;
+        const submittedCount = week.items.filter((entry) => entry.status === 'submitted').length;
+        const weekBusy = busyKey === `week:${week.weekStart}`;
+
+        return (
+          <section key={week.weekStart} className="logbook-week">
+            <div className="logbook-week__head">
+              <div>
+                <h3 className="logbook-week__title">Week of {formatDay(week.weekStart)}</h3>
+                <span className="logbook-week__meta">
+                  {week.items.length} entr{week.items.length === 1 ? 'y' : 'ies'}
+                  {hours > 0 ? `, ${hours.toFixed(1)} hours logged` : ''}
+                </span>
+              </div>
+
+              <div className="logbook-week__actions">
+                {isOwner && draftCount > 0 && (
+                  <button
+                    type="button"
+                    className="btn btn--primary"
+                    onClick={() => handleSubmitWeek(week)}
+                    disabled={Boolean(busyKey)}
                   >
-                    View attachment
-                  </a>
+                    {weekBusy ? 'Submitting...' : `Submit week (${draftCount})`}
+                  </button>
+                )}
+                {canReview && submittedCount > 0 && (
+                  <>
+                    <button
+                      type="button"
+                      className="btn btn--primary"
+                      onClick={() => handleApprove(week)}
+                      disabled={Boolean(busyKey)}
+                    >
+                      {weekBusy ? 'Saving...' : `Approve week (${submittedCount})`}
+                    </button>
+                    <button
+                      type="button"
+                      className="btn btn--ghost"
+                      onClick={() => setReturning({ weekStart: week.weekStart, comment: '' })}
+                      disabled={Boolean(busyKey)}
+                    >
+                      Return week
+                    </button>
+                  </>
                 )}
               </div>
-              <p className="logbook-entry__activity">{entry.activity}</p>
-              {entry.notes && <p className="logbook-entry__notes">{entry.notes}</p>}
-            </li>
-          ))}
-        </ul>
-      )}
+            </div>
+
+            {canReview && returning && returning.weekStart === week.weekStart && (
+              <div className="logbook-return">
+                <label className="logbook-form__field">
+                  <span>What needs to be fixed?</span>
+                  <textarea
+                    value={returning.comment}
+                    onChange={(e) => setReturning({ ...returning, comment: e.target.value })}
+                    maxLength={2000}
+                  />
+                </label>
+                <div className="logbook-form__buttons">
+                  <button
+                    type="button"
+                    className="btn btn--primary"
+                    onClick={() => handleReturn(week)}
+                    disabled={Boolean(busyKey)}
+                  >
+                    Return to student
+                  </button>
+                  <button type="button" className="btn btn--ghost" onClick={() => setReturning(null)}>
+                    Cancel
+                  </button>
+                </div>
+              </div>
+            )}
+
+            <ul className="logbook-list">
+              {week.items.map((entry) => {
+                const entryBusy = busyKey === `entry:${entry.id}`;
+                const canEdit = isOwner && ['draft', 'returned'].includes(entry.status);
+
+                return (
+                  <li key={entry.id} className="logbook-entry">
+                    <div className="logbook-entry__head">
+                      <div>
+                        <strong className="logbook-entry__date">{formatDay(entry.entry_date)}</strong>
+                        {(entry.start_time || entry.end_time) && (
+                          <div className="logbook-entry__time">
+                            {entry.start_time || '?'} to {entry.end_time || '?'}
+                          </div>
+                        )}
+                      </div>
+                      <StatusBadge>{STATUS_LABELS[entry.status] || entry.status}</StatusBadge>
+                    </div>
+
+                    <p className="logbook-entry__task">{entry.activity}</p>
+
+                    <div className="logbook-entry__details">
+                      {entry.description && <div>{entry.description}</div>}
+                      {entry.skills_learned && (
+                        <div>
+                          <span className="logbook-entry__label">Skills learned: </span>
+                          {entry.skills_learned}
+                        </div>
+                      )}
+                      {entry.challenges && (
+                        <div>
+                          <span className="logbook-entry__label">Challenges: </span>
+                          {entry.challenges}
+                        </div>
+                      )}
+                      {entry.tools_used && (
+                        <div>
+                          <span className="logbook-entry__label">Tools: </span>
+                          {entry.tools_used}
+                        </div>
+                      )}
+                      {entry.notes && <div className="logbook-entry__notes">{entry.notes}</div>}
+                    </div>
+
+                    {entry.files && entry.files.length > 0 && (
+                      <div className="logbook-entry__files">
+                        {entry.files.map((file) => (
+                          <a
+                            key={file.id}
+                            href={file.url}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="logbook-entry__link"
+                          >
+                            {file.name}
+                          </a>
+                        ))}
+                      </div>
+                    )}
+
+                    {entry.review_comment && (
+                      <div className="logbook-entry__review">{entry.review_comment}</div>
+                    )}
+
+                    {canEdit && (
+                      <div className="logbook-entry__actions">
+                        <button
+                          type="button"
+                          className="btn btn--ghost"
+                          onClick={() => startEdit(entry)}
+                          disabled={Boolean(busyKey)}
+                        >
+                          Edit
+                        </button>
+                        <button
+                          type="button"
+                          className="btn btn--primary"
+                          onClick={() => handleSubmitEntry(entry)}
+                          disabled={Boolean(busyKey)}
+                        >
+                          {entryBusy ? 'Submitting...' : entry.status === 'returned' ? 'Resubmit' : 'Submit'}
+                        </button>
+                        {entry.status === 'draft' && (
+                          <button
+                            type="button"
+                            className="btn btn--ghost"
+                            onClick={() => handleDelete(entry)}
+                            disabled={Boolean(busyKey)}
+                          >
+                            Delete
+                          </button>
+                        )}
+                      </div>
+                    )}
+                  </li>
+                );
+              })}
+            </ul>
+          </section>
+        );
+      })}
     </Card>
   );
 }
