@@ -9,13 +9,19 @@ import TempSupervisorSection from '../components/TempSupervisorSection';
 import LogbookSection from '../../student/components/LogbookSection';
 import ExportButton from '../../../components/shared/ExportButton';
 import * as reportsApi from '../../../api/reports.api';
+import * as universitySupervisorsApi from '../../../api/universitySupervisors.api';
+import useResolvedStudent from '../../shared/hooks/useResolvedStudent';
 import '../../../styles/portalSections.css';
 
 export default function StudentDetailPage() {
   const { studentId } = useParams();
   const location = useLocation();
   const navigate = useNavigate();
-  const student = location.state?.student;
+  const student = useResolvedStudent(
+    studentId,
+    location.state?.student,
+    universitySupervisorsApi.listMyStudents
+  );
 
   async function handleExport() {
     if (!studentId) return;
@@ -45,7 +51,7 @@ export default function StudentDetailPage() {
             textTransform: 'inherit',
           }}
         >
-          ← Students
+          Back to students
         </button>
       }
       title={student ? student.name : 'Student'}
@@ -74,8 +80,9 @@ export default function StudentDetailPage() {
       <FeedbackSection studentId={studentId} />
       <SubmissionsSection studentId={studentId} />
       <LogbookSection studentId={studentId} />
-      <SiteVisitSection studentId={studentId} />
+      <SiteVisitSection studentId={studentId} studentName={student ? student.name : ''} />
       <TempSupervisorSection studentId={studentId} />
     </PortalLayout>
   );
 }
+
