@@ -1,41 +1,107 @@
 import { openDB } from 'idb';
 
 const DB_NAME = 'attachtrack-offline';
-const DB_VERSION = 1;
+const DB_VERSION = 2;
+const LEGACY_QUEUE = 'submissionsQueue';
 
-// Phase 5 scope: define the schema only. Nothing writes to `submissionsQueue`
-// yet — that logic belongs to Phase 6. `session` exists now because cached
-// login (replacing the current localStorage stand-in in AuthContext) is
-// also part of Phase 5.
+let dbPromise = null;
 
-let dbPromise;
+async function migrateLegacyQueue(db, transaction) {
+  if (!db.objectStoreNames.contains(LEGACY_QUEUE)) return;
+
+  const legacy = transaction.objectStore(LEGACY_QUEUE);
+  const outbox = transaction.objectStore('outbox');
+  const blobs = transaction.objectStore('blobs');
+
+  let cursor = await legacy.openCursor();
+  while (cursor) {
+    const item = cursor.value;
+    if (item && item.clientUuid && item.file) {
+      const fileId = `${item.clientUuid}:legacy`;
+      const createdAt = Date.parse(item.submittedAt) || Date.now();
+      await blobs.put({ id: fileId, outboxId: item.clientUuid, blob: item.file });
+      await outbox.put({
+        id: item.clientUuid,
+        type: 'submission.create',
+        userId: null,
+        status: item.status === 'failed' ? 'failed' : 'pending',
+        priority: 1,
+        entityKey: `submission:${item.clientUuid}`,
+        label: item.fileName || 'Document',
+        payload: { recipientRole: item.recipientRole },
+        files: [
+          {
+            id: fileId,
+            name: item.fileName || 'document',
+            type: item.fileType || item.file.type || 'application/octet-stream',
+            size: item.file.size || 0,
+          },
+        ],
+        progress: {},
+        attempts: 0,
+        nextAttemptAt: 0,
+        error: item.errorMessage || null,
+        errorCode: null,
+        clientCreatedAt: item.submittedAt || new Date(createdAt).toISOString(),
+        clockOffsetMs: null,
+        createdAt,
+        updatedAt: Date.now(),
+        syncStartedAt: null,
+        syncedAt: null,
+      });
+    }
+    cursor = await cursor.continue();
+  }
+
+  db.deleteObjectStore(LEGACY_QUEUE);
+}
 
 export function getDB() {
   if (!dbPromise) {
     dbPromise = openDB(DB_NAME, DB_VERSION, {
-      upgrade(db) {
-        // Single cached record: the current user's session for offline login.
-        // keyPath 'id' with a fixed value ('current') since there's only ever one.
-        if (!db.objectStoreNames.contains('session')) {
+      upgrade(db, oldVersion, newVersion, transaction) {
+        if (oldVersion < 1) {
           db.createObjectStore('session', { keyPath: 'id' });
         }
 
-        // Phase 6 will read/write here. Schema decided now so Phase 6 doesn't
-        // need a version bump: clientUuid is the dedup key (matches the
-        // backend's submissions.client_uuid column), status tracks
-        // pending_sync/synced/failed for the "Pending sync" UI indicator.
-        if (!db.objectStoreNames.contains('submissionsQueue')) {
-          const store = db.createObjectStore('submissionsQueue', { keyPath: 'clientUuid' });
-          store.createIndex('status', 'status');
-          store.createIndex('submittedAt', 'submittedAt');
+        if (oldVersion < 2) {
+          const outbox = db.createObjectStore('outbox', { keyPath: 'id' });
+          outbox.createIndex('status', 'status');
+          outbox.createIndex('type', 'type');
+          outbox.createIndex('userId', 'userId');
+          outbox.createIndex('entityKey', 'entityKey');
+          outbox.createIndex('createdAt', 'createdAt');
+
+          const blobs = db.createObjectStore('blobs', { keyPath: 'id' });
+          blobs.createIndex('outboxId', 'outboxId');
+
+          const cache = db.createObjectStore('cache', { keyPath: 'key' });
+          cache.createIndex('userId', 'userId');
+
+          db.createObjectStore('meta', { keyPath: 'key' });
+          db.createObjectStore('idmap', { keyPath: 'key' });
+
+          if (oldVersion === 1) {
+            migrateLegacyQueue(db, transaction).catch(() => {});
+          }
         }
       },
+      blocking() {
+        if (dbPromise) {
+          dbPromise.then((db) => db.close()).catch(() => {});
+        }
+        dbPromise = null;
+      },
+      terminated() {
+        dbPromise = null;
+      },
+    }).catch((err) => {
+      dbPromise = null;
+      throw err;
     });
   }
   return dbPromise;
 }
-
-// ---- Session (cached login) ----
 
 export async function saveSession(sessionData) {
   const db = await getDB();
@@ -51,25 +117,14 @@ export async function clearSession() {
   const db = await getDB();
   await db.delete('session', 'current');
 }
-// ---- Offline submissions queue (Phase 6) ----
 
-export async function enqueueSubmission(item) {
+export async function metaGet(key) {
   const db = await getDB();
-  await db.put('submissionsQueue', item);
+  const row = await db.get('meta', key);
+  return row ? row.value : undefined;
 }
 
-export async function getQueuedSubmissions() {
+export async function metaSet(key, value) {
   const db = await getDB();
-  return db.getAll('submissionsQueue');
-}
-
-export async function removeQueuedSubmission(clientUuid) {
-  const db = await getDB();
-  await db.delete('submissionsQueue', clientUuid);
-}
-export async function updateQueuedSubmission(clientUuid, changes) {
-  const db = await getDB();
-  const existing = await db.get('submissionsQueue', clientUuid);
-  if (!existing) return;
-  await db.put('submissionsQueue', { ...existing, ...changes });
+  await db.put('meta', { key, value, updatedAt: Date.now() });
 }
