@@ -1,204 +1,139 @@
 jest.mock('../../config/db');
 const db = require('../../config/db');
-const { assignSupervisor, attachUserAccount, updateLocation } = require('./students.service');
+const { attachUserAccount, updateLocation } = require('./students.service');
 
 beforeEach(() => {
   jest.resetAllMocks();
 });
 
-// recomputeAndSave() is not exported directly, but assignSupervisor() and
-// attachUserAccount() both call it internally as their last step — testing
-// through them exercises the exact same link_status computation logic
-// (computeLinkStatus) without needing to export an internal helper just
-// for testing.
+function studentRow(overrides = {}) {
+  return {
+    id: 'student-id',
+    user_id: null,
+    industry_supervisor_id: null,
+    university_supervisor_id: null,
+    link_status: 'unlinked',
+    ...overrides,
+  };
+}
 
-describe('linking logic — computeLinkStatus via assignSupervisor', () => {
-  test('supervisor adds a student with no account yet — stays unlinked', async () => {
-    // findOrCreateByEmail: no existing row, so it INSERTs a fresh one
+describe('link status when a student account is attached', () => {
+  test('new student with no supervisors stays unlinked and keeps the account name', async () => {
     db.query
-      .mockResolvedValueOnce({ rows: [] }) // SELECT: no existing student
-      .mockResolvedValueOnce({
-        rows: [
-          {
-            id: 'student-id',
-            user_id: null,
-            industry_supervisor_id: null,
-            university_supervisor_id: null,
-            link_status: 'unlinked',
-          },
-        ],
-      }) // INSERT: fresh unlinked row
-      .mockResolvedValueOnce({ rows: [] }) // UPDATE: sets industry_supervisor_id
-      .mockResolvedValueOnce({
-        rows: [
-          {
-            id: 'student-id',
-            user_id: null, // still no account
-            industry_supervisor_id: 'is-id',
-            university_supervisor_id: null,
-            link_status: 'unlinked',
-          },
-        ],
-      }); // recomputeAndSave's re-SELECT
-
-    const result = await assignSupervisor({
-      email: 'newstudent@example.com',
-      name: 'New Student',
-      supervisorColumn: 'industry_supervisor_id',
-      supervisorId: 'is-id',
-    });
-
-    // has a supervisor now, but still no verified account — must stay unlinked
-    expect(result.link_status).toBe('unlinked');
-  });
-
-  test('supervisor adds a student whose account already exists and is verified — becomes linked', async () => {
-    db.query
-      .mockResolvedValueOnce({
-        rows: [
-          {
-            id: 'student-id',
-            user_id: 'existing-user-id', // already self-registered
-            industry_supervisor_id: null,
-            university_supervisor_id: null,
-            link_status: 'unlinked',
-          },
-        ],
-      }) // findOrCreateByEmail: existing row found
-      .mockResolvedValueOnce({ rows: [] }) // UPDATE: sets industry_supervisor_id
-      .mockResolvedValueOnce({
-        rows: [
-          {
-            id: 'student-id',
-            user_id: 'existing-user-id',
-            industry_supervisor_id: 'is-id',
-            university_supervisor_id: null,
-            link_status: 'unlinked',
-          },
-        ],
-      }) // recomputeAndSave's re-SELECT
-      .mockResolvedValueOnce({ rows: [] }); // recomputeAndSave's UPDATE (status flips)
-
-    const result = await assignSupervisor({
-      email: 'alreadyregistered@example.com',
-      name: 'Already Registered',
-      supervisorColumn: 'industry_supervisor_id',
-      supervisorId: 'is-id',
-    });
-
-    // has both an account AND a supervisor now — should flip to linked
-    expect(result.link_status).toBe('linked');
-  });
-
-  test('rejects assigning a student who already has a different supervisor of the same type', async () => {
-    db.query.mockResolvedValueOnce({
-      rows: [
-        {
-          id: 'student-id',
-          user_id: null,
-          industry_supervisor_id: 'a-different-supervisor-id', // already taken
-          university_supervisor_id: null,
-          link_status: 'unlinked',
-        },
-      ],
-    });
-
-    await expect(
-      assignSupervisor({
-        email: 'taken@example.com',
-        name: 'Taken Student',
-        supervisorColumn: 'industry_supervisor_id',
-        supervisorId: 'is-id',
-      })
-    ).rejects.toThrow('This student is already assigned to a different supervisor of that type');
-  });
-});
-
-describe('linking logic — computeLinkStatus via attachUserAccount', () => {
-  test('student verifies email with no supervisor having added them yet — stays unlinked', async () => {
-    db.query
-      .mockResolvedValueOnce({ rows: [] }) // findOrCreateByEmail: no existing row
-      .mockResolvedValueOnce({
-        rows: [
-          {
-            id: 'student-id',
-            user_id: null,
-            industry_supervisor_id: null,
-            university_supervisor_id: null,
-            link_status: 'unlinked',
-          },
-        ],
-      }) // INSERT: fresh row
-      .mockResolvedValueOnce({ rows: [] }) // UPDATE: sets user_id
-      .mockResolvedValueOnce({
-        rows: [
-          {
-            id: 'student-id',
-            user_id: 'new-user-id',
-            industry_supervisor_id: null, // no supervisor yet
-            university_supervisor_id: null,
-            link_status: 'unlinked',
-          },
-        ],
-      }); // recomputeAndSave's re-SELECT
+      .mockResolvedValueOnce({ rows: [] })
+      .mockResolvedValueOnce({ rows: [studentRow()] })
+      .mockResolvedValueOnce({ rows: [] })
+      .mockResolvedValueOnce({ rows: [studentRow({ user_id: 'new-user-id' })] });
 
     const result = await attachUserAccount({
       email: 'freshstudent@example.com',
       name: 'Fresh Student',
+
       userId: 'new-user-id',
     });
 
     expect(result.link_status).toBe('unlinked');
+    expect(db.query).toHaveBeenCalledTimes(4);
+    expect(db.query).toHaveBeenNthCalledWith(
+      3,
+      'UPDATE students SET user_id = $1, name = $2 WHERE id = $3',
+      ['new-user-id', 'Fresh Student', 'student-id']
+    );
   });
 
-  test('student verifies email after a supervisor already added them — becomes linked', async () => {
+  test('student with only an industry supervisor stays unlinked', async () => {
     db.query
+      .mockResolvedValueOnce({ rows: [studentRow({ industry_supervisor_id: 'is-id' })] })
+      .mockResolvedValueOnce({ rows: [] })
       .mockResolvedValueOnce({
-        rows: [
-          {
-            id: 'student-id',
-            user_id: null,
-            industry_supervisor_id: 'is-id', // supervisor already claimed them
-            university_supervisor_id: null,
-            link_status: 'unlinked',
-          },
-        ],
-      }) // findOrCreateByEmail: existing row found
-      .mockResolvedValueOnce({ rows: [] }) // UPDATE: sets user_id
-      .mockResolvedValueOnce({
-        rows: [
-          {
-            id: 'student-id',
-            user_id: 'new-user-id',
-            industry_supervisor_id: 'is-id',
-            university_supervisor_id: null,
-            link_status: 'unlinked',
-          },
-        ],
-      }) // recomputeAndSave's re-SELECT
-      .mockResolvedValueOnce({ rows: [] }); // recomputeAndSave's UPDATE (status flips)
+        rows: [studentRow({ user_id: 'new-user-id', industry_supervisor_id: 'is-id' })],
+      });
 
     const result = await attachUserAccount({
-      email: 'alreadyclaimed@example.com',
-      name: 'Already Claimed',
+      email: 'onesupervisor@example.com',
+      name: 'One Supervisor',
+      userId: 'new-user-id',
+    });
+
+    expect(result.link_status).toBe('unlinked');
+    expect(db.query).toHaveBeenCalledTimes(3);
+  });
+
+  test('student with only a university supervisor stays unlinked', async () => {
+    db.query
+
+      .mockResolvedValueOnce({ rows: [studentRow({ university_supervisor_id: 'us-id' })] })
+      .mockResolvedValueOnce({ rows: [] })
+      .mockResolvedValueOnce({
+        rows: [studentRow({ user_id: 'new-user-id', university_supervisor_id: 'us-id' })],
+      });
+
+    const result = await attachUserAccount({
+      email: 'onesupervisor@example.com',
+      name: 'One Supervisor',
+      userId: 'new-user-id',
+    });
+
+    expect(result.link_status).toBe('unlinked');
+    expect(db.query).toHaveBeenCalledTimes(3);
+  });
+
+  test('student with both supervisors becomes linked once the account is attached', async () => {
+    db.query
+      .mockResolvedValueOnce({
+        rows: [studentRow({ industry_supervisor_id: 'is-id', university_supervisor_id: 'us-id' })],
+      })
+      .mockResolvedValueOnce({ rows: [] })
+      .mockResolvedValueOnce({
+        rows: [
+          studentRow({
+            user_id: 'new-user-id',
+            industry_supervisor_id: 'is-id',
+            university_supervisor_id: 'us-id',
+          }),
+        ],
+      })
+      .mockResolvedValueOnce({ rows: [] });
+
+
+    const result = await attachUserAccount({
+      email: 'bothsupervisors@example.com',
+      name: 'Both Supervisors',
       userId: 'new-user-id',
     });
 
     expect(result.link_status).toBe('linked');
+    expect(db.query).toHaveBeenNthCalledWith(
+      4,
+      'UPDATE students SET link_status = $1 WHERE id = $2',
+      ['linked', 'student-id']
+    );
+  });
+
+  test('already linked student is left unchanged', async () => {
+    const linked = studentRow({
+      user_id: 'existing-user-id',
+      industry_supervisor_id: 'is-id',
+      university_supervisor_id: 'us-id',
+      link_status: 'linked',
+    });
+    db.query
+      .mockResolvedValueOnce({ rows: [linked] })
+      .mockResolvedValueOnce({ rows: [linked] });
+
+    const result = await attachUserAccount({
+      email: 'linked@example.com',
+      name: 'Linked Student',
+      userId: 'existing-user-id',
+    });
+
+
+    expect(result.link_status).toBe('linked');
+    expect(db.query).toHaveBeenCalledTimes(2);
   });
 
   test('rejects when the student email is already linked to a different user account', async () => {
-    db.query.mockResolvedValueOnce({
-      rows: [
-        {
-          id: 'student-id',
-          user_id: 'a-different-user-id', // already claimed by someone else
-          industry_supervisor_id: null,
-          university_supervisor_id: null,
-          link_status: 'unlinked',
-        },
-      ],
-    });
+    db.query.mockResolvedValueOnce({ rows: [studentRow({ user_id: 'a-different-user-id' })] });
 
     await expect(
       attachUserAccount({
@@ -210,31 +145,22 @@ describe('linking logic — computeLinkStatus via attachUserAccount', () => {
   });
 });
 
-describe('input validation — assignSupervisor and attachUserAccount', () => {
-  test('assignSupervisor rejects an invalid email', async () => {
+describe('input validation when attaching an account', () => {
+  test('rejects an invalid email', async () => {
     await expect(
-      assignSupervisor({
-        email: 'not-an-email',
-        name: 'Someone',
-        supervisorColumn: 'industry_supervisor_id',
-        supervisorId: 'is-id',
-      })
+      attachUserAccount({ email: 'not-an-email', name: 'Someone', userId: 'user-id' })
     ).rejects.toThrow('Please provide a valid email address');
   });
 
-  test('assignSupervisor rejects an empty name', async () => {
+  test('rejects an empty name', async () => {
     await expect(
-      assignSupervisor({
-        email: 'valid@example.com',
-        name: '',
-        supervisorColumn: 'industry_supervisor_id',
-        supervisorId: 'is-id',
-      })
+      attachUserAccount({ email: 'valid@example.com', name: '', userId: 'user-id' })
     ).rejects.toThrow('name is required');
   });
 });
 
 describe('student profile updates', () => {
+
   test('updateLocation stores a trimmed value and returns the student row', async () => {
     db.query
       .mockResolvedValueOnce({
