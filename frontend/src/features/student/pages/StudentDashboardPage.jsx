@@ -1,8 +1,6 @@
 import { useEffect, useState } from 'react';
 import PortalLayout from '../../../components/shared/PortalLayout';
 import StatusBadge from '../../../components/shared/StatusBadge';
-import LedgerField from '../../../components/shared/LedgerField';
-import StampButton from '../../../components/shared/StampButton';
 import ExportButton from '../../../components/shared/ExportButton';
 import SectionTabs from '../../../components/shared/SectionTabs';
 import { Card, EmptyState } from '../../../components/shared/Card';
@@ -28,18 +26,13 @@ const SECTIONS = [
 export default function StudentDashboardPage() {
   const [profile, setProfile] = useState(null);
   const [placement, setPlacement] = useState(undefined);
-  const [location, setLocation] = useState('');
-  const [savingLocation, setSavingLocation] = useState(false);
   const [activeSection, setActiveSection] = useState(SECTIONS[0].id);
   const [error, setError] = useState('');
 
   function loadProfile() {
     studentsApi
       .getMyStudentProfile()
-      .then((res) => {
-        setProfile(res.data);
-        setLocation(res.data.location || '');
-      })
+      .then((res) => setProfile(res.data))
       .catch((err) => setError(err.message));
   }
 
@@ -66,20 +59,6 @@ export default function StudentDashboardPage() {
       .then((res) => setPlacement(res.data))
       .catch(() => setPlacement(null));
   }, []);
-
-  async function handleLocationSave(e) {
-    e.preventDefault();
-    if (!profile) return;
-    setSavingLocation(true);
-    try {
-      const res = await studentsApi.updateLocation({ location });
-      setProfile((prev) => ({ ...prev, location: res.data.location }));
-    } catch (err) {
-      setError(err.message);
-    } finally {
-      setSavingLocation(false);
-    }
-  }
 
   return (
     <PortalLayout
@@ -131,22 +110,6 @@ export default function StudentDashboardPage() {
             </div>
           )}
         </Card>
-      )}
-
-      {profile && (
-        <section className="student-location">
-          <form onSubmit={handleLocationSave} className="student-location__form">
-            <LedgerField
-              label="Placement location"
-              value={location}
-              onChange={(e) => setLocation(e.target.value)}
-              placeholder="Add your site address or location"
-            />
-            <StampButton type="submit" loading={savingLocation}>
-              Save location
-            </StampButton>
-          </form>
-        </section>
       )}
 
       {profile && (
