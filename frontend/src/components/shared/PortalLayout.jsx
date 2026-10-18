@@ -2,7 +2,12 @@ import { useEffect, useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import './PortalLayout.css';
 import NotificationBell from './NotificationBell';
+import NetworkBanner from './NetworkBanner';
+import ConfirmDialog from './ConfirmDialog';
+import './offline.css';
 import { useAuth } from '../../context/AuthContext';
+import { useUnsyncedCount } from '../../offline/hooks';
+import { triggerSync } from '../../offline/syncEngine';
 
 const ROLE_LABELS = {
   student: 'Student',
@@ -42,6 +47,7 @@ const NAV = {
 };
 
 const SETTINGS_LINK = { to: '/settings/notifications', label: 'Settings' };
+const SYNC_LINK = { to: '/sync', label: 'Sync' };
 
 function isActive(location, path) {
   return location.pathname === path || location.pathname.startsWith(`${path}/`);
@@ -51,7 +57,27 @@ export default function PortalLayout({ eyebrow, title, actions, children }) {
   const { user, logout } = useAuth();
   const location = useLocation();
   const [menuOpen, setMenuOpen] = useState(false);
-  const links = [...(NAV[user?.role] || []), SETTINGS_LINK];
+  const [confirmLogout, setConfirmLogout] = useState(false);
+  const [syncingBeforeLogout, setSyncingBeforeLogout] = useState(false);
+  const unsynced = useUnsyncedCount();
+  const links = [...(NAV[user?.role] || []), SYNC_LINK, SETTINGS_LINK];
+
+  function handleLogoutClick() {
+    if (unsynced.total > 0) {
+      setConfirmLogout(true);
+      return;
+    }
+    logout();
+  }
+
+  async function handleSyncFirst() {
+    setSyncingBeforeLogout(true);
+    try {
+      await triggerSync('logout');
+    } finally {
+      setSyncingBeforeLogout(false);
+    }
+  }
 
   useEffect(() => {
     setMenuOpen(false);
@@ -87,6 +113,9 @@ export default function PortalLayout({ eyebrow, title, actions, children }) {
                 className={`portal-layout__nav-link${isActive(location, link.to) ? ' portal-layout__nav-link--active' : ''}`}
               >
                 {link.label}
+                {link.to === '/sync' && unsynced.total > 0 && (
+                  <span className="nav-badge">{unsynced.total}</span>
+                )}
               </Link>
             ))}
 
@@ -95,7 +124,7 @@ export default function PortalLayout({ eyebrow, title, actions, children }) {
                 <span className="portal-layout__panel-name">{user?.name}</span>
                 <span className="portal-layout__panel-role">{ROLE_LABELS[user?.role]}</span>
               </div>
-              <button className="portal-layout__logout" onClick={logout}>
+              <button className="portal-layout__logout" onClick={handleLogoutClick}>
                 Log out
               </button>
             </div>
@@ -105,7 +134,10 @@ export default function PortalLayout({ eyebrow, title, actions, children }) {
             <NotificationBell />
             <span className="portal-layout__role">{ROLE_LABELS[user?.role]}</span>
             <span className="portal-layout__name">{user?.name}</span>
-            <button className="portal-layout__logout portal-layout__logout--desktop" onClick={logout}>
+            <button
+              className="portal-layout__logout portal-layout__logout--desktop"
+              onClick={handleLogoutClick}
+            >
               Log out
             </button>
             <button
@@ -131,6 +163,25 @@ export default function PortalLayout({ eyebrow, title, actions, children }) {
           />
         )}
       </header>
+
+      <NetworkBanner />
+
+      {confirmLogout && (
+        <ConfirmDialog
+          title="Unsynced work on this device"
+          confirmLabel="Log out anyway"
+          extraLabel="Sync now"
+          busy={syncingBeforeLogout}
+          onExtra={handleSyncFirst}
+          onCancel={() => setConfirmLogout(false)}
+          onConfirm={() => {
+            setConfirmLogout(false);
+            logout();
+          }}
+        >
+          You have {unsynced.total} {unsynced.total === 1 ? 'item' : 'items'} that {unsynced.total === 1 ? 'has' : 'have'} not reached the server yet. If you log out, {unsynced.total === 1 ? 'it stays' : 'they stay'} on this device and will sync the next time you sign in here. Connect to the internet and choose Sync now to send {unsynced.total === 1 ? 'it' : 'them'} first.
+        </ConfirmDialog>
+      )}
 
       <main className="portal-layout__content">
         <div className="portal-layout__page-header">

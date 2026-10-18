@@ -4,7 +4,6 @@ import StampButton from '../../../components/shared/StampButton';
 import * as industrySupervisorsApi from '../../../api/industrySupervisors.api';
 
 export default function AddStudentForm({ onAdded, onCancel }) {
-  const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
@@ -12,15 +11,14 @@ export default function AddStudentForm({ onAdded, onCancel }) {
   async function handleSubmit(e) {
     e.preventDefault();
     setError('');
-    if (!name.trim() || !email.trim()) {
-      setError('Enter both a name and an email');
+    if (!email.trim()) {
+      setError('Enter the student\'s email');
       return;
     }
     setLoading(true);
     try {
-      const res = await industrySupervisorsApi.addStudent({ name, email });
+      const res = await industrySupervisorsApi.addStudent({ email: email.trim() });
       onAdded(res.data);
-      setName('');
       setEmail('');
     } catch (err) {
       setError(err.message);
@@ -31,7 +29,6 @@ export default function AddStudentForm({ onAdded, onCancel }) {
 
   return (
     <form onSubmit={handleSubmit} style={{ marginBottom: 8 }}>
-      <LedgerField label="Student name" value={name} onChange={(e) => setName(e.target.value)} />
       <LedgerField
         label="Student email"
         type="email"

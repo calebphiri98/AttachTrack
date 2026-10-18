@@ -57,6 +57,15 @@ const updateEntry = asyncHandler(async (req, res) => {
   res.status(200).json({ success: true, data: entry });
 });
 
+const addFiles = asyncHandler(async (req, res) => {
+  const entry = await logbooksService.addFiles({
+    userId: req.user.id,
+    entryId: req.params.entryId,
+    files: req.files || [],
+  });
+  res.status(200).json({ success: true, data: entry });
+});
+
 const deleteEntry = asyncHandler(async (req, res) => {
   const result = await logbooksService.deleteEntry({
     userId: req.user.id,
@@ -110,9 +119,11 @@ module.exports = {
   listMine,
   createEntry,
   updateEntry,
+  addFiles,
   deleteEntry,
   submitEntry,
   submitWeek,
   listForStudent,
   reviewWeek,
 };
+

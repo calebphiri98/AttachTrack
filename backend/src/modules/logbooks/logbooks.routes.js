@@ -3,6 +3,7 @@ const multer = require('multer');
 const logbooksController = require('./logbooks.controller');
 const auth = require('../../middleware/auth');
 const requireRole = require('../../middleware/requireRole');
+const offlineSync = require('../../middleware/offlineSync');
 
 const router = express.Router();
 const upload = multer({
@@ -11,11 +12,51 @@ const upload = multer({
 });
 
 router.get('/me', auth, requireRole('student'), logbooksController.listMine);
-router.post('/me', auth, requireRole('student'), upload.array('files', 5), logbooksController.createEntry);
-router.post('/me/weeks/:weekStart/submit', auth, requireRole('student'), logbooksController.submitWeek);
-router.put('/me/:entryId', auth, requireRole('student'), upload.array('files', 5), logbooksController.updateEntry);
-router.delete('/me/:entryId', auth, requireRole('student'), logbooksController.deleteEntry);
-router.post('/me/:entryId/submit', auth, requireRole('student'), logbooksController.submitEntry);
+router.post(
+  '/me',
+  auth,
+  requireRole('student'),
+  upload.array('files', 5),
+  offlineSync({ table: 'logbook_entries' }),
+  logbooksController.createEntry
+);
+router.post(
+  '/me/weeks/:weekStart/submit',
+  auth,
+  requireRole('student'),
+  offlineSync(),
+  logbooksController.submitWeek
+);
+router.post(
+  '/me/:entryId/files',
+  auth,
+  requireRole('student'),
+  upload.array('files', 5),
+  offlineSync({ table: 'logbook_entries' }),
+  logbooksController.addFiles
+);
+router.put(
+  '/me/:entryId',
+  auth,
+  requireRole('student'),
+  upload.array('files', 5),
+  offlineSync({ table: 'logbook_entries' }),
+  logbooksController.updateEntry
+);
+router.delete(
+  '/me/:entryId',
+  auth,
+  requireRole('student'),
+  offlineSync(),
+  logbooksController.deleteEntry
+);
+router.post(
+  '/me/:entryId/submit',
+  auth,
+  requireRole('student'),
+  offlineSync({ table: 'logbook_entries' }),
+  logbooksController.submitEntry
+);
 
 router.get(
   '/student/:studentId',
@@ -31,3 +72,4 @@ router.post(
 );
 
 module.exports = router;
+

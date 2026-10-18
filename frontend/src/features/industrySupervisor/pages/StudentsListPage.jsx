@@ -53,13 +53,13 @@ export default function StudentsListPage() {
 
       {error && <p style={{ color: 'var(--error)' }}>{error}</p>}
 
-      {students === null && !error && <p style={{ color: 'var(--muted)' }}>Loading students…</p>}
+      {students === null && !error && <p style={{ color: 'var(--muted)' }}>Loading students...</p>}
 
       {students && students.length === 0 && (
         <Card>
           <EmptyState>
-            No students yet. Add one by name and email — they'll link up automatically once
-            they register.
+            No students yet. Add one by email, and they will link up automatically once they
+            register.
           </EmptyState>
         </Card>
       )}
@@ -79,7 +79,7 @@ export default function StudentsListPage() {
                     className="student-list__view"
                     onClick={() => navigate(`/industry/students/${student.id}`, { state: { student } })}
                   >
-                    View →
+                    View &rarr;
                   </button>
                 </div>
               </li>

@@ -3,13 +3,14 @@ import PortalLayout from '../../../components/shared/PortalLayout';
 import ThreadList from '../components/ThreadList';
 import ThreadPanel from '../components/ThreadPanel';
 import * as messagesApi from '../../../api/messages.api';
+import { useSyncRefresh } from '../../../offline/hooks';
 import './MessagesPage.css';
 
 export default function MessagesPage() {
   const [threads, setThreads] = useState(null);
   const [contacts, setContacts] = useState(null);
   const [error, setError] = useState('');
-  const [selected, setSelected] = useState(null); // { id, name, role }
+  const [selected, setSelected] = useState(null);
 
   function loadThreads() {
     messagesApi
@@ -26,12 +27,14 @@ export default function MessagesPage() {
       .catch((err) => setError(err.message));
   }, []);
 
+  useSyncRefresh(loadThreads);
+
   const loading = threads === null || contacts === null;
 
   return (
     <PortalLayout eyebrow="Communication" title="Messages">
       {error && <p style={{ color: 'var(--error)' }}>{error}</p>}
-      {loading && !error && <p style={{ color: 'var(--muted)' }}>Loading messages…</p>}
+      {loading && !error && <p style={{ color: 'var(--muted)' }}>Loading messages...</p>}
 
       {!loading && (
         <div className="messages-page">

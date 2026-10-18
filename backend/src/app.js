@@ -1,4 +1,4 @@
-﻿const express = require('express');
+const express = require('express');
 const cors = require('cors');
 
 const authRoutes = require('./modules/auth/auth.routes');
@@ -24,6 +24,7 @@ const cronRoutes = require('./modules/cron/cron.routes');
 const placementsRoutes = require('./modules/placements/placements.routes');
 const assessmentsRoutes = require('./modules/assessments/assessments.routes');
 const resultsRoutes = require('./modules/results/results.routes');
+const syncRoutes = require('./modules/sync/sync.routes');
 
 const app = express();
 
@@ -32,6 +33,7 @@ app.use(express.json());
 
 app.set('trust proxy', 1);
 
+app.use('/api/sync', syncRoutes);
 app.use('/api/auth', authLimiter);
 app.use('/api', generalLimiter);
 

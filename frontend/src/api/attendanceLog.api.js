@@ -8,9 +8,13 @@ export function getStudentAttendance(studentId, limit = 120) {
   return request(`/attendance/student/${studentId}?limit=${limit}`);
 }
 
-export function saveAttendance({ studentId, dateFrom, dateTo, status, reason, notes, weekdaysOnly }) {
+export function saveAttendance(
+  { studentId, dateFrom, dateTo, status, reason, notes, weekdaysOnly },
+  options = {}
+) {
   return request('/attendance', {
     method: 'POST',
     body: { studentId, dateFrom, dateTo, status, reason, notes, weekdaysOnly },
+    ...options,
   });
 }

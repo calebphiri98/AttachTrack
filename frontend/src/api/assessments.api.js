@@ -41,9 +41,10 @@ export function getAssessment(kind, studentId) {
   return request(`/assessments/${kind}/students/${studentId}`);
 }
 
-export function saveAssessment(kind, studentId, { scores, comments, submit }) {
+export function saveAssessment(kind, studentId, { scores, comments, submit }, options = {}) {
   return request(`/assessments/${kind}/students/${studentId}`, {
     method: 'PUT',
     body: { scores, comments, submit },
+    ...options,
   });
 }
