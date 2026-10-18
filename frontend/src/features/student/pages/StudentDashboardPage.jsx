@@ -29,13 +29,6 @@ export default function StudentDashboardPage() {
   const [activeSection, setActiveSection] = useState(SECTIONS[0].id);
   const [error, setError] = useState('');
 
-  function loadProfile() {
-    studentsApi
-      .getMyStudentProfile()
-      .then((res) => setProfile(res.data))
-      .catch((err) => setError(err.message));
-  }
-
   async function handleExport() {
     if (!profile) return;
     try {
@@ -53,7 +46,10 @@ export default function StudentDashboardPage() {
   }
 
   useEffect(() => {
-    loadProfile();
+    studentsApi
+      .getMyStudentProfile()
+      .then((res) => setProfile(res.data))
+      .catch((err) => setError(err.message));
     placementsApi
       .getMyPlacement()
       .then((res) => setPlacement(res.data))
@@ -77,8 +73,8 @@ export default function StudentDashboardPage() {
 
       {profile && profile.link_status !== 'linked' && (
         <p className="student-notice">
-          Waiting to be linked to a supervisor. Once your industry or university supervisor
-          adds you, this will update automatically.
+          Waiting for the coordinator to assign your industry and university supervisors. This
+          page updates once both are assigned.
         </p>
       )}
 
