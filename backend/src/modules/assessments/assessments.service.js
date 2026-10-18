@@ -1,5 +1,6 @@
 const db = require('../../config/db');
 const AppError = require('../../utils/AppError');
+const requestContext = require('../../utils/requestContext');
 const { requireUuid, requireString, optionalString } = require('../../utils/validators');
 const studentsService = require('../students/students.service');
 const notificationsService = require('../notifications/notifications.service');
@@ -410,7 +411,8 @@ async function saveAssessment({
   if (submit && !form.confirmed_at) {
     throw new AppError(
       'The assessment form has not been confirmed by the Coordinator yet, so it cannot be submitted',
-      409
+      409,
+      'FORM_NOT_CONFIRMED'
     );
   }
 
@@ -438,20 +440,38 @@ async function saveAssessment({
     }
   }
 
+  const timing = requestContext.getTiming();
+  const trustedAt = requestContext.getTrustedNow();
+
   const { rows: assessmentRows } = await db.query(
-    `INSERT INTO assessments (student_id, kind, assessor_user_id, comments, status)
-     VALUES ($1, $2, $3, $4, 'draft')
+    `INSERT INTO assessments
+       (student_id, kind, assessor_user_id, comments, status,
+        client_created_at, server_received_at, clock_offset_ms, clock_flagged)
+     VALUES ($1, $2, $3, $4, 'draft', $5, $6, $7, $8)
      ON CONFLICT (student_id, kind)
      DO UPDATE SET assessor_user_id = EXCLUDED.assessor_user_id,
                    comments = EXCLUDED.comments,
                    updated_at = now()
      WHERE assessments.status = 'draft'
      RETURNING *`,
-    [studentId, kind, userId, cleanComments]
+    [
+      studentId,
+      kind,
+      userId,
+      cleanComments,
+      timing ? timing.clientCreatedAt : null,
+      timing ? timing.serverReceivedAt : new Date(),
+      timing ? timing.offsetMs : null,
+      timing ? timing.flagged : false,
+    ]
   );
 
   if (assessmentRows.length === 0) {
-    throw new AppError('This assessment has been submitted and can no longer be changed', 409);
+    throw new AppError(
+      'This assessment has been submitted and can no longer be changed',
+      409,
+      'RECORD_LOCKED'
+    );
   }
   const assessment = assessmentRows[0];
 
@@ -491,17 +511,17 @@ async function saveAssessment({
   const { rows: submitted } = await db.query(
     `UPDATE assessments
      SET status = 'submitted',
-         submitted_at = now(),
+         submitted_at = $2,
          total_marks = (SELECT COALESCE(SUM(marks), 0) FROM assessment_scores WHERE assessment_id = $1),
          max_total = (SELECT COALESCE(SUM(max_marks), 0) FROM assessment_scores WHERE assessment_id = $1),
          updated_at = now()
      WHERE id = $1 AND status = 'draft'
      RETURNING id`,
-    [assessment.id]
+    [assessment.id, trustedAt]
   );
 
   if (submitted.length === 0) {
-    throw new AppError('This assessment has already been submitted', 409);
+    throw new AppError('This assessment has already been submitted', 409, 'RECORD_LOCKED');
   }
 
   await notifyAssessmentSubmitted(kind, studentId);
@@ -519,3 +539,4 @@ module.exports = {
   getAssessment,
   saveAssessment,
 };
+
