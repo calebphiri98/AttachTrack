@@ -7,13 +7,19 @@ import SubmissionsSection from '../components/SubmissionsSection';
 import LogbookSection from '../../student/components/LogbookSection';
 import ExportButton from '../../../components/shared/ExportButton';
 import * as reportsApi from '../../../api/reports.api';
+import * as industrySupervisorsApi from '../../../api/industrySupervisors.api';
+import useResolvedStudent from '../../shared/hooks/useResolvedStudent';
 import '../../../styles/portalSections.css';
 
 export default function StudentDetailPage() {
   const { studentId } = useParams();
   const location = useLocation();
   const navigate = useNavigate();
-  const student = location.state?.student;
+  const student = useResolvedStudent(
+    studentId,
+    location.state?.student,
+    industrySupervisorsApi.listMyStudents
+  );
 
   async function handleExport() {
     if (!studentId) return;
@@ -43,7 +49,7 @@ export default function StudentDetailPage() {
             textTransform: 'inherit',
           }}
         >
-          ← Students
+          Back to students
         </button>
       }
       title={student ? student.name : 'Student'}
@@ -75,3 +81,4 @@ export default function StudentDetailPage() {
     </PortalLayout>
   );
 }
+
