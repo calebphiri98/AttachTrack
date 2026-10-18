@@ -8,12 +8,12 @@ export function listMine() {
   return request('/submissions/mine');
 }
 
-export function submitDocument(file, clientUuid, recipientRole) {
+export function submitDocument(file, clientUuid, recipientRole, options = {}) {
   const formData = new FormData();
   formData.append('file', file);
   formData.append('clientUuid', clientUuid);
   formData.append('recipientRole', recipientRole);
-  return request('/submissions', { method: 'POST', body: formData, isForm: true });
+  return request('/submissions', { method: 'POST', body: formData, isForm: true, ...options });
 }
 
 export function createRequirement(studentId, dueDate) {
@@ -23,7 +23,7 @@ export function createRequirement(studentId, dueDate) {
   });
 }
 
-export function fulfillRequirement(submissionId, file) {
+export function fulfillRequirement(submissionId, file, options = {}) {
   const formData = new FormData();
   formData.append('file', file);
 
@@ -31,6 +31,7 @@ export function fulfillRequirement(submissionId, file) {
     method: 'POST',
     body: formData,
     isForm: true,
+    ...options,
   });
 }
 

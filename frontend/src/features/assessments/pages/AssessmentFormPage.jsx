@@ -1,7 +1,14 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import PortalLayout from '../../../components/shared/PortalLayout';
+import SyncChip from '../../../components/shared/SyncChip';
+import { useAuth } from '../../../context/AuthContext';
 import * as assessmentsApi from '../../../api/assessments.api';
+import * as actions from '../../../offline/actions';
+import { useOutbox, useSyncRefresh } from '../../../offline/hooks';
+import { listRecords } from '../../../offline/outbox';
+import { pendingAssessment, syncInfo } from '../../../offline/overlays';
+import { discardRecord } from '../../../offline/syncEngine';
 import './AssessmentPages.css';
 
 const EYEBROWS = {
@@ -9,18 +16,35 @@ const EYEBROWS = {
   university: 'University supervisor',
 };
 
-function toDraft(data) {
+function toDraft(data, pending) {
   const marks = {};
   const remarks = {};
   data.items.forEach((item) => {
     marks[item.criterion_id] = item.marks === null || item.marks === undefined ? '' : String(item.marks);
     remarks[item.criterion_id] = item.remark || '';
   });
-  return { marks, remarks, comments: data.comments || '' };
+  let comments = data.comments || '';
+
+  if (pending && data.status !== 'submitted') {
+    data.items.forEach((item) => {
+      marks[item.criterion_id] = '';
+      remarks[item.criterion_id] = '';
+    });
+    (pending.payload.scores || []).forEach((score) => {
+      marks[score.criterionId] = String(score.marks);
+      remarks[score.criterionId] = score.remark || '';
+    });
+    comments = pending.payload.comments || '';
+  }
+
+  return { marks, remarks, comments };
 }
 
 export default function AssessmentFormPage({ kind }) {
   const { studentId } = useParams();
+  const { user } = useAuth();
+  const outbox = useOutbox();
+  const pending = useMemo(() => pendingAssessment(outbox, kind, studentId), [outbox, kind, studentId]);
   const [data, setData] = useState(null);
   const [marks, setMarks] = useState({});
   const [remarks, setRemarks] = useState({});
@@ -29,26 +53,43 @@ export default function AssessmentFormPage({ kind }) {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
   const [message, setMessage] = useState('');
+  const dirtyRef = useRef(false);
 
-  function applyData(next) {
-    const draft = toDraft(next);
+  function applyData(next, pendingRecord = null) {
+    const draft = toDraft(next, pendingRecord);
+    dirtyRef.current = false;
     setData(next);
     setMarks(draft.marks);
     setRemarks(draft.remarks);
     setComments(draft.comments);
   }
 
+  async function load() {
+    try {
+      const [res, records] = await Promise.all([
+        assessmentsApi.getAssessment(kind, studentId),
+        listRecords({ userId: user ? user.id : null }),
+      ]);
+      applyData(res.data, pendingAssessment(records, kind, studentId));
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  }
+
   useEffect(() => {
     setLoading(true);
     setError('');
-    assessmentsApi
-      .getAssessment(kind, studentId)
-      .then((res) => applyData(res.data))
-      .catch((err) => setError(err.message))
-      .finally(() => setLoading(false));
+    load();
   }, [kind, studentId]);
 
-  const locked = data?.status === 'submitted';
+  useSyncRefresh(() => {
+    if (!dirtyRef.current) load();
+  });
+
+  const locked = data?.status === 'submitted' || Boolean(pending && pending.payload.submit);
+  const lockedByServer = data?.status === 'submitted';
   const items = data?.items || [];
   const maxTotal = items.reduce((sum, item) => sum + item.max_marks, 0);
   const enteredTotal = items.reduce((sum, item) => {
@@ -107,9 +148,23 @@ export default function AssessmentFormPage({ kind }) {
 
     setSaving(true);
     try {
-      const res = await assessmentsApi.saveAssessment(kind, studentId, buildPayload(submit));
-      applyData(res.data);
-      setMessage(submit ? 'Assessment submitted.' : 'Draft saved.');
+      const result = await actions.saveAssessment({
+        kind,
+        studentId,
+        studentName: data ? data.student.name : '',
+        ...buildPayload(submit),
+      });
+      if (result.queued) {
+        setMessage(
+          submit
+            ? 'Submission saved on this device. It will be sent when the connection allows, and cannot be changed afterwards.'
+            : 'Draft saved on this device. It will sync automatically.'
+        );
+      } else {
+        applyData(result.data);
+        setMessage(submit ? 'Assessment submitted.' : 'Draft saved.');
+      }
+      dirtyRef.current = false;
     } catch (err) {
       setError(err.message);
     } finally {
@@ -138,11 +193,25 @@ export default function AssessmentFormPage({ kind }) {
               draft, but you cannot submit until it is confirmed.
             </p>
           )}
-          {locked && (
+          {lockedByServer && (
             <p className="assess-banner assess-banner--ok">
               This assessment was submitted on {new Date(data.submittedAt).toLocaleDateString()} and
               can no longer be changed.
             </p>
+          )}
+          {pending && !lockedByServer && (
+            <div className="assess-banner">
+              <SyncChip sync={syncInfo(pending)} />
+              {pending.status === 'failed' && (
+                <button
+                  type="button"
+                  className="btn btn--ghost"
+                  onClick={() => discardRecord(pending.id)}
+                >
+                  Discard my local copy
+                </button>
+              )}
+            </div>
           )}
           {message && <p className="assess-banner assess-banner--ok">{message}</p>}
 
@@ -151,7 +220,16 @@ export default function AssessmentFormPage({ kind }) {
             <div className="assess-summary">
               <span>Student: {data.student.name}</span>
               {data.student.programme && <span>Programme: {data.student.programme}</span>}
-              <span>Status: {locked ? 'Submitted' : data.status === 'draft' ? 'Draft saved' : 'Not started'}</span>
+              <span>
+                Status:{' '}
+                {locked
+                  ? lockedByServer
+                    ? 'Submitted'
+                    : 'Submitted (waiting to sync)'
+                  : data.status === 'draft' || pending
+                    ? 'Draft saved'
+                    : 'Not started'}
+              </span>
             </div>
 
             {items.length === 0 && (
@@ -172,7 +250,10 @@ export default function AssessmentFormPage({ kind }) {
                     step="0.5"
                     inputMode="decimal"
                     value={marks[item.criterion_id] ?? ''}
-                    onChange={(e) => setMarks((prev) => ({ ...prev, [item.criterion_id]: e.target.value }))}
+                    onChange={(e) => {
+                      dirtyRef.current = true;
+                      setMarks((prev) => ({ ...prev, [item.criterion_id]: e.target.value }));
+                    }}
                     disabled={locked || saving}
                     aria-label={`Marks for ${item.label}`}
                   />
@@ -181,7 +262,10 @@ export default function AssessmentFormPage({ kind }) {
                 <label className="assess-criterion__remark">
                   <input
                     value={remarks[item.criterion_id] ?? ''}
-                    onChange={(e) => setRemarks((prev) => ({ ...prev, [item.criterion_id]: e.target.value }))}
+                    onChange={(e) => {
+                      dirtyRef.current = true;
+                      setRemarks((prev) => ({ ...prev, [item.criterion_id]: e.target.value }));
+                    }}
                     placeholder="Remark (optional)"
                     maxLength={500}
                     disabled={locked || saving}
@@ -205,7 +289,10 @@ export default function AssessmentFormPage({ kind }) {
               <span>Overall comments (optional)</span>
               <textarea
                 value={comments}
-                onChange={(e) => setComments(e.target.value)}
+                onChange={(e) => {
+                  dirtyRef.current = true;
+                  setComments(e.target.value);
+                }}
                 maxLength={3000}
                 disabled={locked || saving}
               />
@@ -244,3 +331,4 @@ export default function AssessmentFormPage({ kind }) {
     </PortalLayout>
   );
 }
+

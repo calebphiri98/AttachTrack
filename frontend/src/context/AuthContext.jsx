@@ -1,23 +1,45 @@
 import { createContext, useContext, useEffect, useState, useCallback, useRef } from 'react';
 import * as authApi from '../api/auth.api';
-import { setAccessToken, setUnauthorizedHandler, tryRefresh } from '../api/httpClient';
+import { REFRESH_KEY } from '../api/config';
+import {
+  setAccessToken,
+  setCurrentUserId,
+  setUnauthorizedHandler,
+  tryRefresh,
+} from '../api/httpClient';
 import { saveSession, getSession, clearSession as clearCachedSession } from '../offline/db';
-
-const REFRESH_KEY = 'attachtrack_refresh_token';
+import { cacheClearUser } from '../offline/cache';
 
 const AuthContext = createContext(null);
 
+function readStoredUser() {
+  try {
+    const raw = localStorage.getItem('attachtrack_user');
+    return raw ? JSON.parse(raw) : null;
+  } catch {
+    return null;
+  }
+}
+
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
-  const [status, setStatus] = useState('loading'); // 'loading' | 'authenticated' | 'guest'
-
+  const [status, setStatus] = useState('loading');
   const manualAuthRef = useRef(false);
+  const userIdRef = useRef(null);
+
+  useEffect(() => {
+    userIdRef.current = user ? user.id : null;
+    setCurrentUserId(user ? user.id : null);
+  }, [user]);
 
   const clearSession = useCallback(() => {
+    const previousUserId = userIdRef.current;
     setAccessToken(null);
     localStorage.removeItem(REFRESH_KEY);
     localStorage.removeItem('attachtrack_user');
     clearCachedSession().catch(() => {});
+    if (previousUserId) cacheClearUser(previousUserId).catch(() => {});
+    setCurrentUserId(null);
     setUser(null);
     setStatus('guest');
   }, []);
@@ -33,47 +55,38 @@ export function AuthProvider({ children }) {
       return;
     }
 
-    // Optimistic restore: read the IndexedDB-cached session immediately.
-    // This is what makes an offline reload show a logged-in UI instead of
-    // bouncing to /login — it doesn't wait on, or require, the network call.
     getSession()
       .then((cached) => {
         if (manualAuthRef.current || !cached) return;
         setUser(cached.user);
         setStatus('authenticated');
       })
-      .catch(() => {
-        // no cached session yet — fine, the refresh call below is the fallback
-      });
+      .catch(() => {});
 
-    // Uses the SAME shared tryRefresh() as httpClient.js's own 401-retry
-    // logic — this is what a rotating refresh token requires. Two
-    // independent refresh calls racing each other (this effect firing at
-    // the same time as some other request's 401-triggered retry) would
-    // otherwise have the second one arrive with an already-consumed token
-    // and get wrongly rejected, incorrectly logging the user out.
+    const fallbackUser = readStoredUser();
+    if (fallbackUser) {
+      setUser((current) => current || fallbackUser);
+      setStatus((current) => (current === 'loading' ? 'authenticated' : current));
+    }
+
     tryRefresh()
       .then((result) => {
         if (manualAuthRef.current) return;
-        if (!result) return; // network failure or expired token — see below
+        if (!result) return;
 
-        const cachedUser = localStorage.getItem('attachtrack_user');
-        const resolvedUser = cachedUser ? JSON.parse(cachedUser) : null;
+        const resolvedUser = readStoredUser();
         setUser(resolvedUser);
         setStatus('authenticated');
-        // Keep the IndexedDB copy fresh with the latest confirmed session.
         saveSession({ refreshToken: result.refreshToken, user: resolvedUser }).catch(() => {});
       })
-      .catch(() => {
-        // tryRefresh() itself never throws (it catches internally and
-        // resolves null), so this is defensive only.
-      });
+      .catch(() => {});
   }, [clearSession]);
 
   const login = useCallback(async (email, password) => {
     manualAuthRef.current = true;
     const res = await authApi.login({ email, password });
     setAccessToken(res.data.accessToken);
+    setCurrentUserId(res.data.user.id);
     localStorage.setItem(REFRESH_KEY, res.data.refreshToken);
     localStorage.setItem('attachtrack_user', JSON.stringify(res.data.user));
     setUser(res.data.user);
@@ -87,8 +100,7 @@ export function AuthProvider({ children }) {
     try {
       await authApi.logout({ refreshToken });
     } catch {
-      // Even if the server call fails (e.g. offline), clear the local
-      // session anyway — the person clicked logout, honor it locally.
+      manualAuthRef.current = false;
     }
     manualAuthRef.current = false;
     clearSession();

@@ -3,6 +3,7 @@ const assessmentsController = require('./assessments.controller');
 const auth = require('../../middleware/auth');
 const requireRole = require('../../middleware/requireRole');
 const AppError = require('../../utils/AppError');
+const offlineSync = require('../../middleware/offlineSync');
 
 const router = express.Router();
 
@@ -31,6 +32,13 @@ router.delete('/criteria/:criterionId', auth, requireRole('admin'), assessmentsC
 
 router.get('/:kind/students', auth, requireKindRole, assessmentsController.listStudents);
 router.get('/:kind/students/:studentId', auth, requireKindRole, assessmentsController.getAssessment);
-router.put('/:kind/students/:studentId', auth, requireKindRole, assessmentsController.saveAssessment);
+router.put(
+  '/:kind/students/:studentId',
+  auth,
+  requireKindRole,
+  offlineSync(),
+  assessmentsController.saveAssessment
+);
 
 module.exports = router;
+

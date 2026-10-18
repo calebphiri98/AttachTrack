@@ -5,17 +5,18 @@ const studentsService = require('../students/students.service');
 const notificationsService = require('../notifications/notifications.service');
 const { requireUuid, requireDate, optionalNumber } = require('../../utils/validators');
 const { uploadBuffer } = require('../../utils/uploadToCloudinary');
+const requestContext = require('../../utils/requestContext');
 
 const VALID_RECIPIENT_ROLES = ['industry_supervisor', 'university_supervisor'];
 
-function deriveState(row) {
+function deriveState(row, asOfMs = Date.now()) {
   if (row.file_url) {
     return 'submitted';
   }
   if (!row.due_date) {
     return 'open';
   }
-  const isPastDue = new Date(row.due_date).getTime() < Date.now();
+  const isPastDue = new Date(row.due_date).getTime() < asOfMs;
   if (!isPastDue) {
     return 'open';
   }
@@ -123,7 +124,7 @@ async function createSubmission({ studentUserId, file, clientUuid, recipientRole
     filename: finalClientUuid,
   });
 
-  const submittedAt = new Date();
+  const submittedAt = requestContext.getTrustedNow();
 
   try {
     const { rows } = await db.query(
@@ -210,14 +211,16 @@ async function fulfillRequirement({ submissionId, studentUserId, file }) {
     throw new AppError('This submission does not belong to you', 403);
   }
   if (submission.file_url) {
-    throw new AppError('This submission has already been fulfilled', 409);
+    throw new AppError('This submission has already been fulfilled', 409, 'RECORD_LOCKED');
   }
 
-  const state = deriveState(submission);
+  const trustedAt = requestContext.getTrustedNow();
+  const state = deriveState(submission, trustedAt.getTime());
   if (state === 'closed') {
     throw new AppError(
-      'This submission is past its due date and closed. Ask your supervisor to reopen it.',
-      403
+      'This submission was past its due date when it was made and is closed. Ask your supervisor to reopen it.',
+      403,
+      'DEADLINE_PASSED'
     );
   }
 
@@ -233,12 +236,12 @@ async function fulfillRequirement({ submissionId, studentUserId, file }) {
      SET file_url = $1,
          file_name = $2,
          file_type = $3,
-         submitted_at = now(),
+         submitted_at = $5,
          synced_at = now(),
          status = 'synced'
      WHERE id = $4
      RETURNING *`,
-    [uploadResult.secure_url, file.originalname, file.mimetype, submissionId]
+    [uploadResult.secure_url, file.originalname, file.mimetype, submissionId, trustedAt]
   );
 
   await notifySubmissionReceived(student, submission.recipient_role, rows[0]);
@@ -344,3 +347,4 @@ module.exports = {
   listMine,
   listForStudent,
 };
+

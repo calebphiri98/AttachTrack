@@ -294,7 +294,13 @@ async function updateEntry({ userId, entryId, fields, files, removeFileIds, subm
     throw new AppError('Logbook entry not found', 404);
   }
   if (!['draft', 'returned'].includes(existing.status)) {
-    throw new AppError('This entry has been submitted and can no longer be edited', 409);
+    throw new AppError(
+      existing.status === 'approved'
+        ? 'This entry has been approved and is locked. It can no longer be edited.'
+        : 'This entry has been submitted and can no longer be edited',
+      409,
+      'RECORD_LOCKED'
+    );
   }
 
   const clean = cleanFields(fields);
@@ -349,7 +355,7 @@ async function updateEntry({ userId, entryId, fields, files, removeFileIds, subm
   );
 
   if (rows.length === 0) {
-    throw new AppError('This entry has been submitted and can no longer be edited', 409);
+    throw new AppError('This entry has been submitted and can no longer be edited', 409, 'RECORD_LOCKED');
   }
 
   if (removeIds.length > 0) {
@@ -364,6 +370,45 @@ async function updateEntry({ userId, entryId, fields, files, removeFileIds, subm
     await notifyIndustrySupervisors(student);
   }
 
+  return getEntry(entryId);
+}
+
+async function addFiles({ userId, entryId, files }) {
+  requireUuid(entryId, 'entryId');
+  const student = await studentsService.getByUserId(userId);
+
+  const { rows: existingRows } = await db.query(
+    'SELECT id, status FROM logbook_entries WHERE id = $1 AND student_id = $2',
+    [entryId, student.id]
+  );
+  const existing = existingRows[0];
+  if (!existing) {
+    throw new AppError('Logbook entry not found', 404);
+  }
+  if (!['draft', 'returned'].includes(existing.status)) {
+    throw new AppError(
+      existing.status === 'approved'
+        ? 'This entry has been approved and is locked. Files can no longer be added.'
+        : 'This entry has been submitted. Files can no longer be added.',
+      409,
+      'RECORD_LOCKED'
+    );
+  }
+
+  if (!files || files.length === 0) {
+    throw new AppError('Choose at least one file to upload', 400);
+  }
+
+  const { rows: countRows } = await db.query(
+    'SELECT COUNT(*)::int AS count FROM logbook_entry_files WHERE entry_id = $1',
+    [entryId]
+  );
+  if (countRows[0].count + files.length > MAX_FILES) {
+    throw new AppError(`You can attach at most ${MAX_FILES} files to one entry`, 400);
+  }
+
+  const uploaded = await uploadFiles(student.id, files);
+  await saveFiles(entryId, uploaded);
   return getEntry(entryId);
 }
 
@@ -384,7 +429,13 @@ async function deleteEntry({ userId, entryId }) {
       [entryId, student.id]
     );
     if (existing[0]) {
-      throw new AppError('Only drafts can be deleted', 409);
+      throw new AppError(
+        existing[0].status === 'approved'
+          ? 'This entry has been approved and is locked. It cannot be deleted.'
+          : 'Only drafts can be deleted',
+        409,
+        'RECORD_LOCKED'
+      );
     }
     throw new AppError('Logbook entry not found', 404);
   }
@@ -421,7 +472,13 @@ async function submitEntry({ userId, entryId }) {
       throw new AppError('Logbook entry not found', 404);
     }
     if (!['draft', 'returned'].includes(existing[0].status)) {
-      throw new AppError('This entry has already been submitted', 409);
+      throw new AppError(
+        existing[0].status === 'approved'
+          ? 'This entry has been approved and is locked.'
+          : 'This entry has already been submitted',
+        409,
+        'RECORD_LOCKED'
+      );
     }
     throw new AppError('Add a description before submitting', 400);
   }
@@ -546,8 +603,10 @@ module.exports = {
   listForStudent,
   createEntry,
   updateEntry,
+  addFiles,
   deleteEntry,
   submitEntry,
   submitWeek,
   reviewWeek,
 };
+

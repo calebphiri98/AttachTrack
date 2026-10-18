@@ -12,15 +12,15 @@ export function getThread(userId) {
   return request(`/messages/thread/${userId}`);
 }
 
-export function sendMessage({ recipientId, content, file }) {
+export function sendMessage({ recipientId, content, file }, options = {}) {
   if (file) {
     const formData = new FormData();
     formData.append('recipientId', recipientId);
     if (content) formData.append('content', content);
     formData.append('file', file);
-    return request('/messages', { method: 'POST', body: formData, isForm: true });
+    return request('/messages', { method: 'POST', body: formData, isForm: true, ...options });
   }
-  return request('/messages', { method: 'POST', body: { recipientId, content } });
+  return request('/messages', { method: 'POST', body: { recipientId, content }, ...options });
 }
 
 export function markRead(messageId) {

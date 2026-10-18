@@ -22,6 +22,7 @@ import AssessmentFormsPage from '../features/assessments/pages/AssessmentFormsPa
 import AssessmentsListPage from '../features/assessments/pages/AssessmentsListPage';
 import AssessmentFormPage from '../features/assessments/pages/AssessmentFormPage';
 import AttendancePage from '../features/attendance/pages/AttendancePage';
+import SyncCenterPage from '../features/sync/pages/SyncCenterPage';
 
 export default function AppRoutes() {
   return (
@@ -192,6 +193,14 @@ export default function AppRoutes() {
         }
       />
       <Route
+        path="/sync"
+        element={
+          <ProtectedRoute>
+            <SyncCenterPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
         path="/settings/notifications"
         element={
           <ProtectedRoute>
@@ -204,3 +213,4 @@ export default function AppRoutes() {
     </Routes>
   );
 }
+
