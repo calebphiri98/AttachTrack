@@ -2,6 +2,7 @@ const db = require('../../config/db');
 const AppError = require('../../utils/AppError');
 const { requireUuid, optionalString } = require('../../utils/validators');
 const studentsService = require('../students/students.service');
+const requestContext = require('../../utils/requestContext');
 
 const VALID_STATUSES = ['present', 'absent', 'excused', 'partial'];
 const REASONS = ['sick', 'transport', 'permission', 'other'];
@@ -30,6 +31,11 @@ function todayTime() {
   return Date.parse(`${new Date().toISOString().slice(0, 10)}T00:00:00Z`);
 }
 
+function referenceDayTime() {
+  const trusted = requestContext.getTrustedNow();
+  return Date.parse(`${trusted.toISOString().slice(0, 10)}T00:00:00Z`);
+}
+
 function enumerateDates(fromTime, toTime, weekdaysOnly) {
   const dates = [];
   for (let time = fromTime; time <= toTime; time += DAY_MS) {
@@ -43,6 +49,35 @@ function enumerateDates(fromTime, toTime, weekdaysOnly) {
 function requireIndustryContext(supervisorContext) {
   if (!supervisorContext || supervisorContext.column !== 'industry_supervisor_id') {
     throw new AppError('Only industrial supervisors can record attendance', 403);
+  }
+}
+
+async function assertActiveSupervisor(student, supervisorId, dates) {
+  const { rows } = await db.query(
+    `SELECT industry_supervisor_id,
+            to_char(start_date, 'YYYY-MM-DD') AS start_date,
+            to_char(end_date, 'YYYY-MM-DD') AS end_date
+     FROM temp_supervisor_assignments
+     WHERE student_id = $1`,
+    [student.id]
+  );
+
+  for (const date of dates) {
+    const covering = rows.filter(
+      (row) => row.start_date <= date && (!row.end_date || row.end_date >= date)
+    );
+    const activeIds =
+      covering.length > 0
+        ? covering.map((row) => row.industry_supervisor_id)
+        : [student.industry_supervisor_id];
+
+    if (!activeIds.includes(supervisorId)) {
+      throw new AppError(
+        `You were not the active industrial supervisor on ${date}, so you cannot mark attendance for that day`,
+        403,
+        'NOT_ACTIVE_SUPERVISOR'
+      );
+    }
   }
 }
 
@@ -107,7 +142,7 @@ async function markAttendance({
 
   const cleanNotes = optionalString(notes, { max: 2000 });
 
-  await studentsService.assertSupervises(studentId, 'industry_supervisor_id', supervisorContext.id);
+  const student = await studentsService.getById(studentId);
 
   const dates = enumerateDates(fromTime, toTime, weekdaysOnly);
   if (dates.length === 0) {
@@ -117,6 +152,10 @@ async function markAttendance({
     );
   }
 
+  await assertActiveSupervisor(student, supervisorContext.id, dates);
+
+  const timing = requestContext.getTiming();
+  const reference = referenceDayTime();
   const correctionDays = await getSettingNumber('attendance_correction_days', 7);
   const backfillDays = await getSettingNumber('attendance_backfill_days', 31);
 
@@ -137,14 +176,15 @@ async function markAttendance({
   let unchanged = 0;
 
   for (const date of dates) {
-    const ageDays = Math.round((today - Date.parse(`${date}T00:00:00Z`)) / DAY_MS);
+    const ageDays = Math.round((reference - Date.parse(`${date}T00:00:00Z`)) / DAY_MS);
     const existing = existingByDate.get(date);
 
     if (!existing) {
       if (ageDays > backfillDays) {
         throw new AppError(
           `${date} is more than ${backfillDays} days ago and can no longer be added`,
-          409
+          409,
+          'RECORD_LOCKED'
         );
       }
       toCreate.push(date);
@@ -164,7 +204,8 @@ async function markAttendance({
     if (ageDays > correctionDays) {
       throw new AppError(
         `${date} is more than ${correctionDays} days ago and can no longer be corrected`,
-        409
+        409,
+        'RECORD_LOCKED'
       );
     }
     toUpdate.push(existing);
@@ -177,29 +218,51 @@ async function markAttendance({
     if (toCreate.length > 0) {
       const { rows } = await db.query(
         `INSERT INTO attendance
-           (student_id, industry_supervisor_id, attendance_date, status, reason, notes, marked_by)
-         SELECT $1::uuid, $2::uuid, d, $4::attendance_status, $5::varchar, $6::text, $7::uuid
+           (student_id, industry_supervisor_id, attendance_date, status, reason, notes, marked_by,
+            client_created_at, server_received_at, clock_offset_ms, clock_flagged)
+         SELECT $1::uuid, $2::uuid, d, $4::attendance_status, $5::varchar, $6::text, $7::uuid,
+                $8::timestamptz, $9::timestamptz, $10::bigint, $11::boolean
          FROM unnest($3::date[]) AS d
          RETURNING id`,
-        [studentId, supervisorContext.id, toCreate, status, cleanReason, cleanNotes, userId]
+        [
+          studentId,
+          supervisorContext.id,
+          toCreate,
+          status,
+          cleanReason,
+          cleanNotes,
+          userId,
+          timing ? timing.clientCreatedAt : null,
+          timing ? timing.serverReceivedAt : new Date(),
+          timing ? timing.offsetMs : null,
+          timing ? timing.flagged : false,
+        ]
       );
       created = rows.length;
 
       await db.query(
         `INSERT INTO attendance_changes
-           (attendance_id, change_type, new_status, new_reason, changed_by)
-         SELECT t.id, 'created', $2::attendance_status, $3::varchar, $4::uuid
+           (attendance_id, change_type, new_status, new_reason, changed_by, client_created_at, clock_flagged)
+         SELECT t.id, 'created', $2::attendance_status, $3::varchar, $4::uuid, $5::timestamptz, $6::boolean
          FROM unnest($1::uuid[]) AS t(id)`,
-        [rows.map((row) => row.id), status, cleanReason, userId]
+        [
+          rows.map((row) => row.id),
+          status,
+          cleanReason,
+          userId,
+          timing ? timing.clientCreatedAt : null,
+          timing ? timing.flagged : false,
+        ]
       );
     }
 
     if (toUpdate.length > 0) {
       await db.query(
         `INSERT INTO attendance_changes
-           (attendance_id, change_type, previous_status, new_status, previous_reason, new_reason, changed_by)
+           (attendance_id, change_type, previous_status, new_status, previous_reason, new_reason, changed_by,
+            client_created_at, clock_flagged)
          SELECT t.id, 'updated', t.previous_status::attendance_status, $4::attendance_status,
-                t.previous_reason, $5::varchar, $6::uuid
+                t.previous_reason, $5::varchar, $6::uuid, $7::timestamptz, $8::boolean
          FROM unnest($1::uuid[], $2::text[], $3::text[]) AS t(id, previous_status, previous_reason)`,
         [
           toUpdate.map((row) => row.id),
@@ -208,6 +271,8 @@ async function markAttendance({
           status,
           cleanReason,
           userId,
+          timing ? timing.clientCreatedAt : null,
+          timing ? timing.flagged : false,
         ]
       );
 
@@ -327,3 +392,4 @@ module.exports = {
   getSettingNumber,
   getSettings,
 };
+
