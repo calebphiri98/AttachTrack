@@ -4,10 +4,6 @@ export function listMyStudents() {
   return request('/industry-supervisors/students');
 }
 
-export function addStudent({ email }) {
-  return request('/industry-supervisors/students', { method: 'POST', body: { email } });
-}
-
 export function listAll() {
   return request('/industry-supervisors');
 }
