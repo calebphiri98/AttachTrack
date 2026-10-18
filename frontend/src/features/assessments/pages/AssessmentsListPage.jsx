@@ -1,7 +1,10 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import PortalLayout from '../../../components/shared/PortalLayout';
+import SyncChip from '../../../components/shared/SyncChip';
 import * as assessmentsApi from '../../../api/assessments.api';
+import { useOutbox, useSyncRefresh } from '../../../offline/hooks';
+import { overlayAssessmentList } from '../../../offline/overlays';
 import './AssessmentPages.css';
 
 const STATUS_LABELS = {
@@ -22,18 +25,29 @@ const EYEBROWS = {
 };
 
 export default function AssessmentsListPage({ kind }) {
-  const [students, setStudents] = useState([]);
+  const [serverStudents, setServerStudents] = useState([]);
+  const outbox = useOutbox();
+  const students = useMemo(
+    () => overlayAssessmentList(serverStudents, outbox, kind),
+    [serverStudents, outbox, kind]
+  );
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
-  useEffect(() => {
-    setLoading(true);
-    assessmentsApi
+  function load() {
+    return assessmentsApi
       .listAssessableStudents(kind)
-      .then((res) => setStudents(res.data))
+      .then((res) => setServerStudents(res.data))
       .catch((err) => setError(err.message))
       .finally(() => setLoading(false));
+  }
+
+  useEffect(() => {
+    setLoading(true);
+    load();
   }, [kind]);
+
+  useSyncRefresh(load);
 
   return (
     <PortalLayout eyebrow={EYEBROWS[kind]} title="Student assessments">
@@ -70,6 +84,11 @@ export default function AssessmentsListPage({ kind }) {
                     >
                       {STATUS_LABELS[student.status]}
                     </span>
+                    {student._sync && (
+                      <div style={{ marginTop: 6 }}>
+                        <SyncChip sync={student._sync} showError={false} />
+                      </div>
+                    )}
                   </td>
                   <td>
                     {student.status === 'submitted' && student.max_total
@@ -93,3 +112,4 @@ export default function AssessmentsListPage({ kind }) {
     </PortalLayout>
   );
 }
+
