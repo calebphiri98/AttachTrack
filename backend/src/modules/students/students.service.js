@@ -90,7 +90,7 @@ async function attachUserAccount({ email, name, userId }) {
   }
 
   if (!student.user_id) {
-    await db.query('UPDATE students SET user_id = $1 WHERE id = $2', [userId, student.id]);
+       await db.query('UPDATE students SET user_id = $1, name = $2 WHERE id = $3', [userId, cleanName, student.id]);
   }
 
   return recomputeAndSave(student.id);
