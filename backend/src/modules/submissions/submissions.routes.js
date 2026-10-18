@@ -3,10 +3,18 @@ const submissionsController = require('./submissions.controller');
 const auth = require('../../middleware/auth');
 const requireRole = require('../../middleware/requireRole');
 const upload = require('../../middleware/upload');
+const offlineSync = require('../../middleware/offlineSync');
 
 const router = express.Router();
 
-router.post('/', auth, requireRole('student'), upload.single('file'), submissionsController.create);
+router.post(
+  '/',
+  auth,
+  requireRole('student'),
+  upload.single('file'),
+  offlineSync({ table: 'submissions' }),
+  submissionsController.create
+);
 router.get('/mine', auth, requireRole('student'), submissionsController.listMine);
 router.get(
   '/student/:studentId',
@@ -26,6 +34,7 @@ router.post(
   auth,
   requireRole('student'),
   upload.single('file'),
+  offlineSync({ table: 'submissions' }),
   submissionsController.fulfill
 );
 router.post(
@@ -36,3 +45,5 @@ router.post(
 );
 
 module.exports = router;
+
+
