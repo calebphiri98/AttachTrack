@@ -1,6 +1,7 @@
 ﻿const db = require('../../config/db');
 const AppError = require('../../utils/AppError');
-const { requireString, requireEmail } = require('../../utils/validators');
+const { requireEmail, optionalString } = require('../../utils/validators');
+const nameFromEmail = require('../../utils/nameFromEmail');
 const studentsService = require('../students/students.service');
 
 async function getSupervisorRecordByUserId(userId) {
@@ -15,8 +16,8 @@ async function getSupervisorRecordByUserId(userId) {
 }
 
 async function addStudent(userId, { name, email }) {
-  const cleanName = requireString(name, 'name', { max: 150 });
   const cleanEmail = requireEmail(email);
+  const cleanName = optionalString(name, { max: 150 }) || nameFromEmail(cleanEmail);
 
   const supervisor = await getSupervisorRecordByUserId(userId);
 
