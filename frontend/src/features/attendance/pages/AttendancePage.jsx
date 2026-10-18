@@ -1,9 +1,14 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import PortalLayout from '../../../components/shared/PortalLayout';
+import SyncChip from '../../../components/shared/SyncChip';
 import * as attendanceApi from '../../../api/attendanceLog.api';
+import * as actions from '../../../offline/actions';
+import { useOutbox, useSyncRefresh } from '../../../offline/hooks';
+import { mergeAttendance, pendingCountByStudent } from '../../../offline/overlays';
 import '../../../styles/portalSections.css';
 import '../../assessments/pages/AssessmentPages.css';
-import { useSearchParams } from 'react-router-dom';
+
 const STATUS_OPTIONS = [
   { value: 'present', label: 'Present' },
   { value: 'absent', label: 'Absent' },
@@ -87,7 +92,7 @@ export default function AttendancePage() {
   const [settings, setSettings] = useState({ correctionDays: 7, backfillDays: 31, reminderDays: 7 });
   const [searchParams] = useSearchParams();
   const [selectedId, setSelectedId] = useState(searchParams.get('student') || '');
-  const [records, setRecords] = useState([]);
+  const [serverRecords, setServerRecords] = useState([]);
   const [form, setForm] = useState(buildEmptyForm);
   const [loading, setLoading] = useState(true);
   const [recordsLoading, setRecordsLoading] = useState(false);
@@ -95,6 +100,13 @@ export default function AttendancePage() {
   const [error, setError] = useState('');
   const [message, setMessage] = useState('');
   const formRef = useRef(null);
+  const outbox = useOutbox();
+
+  const records = useMemo(
+    () => mergeAttendance(serverRecords, outbox, selectedId),
+    [serverRecords, outbox, selectedId]
+  );
+  const pendingCounts = useMemo(() => pendingCountByStudent(outbox), [outbox]);
 
   async function loadStudents() {
     try {
@@ -110,13 +122,13 @@ export default function AttendancePage() {
 
   async function loadRecords(studentId) {
     if (!studentId) {
-      setRecords([]);
+      setServerRecords([]);
       return;
     }
     setRecordsLoading(true);
     try {
       const res = await attendanceApi.getStudentAttendance(studentId);
-      setRecords(res.data);
+      setServerRecords(res.data);
     } catch (err) {
       setError(err.message);
     } finally {
@@ -131,6 +143,11 @@ export default function AttendancePage() {
   useEffect(() => {
     loadRecords(selectedId);
   }, [selectedId]);
+
+  useSyncRefresh(() => {
+    loadStudents();
+    loadRecords(selectedId);
+  });
 
   const selectedStudent = students.find((student) => student.student_id === selectedId);
   const needsReason = REASON_STATUSES.includes(form.status);
@@ -214,8 +231,9 @@ export default function AttendancePage() {
 
     setSaving(true);
     try {
-      const res = await attendanceApi.saveAttendance({
+      const result = await actions.markAttendance({
         studentId: selectedId,
+        studentName: selectedStudent ? selectedStudent.name : '',
         dateFrom: form.dateFrom,
         dateTo: form.dateTo,
         status: form.status,
@@ -223,8 +241,14 @@ export default function AttendancePage() {
         notes: form.notes,
         weekdaysOnly: form.weekdaysOnly,
       });
-      const data = res.data;
-      setMessage(`${data.created} added, ${data.updated} updated, ${data.unchanged} unchanged.`);
+      if (result.queued) {
+        setMessage(
+          'Saved on this device. The server checks that you are the active supervisor for each day when it syncs.'
+        );
+      } else {
+        const data = result.data;
+        setMessage(`${data.created} added, ${data.updated} updated, ${data.unchanged} unchanged.`);
+      }
       await Promise.all([loadStudents(), loadRecords(selectedId)]);
     } catch (err) {
       setError(err.message);
@@ -280,6 +304,11 @@ export default function AttendancePage() {
                         <span className={`assess-chip assess-chip--${overviewChip(student)}`}>
                           {lastRecordedText(student)}
                         </span>
+                        {pendingCounts.get(student.student_id) > 0 && (
+                          <div className="assess-table__muted">
+                            {pendingCounts.get(student.student_id)} waiting to sync
+                          </div>
+                        )}
                       </td>
                       <td className="assess-table__muted">
                         {student.present_count} present, {student.absent_count} absent,{' '}
@@ -442,12 +471,19 @@ export default function AttendancePage() {
                               <span className={`assess-chip assess-chip--${STATUS_CHIPS[record.status]}`}>
                                 {STATUS_LABELS[record.status]}
                               </span>
+                              {record._sync && (
+                                <div style={{ marginTop: 6 }}>
+                                  <SyncChip sync={record._sync} />
+                                </div>
+                              )}
                             </td>
                             <td>{record.reason ? REASON_LABELS[record.reason] : '-'}</td>
                             <td className="assess-table__muted">{record.notes || '-'}</td>
                             <td className="assess-table__muted">{record.marked_by_name || '-'}</td>
                             <td>
-                              {canEdit ? (
+                              {record._sync ? (
+                                <span className="assess-table__muted">Not yet synced</span>
+                              ) : canEdit ? (
                                 <button
                                   type="button"
                                   className="btn btn--ghost"
@@ -473,3 +509,4 @@ export default function AttendancePage() {
     </PortalLayout>
   );
 }
+
