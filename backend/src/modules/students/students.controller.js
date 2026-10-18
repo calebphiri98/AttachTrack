@@ -6,7 +6,7 @@ const getMyProfile = asyncHandler(async (req, res) => {
 
   const message =
     profile.link_status === 'unlinked'
-      ? 'You are not yet linked to a supervisor. Please contact your Industry Supervisor or University Supervisor to be added.'
+      ? 'Your coordinator has not yet assigned both of your supervisors. You will be linked as soon as they do.'
       : null;
 
   res.status(200).json({ success: true, data: { ...profile, message } });
