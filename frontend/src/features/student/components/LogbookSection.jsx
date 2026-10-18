@@ -1,10 +1,20 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Card, EmptyState } from '../../../components/shared/Card';
 import StatusBadge from '../../../components/shared/StatusBadge';
+import SyncChip from '../../../components/shared/SyncChip';
 import { useAuth } from '../../../context/AuthContext';
 import * as logbooksApi from '../../../api/logbooks.api';
+import * as actions from '../../../offline/actions';
+import { useOutbox, useSyncRefresh } from '../../../offline/hooks';
+import { applyLogbookOverlay } from '../../../offline/overlays';
+import { prepareFiles, validateFiles } from '../../../offline/images';
+import { discardRecord } from '../../../offline/syncEngine';
 import './LogbookSection.css';
 import './LogbookWeeks.css';
+
+const MAX_FILES = 5;
+const MAX_FILE_BYTES = 10 * 1024 * 1024;
+const QUEUED_TEXT = 'Saved on this device. It will sync automatically when the connection allows.';
 
 const STATUS_LABELS = {
   draft: 'Draft',
@@ -53,7 +63,7 @@ export default function LogbookSection({ studentId = null }) {
   const isOwner = !studentId;
   const canReview = Boolean(studentId) && user?.role === 'industry_supervisor';
 
-  const [entries, setEntries] = useState([]);
+  const [rawEntries, setRawEntries] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [message, setMessage] = useState('');
@@ -67,13 +77,20 @@ export default function LogbookSection({ studentId = null }) {
   const [busyKey, setBusyKey] = useState('');
   const [returning, setReturning] = useState(null);
   const formRef = useRef(null);
+  const draftUuidRef = useRef(crypto.randomUUID());
+  const records = useOutbox();
+
+  const entries = useMemo(
+    () => (isOwner ? applyLogbookOverlay(rawEntries, records) : rawEntries),
+    [rawEntries, records, isOwner]
+  );
 
   async function loadEntries() {
     try {
       const res = studentId
         ? await logbooksApi.getStudentLogbook(studentId)
         : await logbooksApi.getMyLogbook();
-      setEntries(res.data || []);
+      setRawEntries(res.data || []);
     } catch (err) {
       setError(err.message);
     } finally {
@@ -84,6 +101,8 @@ export default function LogbookSection({ studentId = null }) {
   useEffect(() => {
     loadEntries();
   }, [studentId]);
+
+  useSyncRefresh(loadEntries);
 
   const weeks = useMemo(() => {
     const map = new Map();
@@ -105,6 +124,33 @@ export default function LogbookSection({ studentId = null }) {
     setEditingId(null);
     setExistingFiles([]);
     setRemoveIds([]);
+    draftUuidRef.current = crypto.randomUUID();
+  }
+
+  async function handleFilesChosen(event) {
+    const chosen = Array.from(event.target.files || []);
+    const kept = existingFiles.filter((file) => !removeIds.includes(file.id)).length;
+    const problem = validateFiles(chosen, {
+      maxFiles: Math.max(0, MAX_FILES - kept),
+      maxBytes: MAX_FILE_BYTES * 3,
+      label: 'new file',
+    });
+    if (problem) {
+      setError(problem);
+      setFiles([]);
+      setFileKey((key) => key + 1);
+      return;
+    }
+    setError('');
+    const prepared = await prepareFiles(chosen);
+    const oversized = prepared.find((file) => file.size > MAX_FILE_BYTES);
+    if (oversized) {
+      setError(`${oversized.name} is larger than 10 MB after compression`);
+      setFiles([]);
+      setFileKey((key) => key + 1);
+      return;
+    }
+    setFiles(prepared);
   }
 
   function startEdit(entry) {
@@ -151,16 +197,46 @@ export default function LogbookSection({ studentId = null }) {
       return;
     }
 
-    const payload = { ...form, files, removeFileIds: removeIds, submit };
+    const editingEntry = editingId ? entries.find((entry) => entry.id === editingId) : null;
+    const pendingIds = new Set(
+      (editingEntry ? editingEntry.files : []).filter((file) => file.pending).map((file) => file.id)
+    );
+    const removeLocal = removeIds.filter((id) => pendingIds.has(id));
+    const removeServer = removeIds.filter((id) => !pendingIds.has(id));
 
     setSaving(true);
     try {
-      if (editingId) {
-        await logbooksApi.updateLogbookEntry(editingId, payload);
+      let result;
+      if (editingEntry && editingEntry._record) {
+        result = await actions.amendLogbookRecord(editingEntry._record, {
+          fields: form,
+          submit,
+          addFiles: files,
+          removeFileIds: removeLocal,
+          removeServerFileIds:
+            editingEntry._record.type === 'logbook.update' ? removeServer : undefined,
+        });
+      } else if (editingEntry) {
+        result = await actions.updateLogbookEntry({
+          entry: editingEntry,
+          fields: form,
+          files,
+          removeFileIds: removeServer,
+          submit,
+        });
       } else {
-        await logbooksApi.createLogbookEntry(payload);
+        result = await actions.saveLogbookEntry({
+          entryUuid: draftUuidRef.current,
+          fields: form,
+          files,
+          submit,
+        });
       }
-      setMessage(submit ? 'Entry submitted for review.' : 'Draft saved.');
+      if (result.queued) {
+        setMessage(QUEUED_TEXT);
+      } else {
+        setMessage(submit ? 'Entry submitted for review.' : 'Draft saved.');
+      }
       resetForm();
       await loadEntries();
     } catch (err) {
@@ -176,7 +252,11 @@ export default function LogbookSection({ studentId = null }) {
     setMessage('');
     try {
       const res = await action();
-      setMessage(typeof successText === 'function' ? successText(res.data) : successText);
+      if (res.queued) {
+        setMessage(QUEUED_TEXT);
+      } else {
+        setMessage(typeof successText === 'function' ? successText(res.data) : successText);
+      }
       await loadEntries();
     } catch (err) {
       setError(err.message);
@@ -187,13 +267,13 @@ export default function LogbookSection({ studentId = null }) {
 
   function handleDelete(entry) {
     if (!window.confirm('Delete this draft entry?')) return;
-    run(`entry:${entry.id}`, () => logbooksApi.deleteLogbookEntry(entry.id), 'Draft deleted.');
+    run(`entry:${entry.id}`, () => actions.deleteLogbookEntry({ entry }), 'Draft deleted.');
   }
 
   function handleSubmitEntry(entry) {
     run(
       `entry:${entry.id}`,
-      () => logbooksApi.submitLogbookEntry(entry.id),
+      () => actions.submitLogbookEntry({ entry }),
       'Entry submitted for review.'
     );
   }
@@ -202,7 +282,7 @@ export default function LogbookSection({ studentId = null }) {
     if (!window.confirm('Submit all ready entries for this week?')) return;
     run(
       `week:${week.weekStart}`,
-      () => logbooksApi.submitLogbookWeek(week.weekStart),
+      () => actions.submitLogbookWeek({ weekStart: week.weekStart }),
       (data) =>
         `${data.submitted} entr${data.submitted === 1 ? 'y' : 'ies'} submitted${data.skipped ? `, ${data.skipped} skipped for missing descriptions` : ''}.`
     );
@@ -347,13 +427,16 @@ export default function LogbookSection({ studentId = null }) {
           )}
 
           <label className="logbook-form__field">
-            <span>Evidence: photos or documents (optional, up to 5 files of 10 MB)</span>
+            <span>
+              Evidence: photos or documents (optional, up to 5 files of 10 MB; photos are shrunk
+              automatically for weak connections)
+            </span>
             <input
               key={fileKey}
               type="file"
               multiple
               accept="image/*,.pdf,.doc,.docx"
-              onChange={(e) => setFiles(Array.from(e.target.files || []))}
+              onChange={handleFilesChosen}
             />
           </label>
 
@@ -477,7 +560,14 @@ export default function LogbookSection({ studentId = null }) {
                           </div>
                         )}
                       </div>
-                      <StatusBadge>{STATUS_LABELS[entry.status] || entry.status}</StatusBadge>
+                      <div>
+                        <StatusBadge>{STATUS_LABELS[entry.status] || entry.status}</StatusBadge>
+                        {entry._sync && (
+                          <div style={{ marginTop: 6 }}>
+                            <SyncChip sync={entry._sync} />
+                          </div>
+                        )}
+                      </div>
                     </div>
 
                     <p className="logbook-entry__task">{entry.activity}</p>
@@ -507,22 +597,40 @@ export default function LogbookSection({ studentId = null }) {
 
                     {entry.files && entry.files.length > 0 && (
                       <div className="logbook-entry__files">
-                        {entry.files.map((file) => (
-                          <a
-                            key={file.id}
-                            href={file.url}
-                            target="_blank"
-                            rel="noreferrer"
-                            className="logbook-entry__link"
-                          >
-                            {file.name}
-                          </a>
-                        ))}
+                        {entry.files.map((file) =>
+                          file.pending ? (
+                            <span key={file.id} className="logbook-entry__link">
+                              {file.name} (waiting to upload)
+                            </span>
+                          ) : (
+                            <a
+                              key={file.id}
+                              href={file.url}
+                              target="_blank"
+                              rel="noreferrer"
+                              className="logbook-entry__link"
+                            >
+                              {file.name}
+                            </a>
+                          )
+                        )}
                       </div>
                     )}
 
                     {entry.review_comment && (
                       <div className="logbook-entry__review">{entry.review_comment}</div>
+                    )}
+
+                    {isOwner && entry._sync && entry._sync.status === 'failed' && entry._record && (
+                      <div className="logbook-entry__actions">
+                        <button
+                          type="button"
+                          className="btn btn--ghost"
+                          onClick={() => discardRecord(entry._sync.recordId)}
+                        >
+                          Discard my local change
+                        </button>
+                      </div>
                     )}
 
                     {canEdit && (
@@ -565,3 +673,4 @@ export default function LogbookSection({ studentId = null }) {
     </Card>
   );
 }
+
