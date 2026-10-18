@@ -1,7 +1,5 @@
 const db = require('../../config/db');
 const AppError = require('../../utils/AppError');
-const { requireEmail, optionalString } = require('../../utils/validators');
-const nameFromEmail = require('../../utils/nameFromEmail');
 const studentsService = require('../students/students.service');
 
 async function getSupervisorRecordByUserId(userId) {
@@ -15,23 +13,9 @@ async function getSupervisorRecordByUserId(userId) {
   return record;
 }
 
-async function addStudent(userId, { name, email }) {
-  const cleanEmail = requireEmail(email);
-  const cleanName = optionalString(name, { max: 150 }) || nameFromEmail(cleanEmail);
-
-  const supervisor = await getSupervisorRecordByUserId(userId);
-
-  return studentsService.assignSupervisor({
-    email: cleanEmail,
-    name: cleanName,
-    supervisorColumn: 'university_supervisor_id',
-    supervisorId: supervisor.id,
-  });
-}
-
 async function listStudents(userId) {
   const supervisor = await getSupervisorRecordByUserId(userId);
   return studentsService.listBySupervisor('university_supervisor_id', supervisor.id);
 }
 
-module.exports = { addStudent, listStudents, getSupervisorRecordByUserId };
+module.exports = { listStudents, getSupervisorRecordByUserId };
