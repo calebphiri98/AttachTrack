@@ -1,11 +1,11 @@
-﻿const db = require('../../config/db');
+const db = require('../../config/db');
 const AppError = require('../../utils/AppError');
 const { requireEmail, requireString, requireUuid, optionalString } = require('../../utils/validators');
 
 function computeLinkStatus(row) {
   const hasAccount = !!row.user_id;
-  const hasSupervisor = !!row.industry_supervisor_id || !!row.university_supervisor_id;
-  return hasAccount && hasSupervisor ? 'linked' : 'unlinked';
+  const hasBothSupervisors = !!row.industry_supervisor_id && !!row.university_supervisor_id;
+  return hasAccount && hasBothSupervisors ? 'linked' : 'unlinked';
 }
 
 async function recomputeAndSave(studentId) {
@@ -33,50 +33,12 @@ async function findOrCreateByEmail(email, name) {
   return inserted[0];
 }
 
-async function assertEmailNotSupervisorOrAdmin(email) {
-  const { rows } = await db.query('SELECT role FROM users WHERE email = $1', [email]);
-  const existing = rows[0];
-  if (existing && existing.role !== 'student') {
-    throw new AppError(
-      'This email belongs to an existing supervisor or admin account and cannot be added as a student',
-      409
-    );
-  }
-}
-
 const VALID_SUPERVISOR_COLUMNS = ['industry_supervisor_id', 'university_supervisor_id'];
 
 function assertValidSupervisorColumn(column) {
   if (!VALID_SUPERVISOR_COLUMNS.includes(column)) {
     throw new AppError('Invalid supervisor column', 500);
   }
-}
-
-async function assignSupervisor({ email, name, supervisorColumn, supervisorId }) {
-  assertValidSupervisorColumn(supervisorColumn);
-  const cleanEmail = requireEmail(email);
-  const cleanName = requireString(name, 'name', { min: 1, max: 150 });
-
-  await assertEmailNotSupervisorOrAdmin(cleanEmail);
-
-  const student = await findOrCreateByEmail(cleanEmail, cleanName);
-
-  const currentValue = student[supervisorColumn];
-  if (currentValue && currentValue !== supervisorId) {
-    throw new AppError(
-      'This student is already assigned to a different supervisor of that type',
-      409
-    );
-  }
-
-  if (currentValue !== supervisorId) {
-    await db.query(`UPDATE students SET ${supervisorColumn} = $1 WHERE id = $2`, [
-      supervisorId,
-      student.id,
-    ]);
-  }
-
-  return recomputeAndSave(student.id);
 }
 
 async function attachUserAccount({ email, name, userId }) {
@@ -90,7 +52,11 @@ async function attachUserAccount({ email, name, userId }) {
   }
 
   if (!student.user_id) {
-       await db.query('UPDATE students SET user_id = $1, name = $2 WHERE id = $3', [userId, cleanName, student.id]);
+    await db.query('UPDATE students SET user_id = $1, name = $2 WHERE id = $3', [
+      userId,
+      cleanName,
+      student.id,
+    ]);
   }
 
   return recomputeAndSave(student.id);
@@ -193,7 +159,6 @@ async function isIndustrySupervisorOf(student, industrySupervisorId) {
 }
 
 module.exports = {
-  assignSupervisor,
   attachUserAccount,
   listBySupervisor,
   getProfileByUserId,
