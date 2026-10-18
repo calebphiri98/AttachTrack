@@ -1,11 +1,7 @@
 const env = require('../config/env');
 
-// eslint-disable-next-line no-unused-vars
 function errorHandler(err, req, res, next) {
   if (err.name === 'MulterError') {
-    // Give the common, realistic case (file too large) its own clear
-    // message rather than lumping every Multer error type under one
-    // generic "Upload error: <raw message>" prefix.
     if (err.code === 'LIMIT_FILE_SIZE') {
       return res.status(400).json({
         success: false,
@@ -25,6 +21,7 @@ function errorHandler(err, req, res, next) {
   res.status(statusCode).json({
     success: false,
     message,
+    ...(err.isOperational && err.code ? { code: err.code } : {}),
     ...(env.nodeEnv === 'development' && !err.isOperational ? { stack: err.stack } : {}),
   });
 }
