@@ -4,7 +4,6 @@ import StampButton from '../../../components/shared/StampButton';
 import * as universitySupervisorsApi from '../../../api/universitySupervisors.api';
 
 export default function AddStudentForm({ onAdded, onCancel }) {
-  const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [error, setError] = useState('');
   const [saving, setSaving] = useState(false);
@@ -12,13 +11,13 @@ export default function AddStudentForm({ onAdded, onCancel }) {
   async function handleSubmit(e) {
     e.preventDefault();
     setError('');
-    if (!name.trim() || !email.trim()) {
-      setError('Enter the student\'s name and email');
+    if (!email.trim()) {
+      setError('Enter the student\'s email');
       return;
     }
     setSaving(true);
     try {
-      const res = await universitySupervisorsApi.addStudent({ name: name.trim(), email: email.trim() });
+      const res = await universitySupervisorsApi.addStudent({ email: email.trim() });
       onAdded(res.data);
     } catch (err) {
       setError(err.message);
@@ -29,7 +28,6 @@ export default function AddStudentForm({ onAdded, onCancel }) {
 
   return (
     <form onSubmit={handleSubmit} noValidate>
-      <LedgerField label="Student name" value={name} onChange={(e) => setName(e.target.value)} />
       <LedgerField label="Student email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} />
       {error && <p style={{ color: 'var(--error)', fontSize: '0.88rem', marginBottom: 16 }}>{error}</p>}
       <div style={{ display: 'flex', gap: 12 }}>
