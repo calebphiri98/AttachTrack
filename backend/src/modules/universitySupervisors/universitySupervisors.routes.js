@@ -5,12 +5,6 @@ const requireRole = require('../../middleware/requireRole');
 
 const router = express.Router();
 
-router.post(
-  '/students',
-  auth,
-  requireRole('university_supervisor'),
-  universitySupervisorsController.addStudent
-);
 router.get(
   '/students',
   auth,
