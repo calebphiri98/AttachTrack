@@ -184,7 +184,8 @@ async function assignStudentSupervisors({
          university_supervisor_id = $2::uuid,
          link_status = (CASE
            WHEN user_id IS NOT NULL
-                AND ($1::uuid IS NOT NULL OR $2::uuid IS NOT NULL)
+                AND $1::uuid IS NOT NULL
+                AND $2::uuid IS NOT NULL
            THEN 'linked'
            ELSE 'unlinked'
          END)::link_status,
