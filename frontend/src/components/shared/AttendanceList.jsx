@@ -1,7 +1,10 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Card, EmptyState } from './Card';
 import StatusBadge from './StatusBadge';
+import SyncChip from './SyncChip';
 import * as attendanceApi from '../../api/attendanceLog.api';
+import { useOutbox, useSyncRefresh } from '../../offline/hooks';
+import { mergeAttendance } from '../../offline/overlays';
 
 const REASON_LABELS = {
   sick: 'Sick',
@@ -27,19 +30,30 @@ function countStatus(records, status) {
 }
 
 export default function AttendanceList({ studentId, action }) {
-  const [records, setRecords] = useState(null);
+  const [serverRecords, setServerRecords] = useState(null);
+  const outbox = useOutbox();
+  const records = useMemo(
+    () => (serverRecords ? mergeAttendance(serverRecords, outbox, studentId) : null),
+    [serverRecords, outbox, studentId]
+  );
   const [error, setError] = useState('');
   const [visible, setVisible] = useState(PAGE_SIZE);
 
-  useEffect(() => {
-    setRecords(null);
-    setError('');
-    setVisible(PAGE_SIZE);
+  function load() {
     attendanceApi
       .getStudentAttendance(studentId)
-      .then((res) => setRecords(res.data))
+      .then((res) => setServerRecords(res.data))
       .catch((err) => setError(err.message));
+  }
+
+  useEffect(() => {
+    setServerRecords(null);
+    setError('');
+    setVisible(PAGE_SIZE);
+    load();
   }, [studentId]);
+
+  useSyncRefresh(load);
 
   return (
     <Card>
@@ -76,6 +90,7 @@ export default function AttendanceList({ studentId, action }) {
               <li key={record.id} className="record-list__row">
                 <span className="record-list__date">{formatDay(record.attendance_date)}</span>
                 <StatusBadge>{record.status}</StatusBadge>
+                {record._sync && <SyncChip sync={record._sync} showError={false} />}
                 {record.reason && (
                   <span style={{ color: 'var(--muted)', fontSize: '0.88rem' }}>
                     {REASON_LABELS[record.reason] || record.reason}
@@ -106,3 +121,4 @@ export default function AttendanceList({ studentId, action }) {
     </Card>
   );
 }
+
