@@ -1,9 +1,9 @@
 import { Link } from 'react-router-dom';
-import AttendanceList from '../../../components/shared/AttendanceList';
+import AttendancePanel from './AttendancePanel';
 
 export default function AttendanceSection({ studentId }) {
   return (
-    <AttendanceList
+    <AttendancePanel
       studentId={studentId}
       action={
         <Link to={`/industry/attendance?student=${studentId}`} className="btn btn--primary">
