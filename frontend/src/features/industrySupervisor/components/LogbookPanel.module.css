@@ -1,0 +1,46 @@
+.week { border: 1px solid var(--sv-line); border-radius: var(--sv-radius-md); overflow: hidden; background: var(--sv-surface); }
+.weekHead {
+  display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap;
+  gap: 10px 16px; padding: 14px 18px; background: var(--sv-canvas); border-bottom: 1px solid var(--sv-line);
+}
+.weekTitle { margin: 0; font-family: var(--sv-font-display); font-size: 1.1rem; font-weight: 600; color: var(--sv-accent); }
+.weekMeta { font-size: 0.85rem; color: var(--sv-muted); }
+.weekActions { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; }
+
+.returnBox { padding: 16px 18px; background: var(--sv-warn-bg); border-bottom: 1px solid var(--sv-line); }
+
+.entries { display: flex; flex-direction: column; margin: 0; padding: 0; list-style: none; }
+.entry { padding: 16px 18px; border-bottom: 1px solid var(--sv-line); }
+.entry:last-child { border-bottom: none; }
+.entryHead { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; margin-bottom: 6px; }
+.entryDate { display: block; font-weight: 600; color: var(--sv-ink); }
+.entryTime { font-size: 0.85rem; color: var(--sv-muted); }
+.task { margin: 0 0 10px; font-size: 1.02rem; font-weight: 600; color: var(--sv-accent); overflow-wrap: anywhere; }
+
+.details { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px 20px; margin: 0; }
+.details div { min-width: 0; }
+.detailWide { grid-column: 1 / -1; }
+.details dt { margin-bottom: 2px; font-size: 0.8rem; font-weight: 600; color: var(--sv-muted); }
+.details dd { margin: 0; color: var(--sv-ink); white-space: pre-wrap; overflow-wrap: anywhere; line-height: 1.5; }
+
+.files { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+.fileChip {
+  display: inline-flex; align-items: center; padding: 5px 12px; font-size: 0.85rem; font-weight: 600;
+  color: var(--sv-blue-text); text-decoration: none; background: var(--sv-blue-soft); border-radius: 999px;
+  overflow-wrap: anywhere;
+}
+.fileChip:hover { text-decoration: underline; }
+.fileChip:focus-visible { outline: none; box-shadow: var(--sv-focus); }
+
+.review {
+  display: flex; flex-direction: column; gap: 2px; margin-top: 12px; padding: 10px 14px;
+  color: var(--sv-warn); background: var(--sv-warn-bg);
+  border-left: 4px solid var(--sv-gold); border-radius: var(--sv-radius-sm);
+}
+.reviewLabel { font-size: 0.8rem; font-weight: 700; }
+
+@media (max-width: 640px) {
+  .weekHead, .entry { padding-left: 14px; padding-right: 14px; }
+  .weekActions { width: 100%; }
+  .weekActions > :global(.btn) { flex: 1 1 auto; }
+}
