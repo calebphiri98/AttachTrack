@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import AttendancePanel from './AttendancePanel';
+import AttendancePanel from '../../../components/supervisor/AttendancePanel';
 
 export default function AttendanceSection({ studentId }) {
   return (
