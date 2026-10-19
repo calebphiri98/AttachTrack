@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import AuthShell from '../components/AuthShell';
+import LoginShell from '../components/LoginShell';
 import LedgerField from '../components/LedgerField';
 import StampButton from '../components/StampButton';
 import StampBadge from '../components/StampBadge';
@@ -61,19 +61,19 @@ export default function SignupPage() {
 
   if (done) {
     return (
-      <AuthShell eyebrow="Step 1 of 2" title="Account created">
+      <LoginShell eyebrow="Step 1 of 2" title="Account created">
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 16, padding: '24px 0' }}>
           <StampBadge label="Registered" />
           <p style={{ color: 'var(--muted)', fontSize: '0.92rem', textAlign: 'center' }}>
             Check your email for a verification code. Taking you there now.
           </p>
         </div>
-      </AuthShell>
+      </LoginShell>
     );
   }
 
   return (
-    <AuthShell
+    <LoginShell
       eyebrow="Step 1 of 2"
       title="Create your student account"
       subtitle={
@@ -133,7 +133,7 @@ export default function SignupPage() {
           Log in
         </Link>
       </p>
-    </AuthShell>
+    </LoginShell>
   );
 }
 
@@ -145,11 +145,12 @@ export default function SignupPage() {
 // import StampBadge from '../components/StampBadge';
 // import * as authApi from '../../../api/auth.api';
 
+// const RESTRICT_TO_MUBAS = true;
 // const MUBAS_EMAIL_REGEX = /^[^\s@]+@([a-zA-Z0-9-]+\.)*mubas\.ac\.mw$/i;
 
 // export default function SignupPage() {
 //   const navigate = useNavigate();
-//   const [form, setForm] = useState({ name: '', email: '', password: '' });
+//   const [form, setForm] = useState({ name: '', email: '', password: '', confirmPassword: '' });
 //   const [errors, setErrors] = useState({});
 //   const [loading, setLoading] = useState(false);
 //   const [serverError, setServerError] = useState('');
@@ -165,10 +166,15 @@ export default function SignupPage() {
 //     if (!form.name.trim()) next.name = 'Enter your full name';
 //     if (!/^\S+@\S+\.\S+$/.test(form.email)) {
 //       next.email = 'Enter a valid email';
-//     } else if (!MUBAS_EMAIL_REGEX.test(form.email)) {
+//     } else if (RESTRICT_TO_MUBAS && !MUBAS_EMAIL_REGEX.test(form.email)) {
 //       next.email = 'Student signup requires a MUBAS email address';
 //     }
 //     if (form.password.length < 8) next.password = 'At least 8 characters';
+//     if (!form.confirmPassword) {
+//       next.confirmPassword = 'Confirm your password';
+//     } else if (form.confirmPassword !== form.password) {
+//       next.confirmPassword = 'Passwords do not match';
+//     }
 //     setErrors(next);
 //     return Object.keys(next).length === 0;
 //   }
@@ -180,7 +186,7 @@ export default function SignupPage() {
 
 //     setLoading(true);
 //     try {
-//       await authApi.signup(form);
+//       await authApi.signup({ name: form.name, email: form.email, password: form.password });
 //       setDone(true);
 //       setTimeout(() => {
 //         navigate('/verify-email', { state: { email: form.email } });
@@ -198,7 +204,7 @@ export default function SignupPage() {
 //         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 16, padding: '24px 0' }}>
 //           <StampBadge label="Registered" />
 //           <p style={{ color: 'var(--muted)', fontSize: '0.92rem', textAlign: 'center' }}>
-//             Check your email for a verification code taking you there now.
+//             Check your email for a verification code. Taking you there now.
 //           </p>
 //         </div>
 //       </AuthShell>
@@ -209,7 +215,11 @@ export default function SignupPage() {
 //     <AuthShell
 //       eyebrow="Step 1 of 2"
 //       title="Create your student account"
-//       subtitle="Register with your MUBAS email, then verify it to activate your account. Supervisor accounts are created by an administrator."
+//       subtitle={
+//         RESTRICT_TO_MUBAS
+//           ? 'Register with your MUBAS email, then verify it to activate your account. Supervisor accounts are created by an administrator.'
+//           : 'Register with your email, then verify it to activate your account. Supervisor accounts are created by an administrator.'
+//       }
 //     >
 //       <form onSubmit={handleSubmit} noValidate>
 //         <LedgerField
@@ -221,7 +231,7 @@ export default function SignupPage() {
 //           autoComplete="name"
 //         />
 //         <LedgerField
-//           label="MUBAS email"
+//           label={RESTRICT_TO_MUBAS ? 'MUBAS email' : 'Email'}
 //           type="email"
 //           value={form.email}
 //           onChange={(e) => updateField('email', e.target.value)}
@@ -234,6 +244,15 @@ export default function SignupPage() {
 //           value={form.password}
 //           onChange={(e) => updateField('password', e.target.value)}
 //           error={errors.password}
+//           autoComplete="new-password"
+//           showToggle
+//         />
+//         <LedgerField
+//           label="Confirm password"
+//           type="password"
+//           value={form.confirmPassword}
+//           onChange={(e) => updateField('confirmPassword', e.target.value)}
+//           error={errors.confirmPassword}
 //           autoComplete="new-password"
 //           showToggle
 //         />
