@@ -13,14 +13,14 @@
 }
 
 .portal-layout__topbar-inner {
-  max-width: 1040px;
+  max-width: 1240px;
   margin: 0 auto;
   padding: 12px 32px;
   display: grid;
   grid-template-columns: auto minmax(0, 1fr) auto;
   grid-template-areas: 'brand nav account';
   align-items: center;
-  column-gap: 36px;
+  column-gap: 28px;
 }
 
 .portal-layout__topbar :focus-visible {
@@ -60,11 +60,13 @@
   grid-area: nav;
   display: flex;
   align-items: stretch;
-  gap: 22px;
+  gap: 20px;
   min-width: 0;
 }
 
 .portal-layout__nav-link {
+  display: inline-flex;
+  align-items: center;
   color: var(--on-navy-muted);
   font-size: 0.9rem;
   font-weight: 500;
@@ -82,6 +84,11 @@
 .portal-layout__nav-link--active {
   color: var(--on-navy);
   border-bottom-color: var(--gold-bright);
+}
+
+.portal-layout__nav-link .nav-badge {
+  background: var(--gold-bright);
+  color: var(--navy);
 }
 
 .portal-layout__panel-account {
@@ -105,18 +112,25 @@
   min-width: 0;
 }
 
-.portal-layout__role {
-  font-family: var(--font-mono);
-  font-size: 0.68rem;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  color: var(--on-navy-muted);
-  white-space: nowrap;
+.portal-layout__identity {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  max-width: 160px;
+  line-height: 1.25;
 }
 
 .portal-layout__name {
   font-size: 0.9rem;
-  max-width: 160px;
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.portal-layout__role {
+  font-size: 0.74rem;
+  color: var(--on-navy-muted);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -195,30 +209,20 @@
   max-width: 100%;
 }
 
-@media (max-width: 860px) {
-  .portal-layout__topbar-inner {
-    column-gap: 24px;
-  }
-
-  .portal-layout__name {
-    display: none;
-  }
-}
-
-@media (max-width: 768px) {
+@media (max-width: 1120px) {
   .portal-layout__topbar-inner {
     grid-template-columns: minmax(0, 1fr) auto;
     grid-template-areas: 'brand account';
-    padding: 10px 16px;
+    padding: 10px 24px;
   }
 
-  .portal-layout__role,
+  .portal-layout__identity,
   .portal-layout__logout--desktop {
     display: none;
   }
 
   .portal-layout__account {
-    gap: 8px;
+    gap: 10px;
   }
 
   .portal-layout__toggle {
@@ -227,8 +231,8 @@
     justify-content: center;
     align-items: center;
     gap: 5px;
-    width: 42px;
-    height: 42px;
+    width: 38px;
+    height: 38px;
     padding: 0;
     border: 1.5px solid rgba(255, 255, 255, 0.4);
     border-radius: 8px;
@@ -244,7 +248,7 @@
 
   .portal-layout__toggle-bar {
     display: block;
-    width: 20px;
+    width: 18px;
     height: 2px;
     border-radius: 2px;
     background: var(--on-navy);
@@ -275,12 +279,14 @@
     flex-direction: column;
     align-items: stretch;
     gap: 0;
-    padding: 6px 16px 16px;
+    padding: 6px max(24px, env(safe-area-inset-right)) 16px max(24px, env(safe-area-inset-left));
     background: var(--navy);
     border-bottom: 3px solid var(--gold);
     box-shadow: 0 18px 32px -12px rgba(0, 20, 50, 0.55);
     max-height: calc(100vh - 70px);
+    max-height: calc(100dvh - 70px);
     overflow-y: auto;
+    overscroll-behavior: contain;
     visibility: hidden;
     opacity: 0;
     transform: translateY(-8px);
@@ -299,7 +305,9 @@
   }
 
   .portal-layout__nav-link {
-    padding: 14px 12px;
+    justify-content: space-between;
+    min-height: 48px;
+    padding: 12px;
     font-size: 1rem;
     border-bottom: 1px solid rgba(255, 255, 255, 0.12);
     border-left: 3px solid transparent;
@@ -335,10 +343,7 @@
   }
 
   .portal-layout__panel-role {
-    font-family: var(--font-mono);
-    font-size: 0.68rem;
-    letter-spacing: 0.1em;
-    text-transform: uppercase;
+    font-size: 0.78rem;
     color: var(--on-navy-muted);
   }
 
@@ -349,7 +354,9 @@
     z-index: 45;
     background: rgba(0, 20, 50, 0.45);
   }
+}
 
+@media (max-width: 768px) {
   .portal-layout__content {
     padding: 22px 16px 56px;
   }
@@ -357,6 +364,17 @@
   .portal-layout__page-header {
     margin-bottom: 20px;
     padding-bottom: 14px;
+  }
+}
+
+@media (max-width: 640px) {
+  .portal-layout__topbar-inner {
+    padding: 10px 16px;
+  }
+
+  .portal-layout__nav {
+    padding-left: max(16px, env(safe-area-inset-left));
+    padding-right: max(16px, env(safe-area-inset-right));
   }
 }
 
