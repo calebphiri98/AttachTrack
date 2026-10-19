@@ -1,6 +1,16 @@
 import { useEffect, useState } from 'react';
-import { Card, EmptyState } from '../../../components/shared/Card';
 import * as feedbackApi from '../../../api/feedback.api';
+import SectionShell, { EmptyBlock, Pill } from '../../../components/supervisor/SectionShell';
+import ui from '../../../components/supervisor/controls.module.css';
+import styles from './FeedbackSection.module.css';
+
+function formatDate(value) {
+  return new Date(value).toLocaleDateString('en-GB', {
+    day: 'numeric',
+    month: 'short',
+    year: 'numeric',
+  });
+}
 
 export default function FeedbackSection({ studentId }) {
   const [records, setRecords] = useState(null);
@@ -13,31 +23,37 @@ export default function FeedbackSection({ studentId }) {
       .catch((err) => setError(err.message));
   }, [studentId]);
 
+  const description = records && records.length > 0
+    ? `${records.length} note${records.length === 1 ? '' : 's'} from the industry supervisor`
+    : 'Notes written by the industry supervisor';
+
   return (
-    <Card>
-      <h2 className="section-title">Feedback</h2>
-      {error && <p style={{ color: 'var(--error)' }}>{error}</p>}
-      {records === null && !error && <p style={{ color: 'var(--muted)' }}>Loading…</p>}
-      {records && records.length === 0 && <EmptyState>No feedback yet.</EmptyState>}
+    <SectionShell title="Feedback" description={description}>
+      {error && <p className={ui.error} role="alert">{error}</p>}
+      {records === null && !error && <p className={ui.loading}>Loading feedback…</p>}
+
+      {records && records.length === 0 && (
+        <EmptyBlock icon="chat" title="No feedback yet">
+          Feedback from the industry supervisor will appear here.
+        </EmptyBlock>
+      )}
+
       {records && records.length > 0 && (
-        <ul className="record-list">
+        <ul className={ui.list}>
           {records.map((f) => (
-            <li key={f.id} className="record-list__row" style={{ flexDirection: 'column', alignItems: 'flex-start' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', width: '100%' }}>
-                <span className="record-list__date">
-                  {new Date(f.created_at).toLocaleDateString()}
-                </span>
-                {f.flagged_concern && (
-                  <span style={{ color: 'var(--error)', fontSize: '0.8rem', fontWeight: 600 }}>
-                    Flagged
-                  </span>
-                )}
+            <li
+              key={f.id}
+              className={`${styles.entry} ${f.flagged_concern ? styles.entryConcern : ''}`}
+            >
+              <div className={styles.entryHead}>
+                <span className={styles.date}>{formatDate(f.created_at)}</span>
+                {f.flagged_concern && <Pill tone="danger">Concern</Pill>}
               </div>
-              <p style={{ margin: '6px 0 0', color: 'var(--ink)' }}>{f.content}</p>
+              <p className={styles.content}>{f.content}</p>
             </li>
           ))}
         </ul>
       )}
-    </Card>
+    </SectionShell>
   );
 }
