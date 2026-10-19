@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import * as feedbackApi from '../../../api/feedback.api';
-import SectionShell, { EmptyBlock, Pill } from './SectionShell';
-import ui from '../styles/controls.module.css';
+import SectionShell, { EmptyBlock, Pill } from '../../../components/supervisor/SectionShell';
+import ui from '../../../components/supervisor/controls.module.css';
 import styles from './FeedbackSection.module.css';
 
 function formatDate(value) {
