@@ -1,0 +1,52 @@
+.drop {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding: 18px 16px;
+  text-align: center;
+  background: var(--sv-surface);
+  border: 1.5px dashed var(--sv-line);
+  border-radius: var(--sv-radius-md);
+  cursor: pointer;
+  transition: border-color 0.15s ease, background 0.15s ease;
+}
+.drop:hover { border-color: var(--sv-blue); background: var(--sv-blue-soft); }
+.drop:focus-within { border-color: var(--sv-blue); box-shadow: var(--sv-focus); }
+.dropInput {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  opacity: 0;
+}
+.dropTitle { font-weight: 600; color: var(--sv-accent); overflow-wrap: anywhere; }
+.dropHint { font-size: 0.82rem; color: var(--sv-muted); }
+
+.visit {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 16px;
+  background: var(--sv-surface);
+  border: 1px solid var(--sv-line);
+  border-left: 4px solid var(--sv-blue);
+  border-radius: var(--sv-radius-md);
+}
+.visitPending { border-style: dashed; border-left-style: solid; }
+.visitHead { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px 12px; }
+.visitDate { font-weight: 600; color: var(--sv-ink); }
+.notes { margin: 0; color: var(--sv-ink); white-space: pre-wrap; overflow-wrap: anywhere; line-height: 1.55; }
+.meta { font-size: 0.85rem; color: var(--sv-muted); }
+.photo {
+  display: block;
+  width: 100%;
+  max-height: 260px;
+  object-fit: cover;
+  border-radius: var(--sv-radius-sm);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .drop { transition: none; }
+}
