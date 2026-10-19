@@ -1,0 +1,9 @@
+.entry {
+  padding: 14px 16px; background: var(--sv-surface);
+  border: 1px solid var(--sv-line); border-left: 4px solid var(--sv-blue);
+  border-radius: var(--sv-radius-md);
+}
+.entryConcern { border-left-color: var(--sv-danger); background: #fffafa; }
+.entryHead { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 6px; }
+.date { font-size: 0.88rem; font-weight: 600; color: var(--sv-muted); }
+.content { margin: 0; color: var(--sv-ink); white-space: pre-wrap; overflow-wrap: anywhere; line-height: 1.55; }
