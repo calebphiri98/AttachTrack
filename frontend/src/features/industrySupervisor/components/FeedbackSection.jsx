@@ -1,6 +1,16 @@
 import { useEffect, useState } from 'react';
 import * as feedbackApi from '../../../api/feedback.api';
+import SectionShell, { EmptyBlock, Pill } from './SectionShell';
+import ui from '../styles/controls.module.css';
 import styles from './FeedbackSection.module.css';
+
+function formatDate(value) {
+  return new Date(value).toLocaleDateString('en-GB', {
+    day: 'numeric',
+    month: 'short',
+    year: 'numeric',
+  });
+}
 
 export default function FeedbackSection({ studentId }) {
   const [records, setRecords] = useState(null);
@@ -39,24 +49,26 @@ export default function FeedbackSection({ studentId }) {
   }
 
   return (
-    <section className={styles.card}>
-      <h2 className={styles.title}>Feedback</h2>
+    <SectionShell
+      title="Feedback"
+      description="Share progress notes and flag anything that needs attention"
+    >
+      <form onSubmit={handleSubmit} className={`${ui.form} ${ui.panel}`} noValidate>
+        <h3 className={ui.panelTitle}>Write feedback</h3>
 
-      <form onSubmit={handleSubmit} className={styles.form} noValidate>
-        <label className={styles.field}>
-          <span className={styles.label}>New feedback</span>
+        <label className={ui.field}>
+          <span className={ui.label}>Your note</span>
           <textarea
-            className={styles.textarea}
-            rows={3}
+            className={ui.textarea}
+            rows={4}
             value={content}
             onChange={(e) => setContent(e.target.value)}
             placeholder="How is the student doing this week?"
           />
         </label>
 
-        <label className={styles.checkbox}>
+        <label className={ui.checkbox}>
           <input
-            className={styles.checkboxInput}
             type="checkbox"
             checked={flaggedConcern}
             onChange={(e) => setFlaggedConcern(e.target.checked)}
@@ -64,42 +76,47 @@ export default function FeedbackSection({ studentId }) {
           <span>Flag this as a concern</span>
         </label>
 
-        {error && <p className={styles.error}>{error}</p>}
+        {error && <p className={ui.error} role="alert">{error}</p>}
 
-        <div className={styles.actions}>
-          <button type="submit" className={styles.button} disabled={saving}>
-            {saving && <span className={styles.spinner} aria-hidden="true" />}
+        <div className={ui.actions}>
+          <button type="submit" className="btn btn--primary" disabled={saving}>
+            {saving && <span className={ui.spinner} aria-hidden="true" />}
             Save feedback
           </button>
         </div>
       </form>
 
-      <hr className={styles.divider} />
+      <div>
+        <h3 className={ui.subTitle}>
+          Previous feedback
+          {records && <span className={ui.count}>{records.length}</span>}
+        </h3>
 
-      {records === null && <p className={styles.loading}>Loading…</p>}
+        {records === null && <p className={ui.loading}>Loading feedback…</p>}
 
-      {records && records.length === 0 && (
-        <p className={styles.empty}>No feedback written yet.</p>
-      )}
+        {records && records.length === 0 && (
+          <EmptyBlock icon="chat" title="No feedback written yet">
+            Your notes to the student will appear here.
+          </EmptyBlock>
+        )}
 
-      {records && records.length > 0 && (
-        <ul className={styles.list}>
-          {records.map((r) => (
-            <li
-              key={r.id}
-              className={`${styles.entry} ${r.flagged_concern ? styles.entryConcern : ''}`}
-            >
-              <div className={styles.entryHeader}>
-                <span className={styles.date}>
-                  {new Date(r.created_at).toLocaleDateString()}
-                </span>
-                {r.flagged_concern && <span className={styles.badge}>Concern</span>}
-              </div>
-              <p className={styles.content}>{r.content}</p>
-            </li>
-          ))}
-        </ul>
-      )}
-    </section>
+        {records && records.length > 0 && (
+          <ul className={ui.list}>
+            {records.map((r) => (
+              <li
+                key={r.id}
+                className={`${styles.entry} ${r.flagged_concern ? styles.entryConcern : ''}`}
+              >
+                <div className={styles.entryHead}>
+                  <span className={styles.date}>{formatDate(r.created_at)}</span>
+                  {r.flagged_concern && <Pill tone="danger">Concern</Pill>}
+                </div>
+                <p className={styles.content}>{r.content}</p>
+              </li>
+            ))}
+          </ul>
+        )}
+      </div>
+    </SectionShell>
   );
 }
