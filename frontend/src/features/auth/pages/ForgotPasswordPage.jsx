@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import AuthShell from '../components/AuthShell';
+import LoginShell from '../components/LoginShell';
 import LedgerField from '../components/LedgerField';
 import StampButton from '../components/StampButton';
 import * as authApi from '../../../api/auth.api';
@@ -29,7 +29,7 @@ export default function ForgotPasswordPage() {
   }
 
   return (
-    <AuthShell
+    <LoginShell
       eyebrow="Account recovery"
       title="Forgot password"
       subtitle="Enter the email linked to your account and we'll send a reset link."
@@ -58,6 +58,6 @@ export default function ForgotPasswordPage() {
           Back to log in
         </Link>
       </p>
-    </AuthShell>
+    </LoginShell>
   );
 }
