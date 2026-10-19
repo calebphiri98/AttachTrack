@@ -1,15 +1,28 @@
 import { useEffect, useMemo, useState } from 'react';
 import * as siteVisitsApi from '../../../api/siteVisits.api';
 import * as actions from '../../../offline/actions';
-import StampButton from '../../../components/shared/StampButton';
 import SyncChip from '../../../components/shared/SyncChip';
 import { useOutbox, useSyncRefresh } from '../../../offline/hooks';
 import { pendingSiteVisits, syncInfo } from '../../../offline/overlays';
 import { compressImage } from '../../../offline/images';
 import { discardRecord } from '../../../offline/syncEngine';
+import SectionShell, { EmptyBlock, Pill } from '../../../components/supervisor/SectionShell';
+import ui from '../../../components/supervisor/controls.module.css';
+import styles from './SiteVisitSection.module.css';
 
 function today() {
   return new Date().toLocaleDateString('en-CA');
+}
+
+function formatVisitDate(value) {
+  if (!value) return '';
+  return new Date(`${String(value).slice(0, 10)}T00:00:00Z`).toLocaleDateString('en-GB', {
+    weekday: 'short',
+    day: 'numeric',
+    month: 'short',
+    year: 'numeric',
+    timeZone: 'UTC',
+  });
 }
 
 export default function SiteVisitSection({ studentId, studentName }) {
@@ -76,98 +89,121 @@ export default function SiteVisitSection({ studentId, studentName }) {
     }
   }
 
-  const fieldStyle = { padding: '10px 12px', borderRadius: 10, border: '1px solid var(--line)' };
+  const total = visits.length + pending.length;
+  const description = total > 0
+    ? `${total} visit${total === 1 ? '' : 's'} recorded`
+    : 'Record each visit you make to the student’s workplace';
 
   return (
-    <section
-      style={{
-        background: 'var(--panel)',
-        border: '1px solid var(--line)',
-        borderRadius: 20,
-        padding: 20,
-        marginBottom: 24,
-      }}
-    >
-      <h3 style={{ marginTop: 0 }}>Site visits</h3>
+    <SectionShell title="Site visits" description={description}>
+      <form onSubmit={handleSubmit} className={`${ui.form} ${ui.panel}`}>
+        <h3 className={ui.panelTitle}>Record a visit</h3>
 
-      {error && <p style={{ color: 'var(--error)' }}>{error}</p>}
-      {notice && <p className="pending-note">{notice}</p>}
+        <label className={ui.field}>
+          <span className={ui.label}>Visit date</span>
+          <input
+            className={ui.input}
+            type="date"
+            value={form.visitDate}
+            max={today()}
+            onChange={(e) => setForm({ ...form, visitDate: e.target.value })}
+            required
+          />
+        </label>
 
-      <form onSubmit={handleSubmit} style={{ display: 'grid', gap: 12, marginBottom: 20 }}>
-        <input
-          type="date"
-          value={form.visitDate}
-          max={today()}
-          onChange={(e) => setForm({ ...form, visitDate: e.target.value })}
-          style={fieldStyle}
-          required
-        />
-        <textarea
-          value={form.notes}
-          onChange={(e) => setForm({ ...form, notes: e.target.value })}
-          placeholder="Visit notes"
-          rows={4}
-          style={{ ...fieldStyle, resize: 'vertical' }}
-        />
-        <input key={photoKey} type="file" accept="image/*" onChange={handlePhoto} />
-        <StampButton type="submit" loading={saving}>
-          Record site visit
-        </StampButton>
+        <label className={ui.field}>
+          <span className={ui.label}>Visit notes</span>
+          <textarea
+            className={ui.textarea}
+            value={form.notes}
+            onChange={(e) => setForm({ ...form, notes: e.target.value })}
+            placeholder="What did you observe during the visit?"
+            rows={4}
+          />
+        </label>
+
+        <label className={styles.drop}>
+          <input
+            key={photoKey}
+            className={styles.dropInput}
+            type="file"
+            accept="image/*"
+            onChange={handlePhoto}
+          />
+          <span className={styles.dropTitle}>{photo ? photo.name : 'Add a photo (optional)'}</span>
+          <span className={styles.dropHint}>Photos are shrunk automatically for weak connections</span>
+        </label>
+
+        {error && <p className={ui.error} role="alert">{error}</p>}
+        {notice && <p className={ui.message} role="status">{notice}</p>}
+
+        <div className={ui.actions}>
+          <button type="submit" className="btn btn--primary" disabled={saving}>
+            {saving && <span className={ui.spinner} aria-hidden="true" />}
+            Record site visit
+          </button>
+        </div>
       </form>
 
-      {loading ? (
-        <p>Loading visits...</p>
-      ) : visits.length === 0 && pending.length === 0 ? (
-        <p style={{ color: 'var(--muted)' }}>No site visits recorded yet.</p>
-      ) : (
-        <div style={{ display: 'grid', gap: 12 }}>
-          {pending.map((record) => (
-            <div
-              key={record.id}
-              style={{ border: '1px dashed var(--line)', borderRadius: 12, padding: 12 }}
-            >
-              <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12, marginBottom: 8 }}>
-                <strong>{record.payload.visitDate}</strong>
-                <SyncChip sync={syncInfo(record)} />
-              </div>
-              {record.payload.notes && (
-                <div style={{ whiteSpace: 'pre-wrap' }}>{record.payload.notes}</div>
-              )}
-              {record.files.length > 0 && (
-                <div className="pending-note">Photo waiting to upload: {record.files[0].name}</div>
-              )}
-              {record.status === 'failed' && (
-                <button type="button" className="btn btn--ghost" onClick={() => discardRecord(record.id)}>
-                  Discard
-                </button>
-              )}
-            </div>
-          ))}
+      <div>
+        <h3 className={ui.subTitle}>
+          Visit history
+          {!loading && <span className={ui.count}>{total}</span>}
+        </h3>
 
-          {visits.map((visit) => (
-            <div key={visit.id} style={{ border: '1px solid var(--line)', borderRadius: 12, padding: 12 }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12, marginBottom: 8 }}>
-                <strong>{visit.visit_date}</strong>
-                <span style={{ color: 'var(--muted)' }}>{visit.supervisor_name}</span>
-              </div>
-              {visit.notes && <div style={{ whiteSpace: 'pre-wrap' }}>{visit.notes}</div>}
-              {visit.photo_url && (
-                <img
-                  src={visit.photo_url}
-                  alt="Site visit"
-                  style={{
-                    width: '100%',
-                    maxHeight: 220,
-                    objectFit: 'cover',
-                    borderRadius: 12,
-                    marginTop: 12,
-                  }}
-                />
-              )}
-            </div>
-          ))}
-        </div>
-      )}
-    </section>
+        {loading && <p className={ui.loading}>Loading visits…</p>}
+
+        {!loading && total === 0 && (
+          <EmptyBlock icon="pin" title="No site visits recorded yet">
+            Visits you record above will appear here.
+          </EmptyBlock>
+        )}
+
+        {!loading && total > 0 && (
+          <ul className={ui.list}>
+            {pending.map((record) => (
+              <li key={record.id} className={`${styles.visit} ${styles.visitPending}`}>
+                <div className={styles.visitHead}>
+                  <strong className={styles.visitDate}>
+                    {formatVisitDate(record.payload.visitDate)}
+                  </strong>
+                  <SyncChip sync={syncInfo(record)} />
+                </div>
+                {record.payload.notes && <p className={styles.notes}>{record.payload.notes}</p>}
+                {record.files.length > 0 && (
+                  <span className={styles.meta}>
+                    Photo waiting to upload: {record.files[0].name}
+                  </span>
+                )}
+                {record.status === 'failed' && (
+                  <div className={ui.actions}>
+                    <button
+                      type="button"
+                      className="btn btn--ghost"
+                      onClick={() => discardRecord(record.id)}
+                    >
+                      Discard
+                    </button>
+                  </div>
+                )}
+              </li>
+            ))}
+
+            {visits.map((visit) => (
+              <li key={visit.id} className={styles.visit}>
+                <div className={styles.visitHead}>
+                  <strong className={styles.visitDate}>{formatVisitDate(visit.visit_date)}</strong>
+                  {visit.supervisor_name && <Pill tone="info">{visit.supervisor_name}</Pill>}
+                </div>
+                {visit.notes && <p className={styles.notes}>{visit.notes}</p>}
+                {visit.photo_url && (
+                  <img className={styles.photo} src={visit.photo_url} alt="Site visit" />
+                )}
+              </li>
+            ))}
+          </ul>
+        )}
+      </div>
+    </SectionShell>
   );
 }
