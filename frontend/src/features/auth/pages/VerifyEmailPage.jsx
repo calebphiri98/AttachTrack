@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useNavigate, useLocation, Link } from 'react-router-dom';
-import AuthShell from '../components/AuthShell';
+import LoginShell from '../components/LoginShell';
 import LedgerField from '../components/LedgerField';
 import StampButton from '../components/StampButton';
 import StampBadge from '../components/StampBadge';
@@ -57,19 +57,19 @@ export default function VerifyEmailPage() {
 
   if (done) {
     return (
-      <AuthShell eyebrow="Step 2 of 2" title="Email verified">
+      <LoginShell eyebrow="Step 2 of 2" title="Email verified">
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 16, padding: '24px 0' }}>
           <StampBadge label="Verified" />
           <p style={{ color: 'var(--muted)', fontSize: '0.92rem', textAlign: 'center' }}>
             Taking you to log in now.
           </p>
         </div>
-      </AuthShell>
+      </LoginShell>
     );
   }
 
   return (
-    <AuthShell
+    <LoginShell
       eyebrow="Step 2 of 2"
       title="Verify your email"
       subtitle="Enter the 6-digit code we sent you. It expires after a few minutes."
@@ -128,6 +128,6 @@ export default function VerifyEmailPage() {
           Back to log in
         </Link>
       </p>
-    </AuthShell>
+    </LoginShell>
   );
 }
