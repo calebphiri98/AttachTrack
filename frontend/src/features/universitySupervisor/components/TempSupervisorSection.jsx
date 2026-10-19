@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react';
 import * as tempSupervisorsApi from '../../../api/tempSupervisors.api';
 import * as industrySupervisorsApi from '../../../api/industrySupervisors.api';
+import SectionShell, { EmptyBlock, Pill } from '../../../components/supervisor/SectionShell';
+import ui from '../../../components/supervisor/controls.module.css';
 import styles from './TempSupervisorSection.module.css';
 
 export default function TempSupervisorSection({ studentId }) {
@@ -64,75 +66,84 @@ export default function TempSupervisorSection({ studentId }) {
   }
 
   return (
-    <section className={styles.card}>
-      <h2 className={styles.title}>Temporary Supervisor</h2>
-
-      {error && <p className={styles.error}>{error}</p>}
-
-      {loading && <p className={styles.loading}>Loading...</p>}
+    <SectionShell
+      title="Temporary supervisor"
+      description="Hand day-to-day supervision to another industry supervisor when needed"
+    >
+      {error && <p className={ui.error} role="alert">{error}</p>}
+      {loading && <p className={ui.loading}>Loading assignment…</p>}
 
       {!loading && current && (
         <div className={styles.current}>
-          <span className={styles.badge}>Active</span>
+          <div className={styles.currentHead}>
+            <Pill tone="ok">Active</Pill>
+            <span className={styles.since}>
+              Since {new Date(current.start_date).toLocaleDateString('en-GB', {
+                day: 'numeric',
+                month: 'short',
+                year: 'numeric',
+              })}
+            </span>
+          </div>
           <p className={styles.detail}>Assigned by {current.assigned_by_name}</p>
-          {current.department && <p className={styles.detail}>Department: {current.department}</p>}
-          <p className={styles.detailMuted}>
-            Since {new Date(current.start_date).toLocaleDateString()}
-          </p>
-          <button
-            type="button"
-            className={`${styles.button} ${styles.buttonDanger}`}
-            onClick={handleEnd}
-            disabled={actionLoading}
-          >
-            {actionLoading && <span className={styles.spinner} aria-hidden="true" />}
-            End temporary assignment
-          </button>
+          {current.department && (
+            <p className={styles.detailMuted}>Department: {current.department}</p>
+          )}
+          <div className={ui.actions}>
+            <button
+              type="button"
+              className={`btn btn--ghost ${styles.endButton}`}
+              onClick={handleEnd}
+              disabled={actionLoading}
+            >
+              End temporary assignment
+            </button>
+          </div>
         </div>
       )}
 
-      {!loading && !current && <p className={styles.empty}>No active temporary supervisor.</p>}
+      {!loading && !current && (
+        <EmptyBlock icon="user" title="No active temporary supervisor">
+          Assign an industry supervisor below if the student needs cover.
+        </EmptyBlock>
+      )}
 
       {industrySupervisors && (
-        <>
-          <hr className={styles.divider} />
+        <form onSubmit={handleAssign} className={`${styles.assignForm} ${ui.panel}`}>
+          <label className={ui.field}>
+            <span className={ui.label}>Industry supervisor</span>
+            <select
+              className={`${ui.input} ${ui.select}`}
+              value={selectedId}
+              onChange={(e) => setSelectedId(e.target.value)}
+              required
+            >
+              <option value="">Select industry supervisor</option>
+              {industrySupervisors.map((s) => (
+                <option key={s.id} value={s.id}>
+                  {s.name} ({s.email})
+                </option>
+              ))}
+            </select>
+          </label>
 
-          <form onSubmit={handleAssign} className={styles.form}>
-            <label className={styles.field}>
-              <span className={styles.label}>Industry supervisor</span>
-              <select
-                className={styles.select}
-                value={selectedId}
-                onChange={(e) => setSelectedId(e.target.value)}
-                required
-              >
-                <option value="">Select industry supervisor</option>
-                {industrySupervisors.map((s) => (
-                  <option key={s.id} value={s.id}>
-                    {s.name} ({s.email})
-                  </option>
-                ))}
-              </select>
-            </label>
+          <label className={ui.field}>
+            <span className={ui.label}>Department (optional)</span>
+            <input
+              className={ui.input}
+              type="text"
+              placeholder="For example, Finance"
+              value={department}
+              onChange={(e) => setDepartment(e.target.value)}
+            />
+          </label>
 
-            <label className={styles.field}>
-              <span className={styles.label}>Department (optional)</span>
-              <input
-                className={styles.input}
-                type="text"
-                placeholder="e.g. Finance"
-                value={department}
-                onChange={(e) => setDepartment(e.target.value)}
-              />
-            </label>
-
-            <button type="submit" className={styles.button} disabled={actionLoading}>
-              {actionLoading && <span className={styles.spinner} aria-hidden="true" />}
-              {current ? 'Reassign' : 'Assign'}
-            </button>
-          </form>
-        </>
+          <button type="submit" className="btn btn--primary" disabled={actionLoading}>
+            {actionLoading && <span className={ui.spinner} aria-hidden="true" />}
+            {current ? 'Reassign' : 'Assign'}
+          </button>
+        </form>
       )}
-    </section>
+    </SectionShell>
   );
 }
