@@ -6,7 +6,7 @@ import AttendanceSection from '../components/AttendanceSection';
 import FeedbackSection from '../components/FeedbackSection';
 import SubmissionsSection from '../components/SubmissionsSection';
 import StudentAvatar from '../components/StudentAvatar';
-import LogbookSection from '../../student/components/LogbookSection';
+import LogbookPanel from '../components/LogbookPanel';
 import * as reportsApi from '../../../api/reports.api';
 import * as industrySupervisorsApi from '../../../api/industrySupervisors.api';
 import useResolvedStudent from '../../shared/hooks/useResolvedStudent';
@@ -107,7 +107,7 @@ export default function StudentDetailPage() {
           <SubmissionsSection studentId={studentId} />
         </div>
         <div id="logbook" className={styles.anchor}>
-          <LogbookSection studentId={studentId} />
+          <LogbookPanel studentId={studentId} />
         </div>
       </div>
     </PortalLayout>
