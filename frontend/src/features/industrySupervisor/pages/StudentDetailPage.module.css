@@ -1,0 +1,53 @@
+.back {
+  display: inline-flex; align-items: center; gap: 4px;
+  color: var(--sv-accent); text-decoration: none; font: inherit;
+  letter-spacing: inherit; text-transform: inherit;
+}
+.back:hover { text-decoration: underline; }
+.back:focus-visible { outline: none; box-shadow: var(--sv-focus); border-radius: 4px; }
+
+.profile {
+  display: flex; align-items: center; gap: 20px; flex-wrap: wrap;
+  margin-bottom: 16px; padding: 22px 24px;
+  background: var(--sv-surface); border: 1px solid var(--sv-line);
+  border-radius: var(--sv-radius-lg); box-shadow: var(--sv-shadow);
+}
+.identity { flex: 1 1 260px; min-width: 0; }
+.identityTop { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin-bottom: 8px; }
+.profileName {
+  margin: 0; font-size: 1.3rem; font-weight: 700;
+  letter-spacing: -0.01em; color: var(--sv-ink); overflow-wrap: anywhere;
+}
+.facts { display: flex; flex-wrap: wrap; gap: 6px 28px; margin: 0; }
+.facts div { display: flex; flex-direction: column; }
+.facts dt { font-size: 0.8rem; color: var(--sv-muted); }
+.facts dd { margin: 0; font-size: 0.92rem; color: var(--sv-ink); overflow-wrap: anywhere; }
+.actions { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.loading { margin: 0; color: var(--sv-muted); }
+
+.jump {
+  position: sticky; top: 0; z-index: 5; display: flex; gap: 6px;
+  margin-bottom: 20px; padding: 8px; overflow-x: auto;
+  background: color-mix(in srgb, var(--sv-surface) 92%, transparent);
+  backdrop-filter: blur(8px);
+  border: 1px solid var(--sv-line); border-radius: var(--sv-radius-md);
+}
+.jumpLink {
+  flex-shrink: 0; padding: 7px 14px; font-size: 0.9rem; font-weight: 600;
+  color: var(--sv-muted); text-decoration: none; border-radius: var(--sv-radius-sm);
+  transition: background 0.12s ease, color 0.12s ease;
+}
+.jumpLink:hover { background: var(--sv-hover); color: var(--sv-ink); }
+.jumpLink:focus-visible { outline: none; box-shadow: var(--sv-focus); }
+
+.stack { display: flex; flex-direction: column; gap: 20px; }
+.anchor { scroll-margin-top: 72px; }
+
+@media (max-width: 640px) {
+  .profile { padding: 18px 16px; }
+  .actions { width: 100%; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .jumpLink { transition: none; }
+  html { scroll-behavior: auto; }
+}
