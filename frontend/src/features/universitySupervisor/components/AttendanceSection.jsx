@@ -1,5 +1,5 @@
-import AttendanceList from '../../../components/shared/AttendanceList';
+import AttendancePanel from '../../../components/supervisor/AttendancePanel';
 
 export default function AttendanceSection({ studentId }) {
-  return <AttendanceList studentId={studentId} />;
+  return <AttendancePanel studentId={studentId} />;
 }
