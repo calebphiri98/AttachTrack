@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
-import AuthShell from '../components/AuthShell';
+import LoginShell from '../components/LoginShell';
 import LedgerField from '../components/LedgerField';
 import StampButton from '../components/StampButton';
 import * as authApi from '../../../api/auth.api';
@@ -36,7 +36,7 @@ export default function ResetPasswordPage() {
   }
 
   return (
-    <AuthShell
+    <LoginShell
       eyebrow="Set a new password"
       title="Reset password"
       subtitle="Choose a strong password to finish resetting your account."
@@ -63,6 +63,6 @@ export default function ResetPasswordPage() {
           Back to log in
         </Link>
       </p>
-    </AuthShell>
+    </LoginShell>
   );
 }
