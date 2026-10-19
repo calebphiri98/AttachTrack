@@ -48,6 +48,7 @@ const NAV = {
 
 const SETTINGS_LINK = { to: '/settings/notifications', label: 'Settings' };
 const SYNC_LINK = { to: '/sync', label: 'Sync' };
+const DESKTOP_QUERY = '(min-width: 1121px)';
 
 function isActive(location, path) {
   return location.pathname === path || location.pathname.startsWith(`${path}/`);
@@ -92,6 +93,21 @@ export default function PortalLayout({ eyebrow, title, actions, children }) {
     return () => window.removeEventListener('keydown', onKeyDown);
   }, [menuOpen]);
 
+  useEffect(() => {
+    if (!menuOpen) return undefined;
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    const query = window.matchMedia(DESKTOP_QUERY);
+    const closeOnDesktop = (event) => {
+      if (event.matches) setMenuOpen(false);
+    };
+    query.addEventListener('change', closeOnDesktop);
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      query.removeEventListener('change', closeOnDesktop);
+    };
+  }, [menuOpen]);
+
   return (
     <div className="portal-layout">
       <header className="portal-layout__topbar">
@@ -106,18 +122,22 @@ export default function PortalLayout({ eyebrow, title, actions, children }) {
             className={`portal-layout__nav${menuOpen ? ' portal-layout__nav--open' : ''}`}
             aria-label="Main navigation"
           >
-            {links.map((link) => (
-              <Link
-                key={link.to}
-                to={link.to}
-                className={`portal-layout__nav-link${isActive(location, link.to) ? ' portal-layout__nav-link--active' : ''}`}
-              >
-                {link.label}
-                {link.to === '/sync' && unsynced.total > 0 && (
-                  <span className="nav-badge">{unsynced.total}</span>
-                )}
-              </Link>
-            ))}
+            {links.map((link) => {
+              const active = isActive(location, link.to);
+              return (
+                <Link
+                  key={link.to}
+                  to={link.to}
+                  aria-current={active ? 'page' : undefined}
+                  className={`portal-layout__nav-link${active ? ' portal-layout__nav-link--active' : ''}`}
+                >
+                  {link.label}
+                  {link.to === '/sync' && unsynced.total > 0 && (
+                    <span className="nav-badge">{unsynced.total}</span>
+                  )}
+                </Link>
+              );
+            })}
 
             <div className="portal-layout__panel-account">
               <div className="portal-layout__panel-identity">
@@ -132,8 +152,10 @@ export default function PortalLayout({ eyebrow, title, actions, children }) {
 
           <div className="portal-layout__account">
             <NotificationBell />
-            <span className="portal-layout__role">{ROLE_LABELS[user?.role]}</span>
-            <span className="portal-layout__name">{user?.name}</span>
+            <div className="portal-layout__identity">
+              <span className="portal-layout__name">{user?.name}</span>
+              <span className="portal-layout__role">{ROLE_LABELS[user?.role]}</span>
+            </div>
             <button
               className="portal-layout__logout portal-layout__logout--desktop"
               onClick={handleLogoutClick}
