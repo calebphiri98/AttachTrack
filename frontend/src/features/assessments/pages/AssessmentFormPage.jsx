@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+﻿import { useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import PortalLayout from '../../../components/shared/PortalLayout';
 import SyncChip from '../../../components/shared/SyncChip';
@@ -9,7 +9,8 @@ import { useOutbox, useSyncRefresh } from '../../../offline/hooks';
 import { listRecords } from '../../../offline/outbox';
 import { pendingAssessment, syncInfo } from '../../../offline/overlays';
 import { discardRecord } from '../../../offline/syncEngine';
-import './AssessmentPages.css';
+import base from './AssessmentBase.module.css';
+import styles from './AssessmentFormPage.module.css';
 
 const EYEBROWS = {
   industry: 'Industrial supervisor',
@@ -182,6 +183,7 @@ export default function AssessmentFormPage({ kind }) {
         </Link>
       }
     >
+      <div className={`${base.root} ${styles.root}`}>
       {error && <p className="assess-error">{error}</p>}
       {loading && <p className="assess-empty">Loading assessment...</p>}
 
@@ -216,7 +218,7 @@ export default function AssessmentFormPage({ kind }) {
           {message && <p className="assess-banner assess-banner--ok">{message}</p>}
 
           <div className="assess-card">
-            <h2 className="assess-card__title">{data.form.title}</h2>
+            <h2 className="assess-card__title">{data.form.title.replace(/\s*\(SAMPLE\s*-\s*replace with the department rubric\)/gi, '')}</h2>
             <div className="assess-summary">
               <span>Student: {data.student.name}</span>
               {data.student.programme && <span>Programme: {data.student.programme}</span>}
@@ -252,7 +254,20 @@ export default function AssessmentFormPage({ kind }) {
                     value={marks[item.criterion_id] ?? ''}
                     onChange={(e) => {
                       dirtyRef.current = true;
-                      setMarks((prev) => ({ ...prev, [item.criterion_id]: e.target.value }));
+                      const raw = e.target.value;
+                      const value = Number(raw);
+
+                      if (
+                        raw !== '' &&
+                        (!Number.isFinite(value) || value < 0 || value > item.max_marks)
+                      ) {
+                        return;
+                      }
+
+                      setMarks((prev) => ({
+                        ...prev,
+                        [item.criterion_id]: raw
+                      }));
                     }}
                     disabled={locked || saving}
                     aria-label={`Marks for ${item.label}`}
@@ -328,7 +343,11 @@ export default function AssessmentFormPage({ kind }) {
           </div>
         </>
       )}
+      </div>
     </PortalLayout>
   );
 }
+
+
+
 
