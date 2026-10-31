@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+﻿import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import PortalLayout from '../../../components/shared/PortalLayout';
 import SyncChip from '../../../components/shared/SyncChip';
@@ -16,6 +16,7 @@ import { checkConnection } from '../../../offline/network';
 import { getStorageStatus, requestPersistentStorage } from '../../../offline/persist';
 import { useAuth } from '../../../context/AuthContext';
 import '../../../components/shared/offline.css';
+import styles from './SyncCenterPage.module.css';
 
 const TYPE_LABELS = {
   'logbook.create': 'Logbook entry',
@@ -124,6 +125,7 @@ export default function SyncCenterPage() {
         </button>
       }
     >
+      <div className={styles.root}>
       <div className="sync-center__grid">
         <div className="sync-center__summary">
           <div className="sync-center__stat">
@@ -271,6 +273,8 @@ export default function SyncCenterPage() {
           connection allows. <Link to="/settings/notifications">Notification settings</Link>
         </p>
       </div>
+      </div>
     </PortalLayout>
   );
 }
+
