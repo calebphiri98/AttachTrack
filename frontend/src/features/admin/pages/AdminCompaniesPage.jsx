@@ -1,9 +1,9 @@
-import { useEffect, useState } from 'react';
+﻿import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import PortalLayout from '../../../components/shared/PortalLayout';
 import * as companiesApi from '../../../api/companies.api';
 import '../../../styles/portalSections.css';
-import './AdminCompaniesPage.css';
+import styles from './AdminCompaniesPage.module.css';
 
 const EMPTY_FORM = {
   name: '',
@@ -102,6 +102,7 @@ export default function AdminCompaniesPage() {
         </>
       }
     >
+      <div className={styles.root}>
       {error && <p className="companies-error">{error}</p>}
 
       <div className="companies-layout">
@@ -190,6 +191,7 @@ export default function AdminCompaniesPage() {
             </div>
           </form>
         </section>
+      </div>
       </div>
     </PortalLayout>
   );
