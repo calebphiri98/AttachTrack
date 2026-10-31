@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+﻿import { useEffect, useState } from 'react';
 import PortalLayout from '../../../components/shared/PortalLayout';
 import ExportButton from '../../../components/shared/ExportButton';
 import AccountsPanel from '../components/AccountsPanel';
@@ -6,7 +6,7 @@ import AssignmentCell from '../components/AssignmentCell';
 import * as adminApi from '../../../api/admin.api';
 import * as reportsApi from '../../../api/reports.api';
 import '../../../styles/portalSections.css';
-import './AdminDashboardPage.css';
+import styles from './AdminDashboardPage.module.css';
 
 const EMPTY_ACCOUNT = { name: '', email: '', role: 'industry_supervisor' };
 const EMPTY_SUPERVISORS = { industry: [], university: [] };
@@ -117,6 +117,7 @@ export default function AdminDashboardPage() {
       title="Admin overview"
       actions={<ExportButton onClick={handleExport}>Export cohort CSV</ExportButton>}
     >
+      <div className={styles.root}>
       {error && <p className="admin-error">{error}</p>}
       {loading && <p className="admin-empty">Loading dashboard...</p>}
 
@@ -271,6 +272,7 @@ export default function AdminDashboardPage() {
           )}
         </>
       )}
+      </div>
     </PortalLayout>
   );
 }
