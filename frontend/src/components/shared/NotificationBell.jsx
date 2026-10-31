@@ -1,9 +1,9 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+﻿import { useCallback, useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import * as notificationsApi from '../../api/notifications.api';
 import './NotificationBell.css';
 
-const POLL_INTERVAL_MS = 60000;
+const POLL_INTERVAL_MS = 180000;
 const LIST_LIMIT = 20;
 
 function timeAgo(value) {
@@ -26,11 +26,34 @@ export default function NotificationBell() {
   const [error, setError] = useState('');
   const containerRef = useRef(null);
 
-  const refreshCount = useCallback(() => {
-    notificationsApi
-      .getUnreadCount()
-      .then((res) => setUnread(res.data.count))
-      .catch(() => {});
+  const lastRequestAt = useRef(0);
+  const requestInFlight = useRef(false);
+  const blockedUntil = useRef(0);
+
+  const refreshCount = useCallback(async () => {
+    const now = Date.now();
+
+    if (
+      requestInFlight.current ||
+      now < blockedUntil.current ||
+      now - lastRequestAt.current < POLL_INTERVAL_MS
+    ) {
+      return;
+    }
+
+    requestInFlight.current = true;
+    lastRequestAt.current = now;
+
+    try {
+      const res = await notificationsApi.getUnreadCount();
+      setUnread(res.data.count);
+    } catch (err) {
+      if (err.statusCode === 429) {
+        blockedUntil.current = Date.now() + 300000;
+      }
+    } finally {
+      requestInFlight.current = false;
+    }
   }, []);
 
   useEffect(() => {
@@ -183,3 +206,4 @@ export default function NotificationBell() {
     </div>
   );
 }
+
