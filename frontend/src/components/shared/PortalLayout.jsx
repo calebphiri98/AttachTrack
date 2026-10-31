@@ -1,6 +1,6 @@
-import { useEffect, useState } from 'react';
+﻿import { useEffect, useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import './PortalLayout.css';
+import styles from './PortalLayout.module.css';
 import NotificationBell from './NotificationBell';
 import NetworkBanner from './NetworkBanner';
 import ConfirmDialog from './ConfirmDialog';
@@ -109,7 +109,7 @@ export default function PortalLayout({ eyebrow, title, actions, children }) {
   }, [menuOpen]);
 
   return (
-    <div className="portal-layout">
+    <div className={`portal-layout ${styles.root}`}>
       <header className="portal-layout__topbar">
         <div className="portal-layout__topbar-inner">
           <div className="portal-layout__brand">
@@ -218,3 +218,4 @@ export default function PortalLayout({ eyebrow, title, actions, children }) {
     </div>
   );
 }
+
