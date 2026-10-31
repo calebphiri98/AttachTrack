@@ -1,0 +1,139 @@
+﻿.root :global(.assess-card__title) {
+  font-size: 24px;
+  margin-bottom: 22px;
+}
+
+.root :global(.assess-summary) {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 28px;
+}
+
+.root :global(.assess-summary span) {
+  padding: 10px 14px;
+  background: #f6f6f6;
+  border: 1px solid #ebebeb;
+  border-radius: 9px;
+  color: #555555;
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.root :global(.assess-criterion) {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 160px;
+  gap: 20px 24px;
+  align-items: start;
+  margin-bottom: 16px;
+  padding: 24px;
+  background: #fafafa;
+  border: 1px solid #e8e8e8;
+  border-radius: 13px;
+}
+
+.root :global(.assess-criterion__label) {
+  color: #171717;
+  font-size: 15px;
+  font-weight: 700;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+}
+
+.root :global(.assess-criterion__desc) {
+  margin-top: 8px;
+  color: #777777;
+  font-size: 13px;
+  line-height: 1.65;
+}
+
+.root :global(.assess-criterion__score) {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+.root :global(.assess-criterion__score input) {
+  width: 90px;
+  min-height: 48px;
+  padding: 10px;
+  text-align: center;
+  color: #111111;
+  background: #ffffff;
+  border: 1px solid #dcdcdc;
+  border-radius: 9px;
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.root :global(.assess-criterion__score span) {
+  color: #777777;
+  font-size: 13px;
+  white-space: nowrap;
+}
+
+.root :global(.assess-criterion__remark) {
+  grid-column: 1 / -1;
+  display: block;
+}
+
+.root :global(.assess-criterion__remark input) {
+  width: 100%;
+  min-height: 46px;
+  padding: 12px 14px;
+  background: #ffffff;
+  border: 1px solid #dedede;
+  border-radius: 9px;
+  color: #333333;
+  font-size: 13px;
+}
+
+.root :global(.assess-total) {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 16px;
+  margin: 28px 0;
+  padding: 23px 26px;
+  border: 1px solid #242424;
+  border-radius: 13px;
+  background: #171717;
+  color: #ffffff;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.root :global(.assess-total strong) {
+  font-size: 25px;
+  font-weight: 700;
+  letter-spacing: -0.04em;
+  font-variant-numeric: tabular-nums;
+  color: #ffffff;
+}
+
+.root :global(.assess-field textarea) {
+  min-height: 150px;
+}
+
+@media (max-width: 640px) {
+  .root :global(.assess-criterion) {
+    grid-template-columns: 1fr;
+    gap: 16px;
+    padding: 19px 16px;
+  }
+
+  .root :global(.assess-criterion__score) {
+    justify-content: flex-start;
+  }
+
+  .root :global(.assess-total) {
+    padding: 20px;
+  }
+
+  .root :global(.assess-total strong) {
+    font-size: 22px;
+  }
+}

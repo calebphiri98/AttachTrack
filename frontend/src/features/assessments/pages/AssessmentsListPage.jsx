@@ -1,11 +1,12 @@
-import { useEffect, useMemo, useState } from 'react';
+﻿import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import PortalLayout from '../../../components/shared/PortalLayout';
 import SyncChip from '../../../components/shared/SyncChip';
 import * as assessmentsApi from '../../../api/assessments.api';
 import { useOutbox, useSyncRefresh } from '../../../offline/hooks';
 import { overlayAssessmentList } from '../../../offline/overlays';
-import './AssessmentPages.css';
+import base from './AssessmentBase.module.css';
+import styles from './AssessmentsListPage.module.css';
 
 const STATUS_LABELS = {
   not_started: 'Not started',
@@ -51,6 +52,7 @@ export default function AssessmentsListPage({ kind }) {
 
   return (
     <PortalLayout eyebrow={EYEBROWS[kind]} title="Student assessments">
+      <div className={`${base.root} ${styles.root}`}>
       {error && <p className="assess-error">{error}</p>}
       {loading && <p className="assess-empty">Loading students...</p>}
 
@@ -109,7 +111,9 @@ export default function AssessmentsListPage({ kind }) {
           </table>
         </div>
       )}
+      </div>
     </PortalLayout>
   );
 }
+
 

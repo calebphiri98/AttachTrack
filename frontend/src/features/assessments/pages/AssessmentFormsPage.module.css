@@ -1,0 +1,55 @@
+﻿.root :global(.assess-card) {
+  margin-bottom: 24px;
+}
+
+.root :global(.assess-card__title) {
+  margin-bottom: 10px;
+}
+
+.root :global(.assess-card:has(> .assess-grid):first-child) {
+  padding: 24px 30px;
+}
+
+.root :global(.assess-table-wrap) {
+  margin-top: 20px;
+}
+
+.root :global(.assess-table td:first-child) {
+  min-width: 220px;
+}
+
+.root :global(.assess-table__actions) {
+  justify-content: flex-start;
+}
+
+.root :global(.assess-table__actions .btn) {
+  min-height: 36px;
+  padding: 8px 12px;
+}
+
+.root :global(.assess-field select) {
+  appearance: auto;
+  cursor: pointer;
+}
+
+.root :global(.assess-card:last-child) {
+  border-color: #d1d1d1;
+}
+
+.root :global(.assess-card:last-child .assess-card__title) {
+  color: #111111;
+}
+
+.root :global(.assess-card:last-child .assess-actions .btn--primary) {
+  min-width: 170px;
+}
+
+@media (max-width: 760px) {
+  .root :global(.assess-card:has(> .assess-grid):first-child) {
+    padding: 20px 18px;
+  }
+
+  .root :global(.assess-table) {
+    min-width: 640px;
+  }
+}

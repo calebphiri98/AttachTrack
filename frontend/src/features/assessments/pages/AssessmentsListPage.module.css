@@ -1,0 +1,45 @@
+﻿.root :global(.assess-table-wrap) {
+  overflow-x: auto;
+  border-radius: 18px;
+}
+
+.root :global(.assess-table) {
+  min-width: 690px;
+}
+
+.root :global(.assess-table th) {
+  padding: 20px 24px;
+}
+
+.root :global(.assess-table td) {
+  padding: 25px 24px;
+}
+
+.root :global(.assess-table td:first-child) {
+  min-width: 200px;
+}
+
+.root :global(.assess-table td:last-child) {
+  text-align: right;
+}
+
+.root :global(.assess-table td:last-child .btn) {
+  min-width: 125px;
+}
+
+.root :global(.assess-table td:nth-child(4)) {
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.root :global(.assess-table__muted) {
+  margin-top: 7px;
+}
+
+@media (max-width: 760px) {
+  .root :global(.assess-table th),
+  .root :global(.assess-table td) {
+    padding: 18px;
+  }
+}

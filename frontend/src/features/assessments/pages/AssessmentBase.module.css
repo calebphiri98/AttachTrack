@@ -1,0 +1,313 @@
+﻿.root {
+  display: block;
+  min-width: 0;
+  color: #171717;
+}
+
+.root * {
+  box-sizing: border-box;
+}
+
+.root :global(.assess-card) {
+  min-width: 0;
+  padding: 30px;
+  margin: 0 0 24px;
+  background: #ffffff;
+  border: 1px solid #e7e7e7;
+  border-radius: 18px;
+  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.025);
+}
+
+.root :global(.assess-card__title) {
+  margin: 0 0 10px;
+  color: #111111;
+  font-family: 'IBM Plex Sans', Arial, sans-serif;
+  font-size: 21px;
+  font-weight: 700;
+  line-height: 1.35;
+  letter-spacing: -0.035em;
+}
+
+.root :global(.assess-card__hint) {
+  margin: 0 0 24px;
+  max-width: 75ch;
+  color: #777777;
+  font-size: 13px;
+  line-height: 1.7;
+}
+
+.root :global(.assess-banner) {
+  margin: 0 0 22px;
+  padding: 17px 20px;
+  background: #fffaf0;
+  color: #755321;
+  border: 1px solid #eee0c4;
+  border-left: 3px solid #b58c4c;
+  border-radius: 11px;
+  font-size: 13px;
+  line-height: 1.65;
+}
+
+.root :global(.assess-banner--ok) {
+  background: #f1f8f3;
+  color: #28633b;
+  border-color: #cfe7d5;
+  border-left-color: #398754;
+}
+
+.root :global(.assess-error) {
+  margin: 0 0 22px;
+  padding: 17px 20px;
+  color: #a52d2d;
+  background: #fff4f4;
+  border: 1px solid #f0cece;
+  border-radius: 11px;
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+.root :global(.assess-empty) {
+  margin: 0;
+  padding: 44px 20px;
+  text-align: center;
+  color: #777777;
+  font-size: 14px;
+  line-height: 1.65;
+}
+
+.root :global(.assess-grid) {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  align-items: end;
+  gap: 22px;
+}
+
+.root :global(.assess-field) {
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+  min-width: 0;
+  color: #404040;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.root :global(.assess-field input),
+.root :global(.assess-field select),
+.root :global(.assess-field textarea) {
+  display: block;
+  width: 100%;
+  min-width: 0;
+  min-height: 48px;
+  padding: 12px 15px;
+  background: #fafafa;
+  border: 1px solid #dedede;
+  border-radius: 10px;
+  color: #222222;
+  font: inherit;
+  font-size: 14px;
+  font-weight: 400;
+}
+
+.root :global(.assess-field textarea) {
+  min-height: 130px;
+  line-height: 1.65;
+  resize: vertical;
+}
+
+.root :global(input:focus),
+.root :global(select:focus),
+.root :global(textarea:focus) {
+  outline: none;
+  border-color: #111111;
+  box-shadow: 0 0 0 3px rgba(0, 0, 0, 0.06);
+  background: #ffffff;
+}
+
+.root :global(input:disabled),
+.root :global(textarea:disabled),
+.root :global(select:disabled) {
+  background: #f4f4f4;
+  color: #777777;
+  cursor: not-allowed;
+}
+
+.root :global(.assess-actions) {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 26px;
+  padding-top: 22px;
+  border-top: 1px solid #ededed;
+}
+
+.root :global(.assess-actions .btn),
+.root :global(.assess-table .btn) {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 43px;
+  padding: 10px 18px;
+  border-radius: 10px;
+  font-size: 12px;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.root :global(.assess-actions .btn--primary),
+.root :global(.assess-table .btn--primary) {
+  background: #171717;
+  color: #ffffff;
+  border: 1px solid #171717;
+}
+
+.root :global(.assess-actions .btn--primary:hover),
+.root :global(.assess-table .btn--primary:hover) {
+  background: #333333;
+  border-color: #333333;
+}
+
+.root :global(.assess-actions .btn--ghost),
+.root :global(.assess-table .btn--ghost) {
+  background: #ffffff;
+  color: #222222;
+  border: 1px solid #dedede;
+}
+
+.root :global(.assess-actions .btn--ghost:hover),
+.root :global(.assess-table .btn--ghost:hover) {
+  border-color: #999999;
+  background: #f5f5f5;
+}
+
+.root :global(.btn:disabled) {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.root :global(.assess-table-wrap) {
+  min-width: 0;
+  overflow-x: auto;
+  background: #ffffff;
+  border: 1px solid #e5e5e5;
+  border-radius: 15px;
+  box-shadow: 0 5px 20px rgba(0, 0, 0, 0.02);
+}
+
+.root :global(.assess-table) {
+  width: 100%;
+  border-collapse: collapse;
+  border-spacing: 0;
+  font-size: 13px;
+}
+
+.root :global(.assess-table th) {
+  padding: 19px 22px;
+  text-align: left;
+  background: #f8f8f8;
+  color: #777777;
+  border-bottom: 1px solid #e7e7e7;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.075em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.root :global(.assess-table td) {
+  padding: 21px 22px;
+  border-bottom: 1px solid #eeeeee;
+  vertical-align: middle;
+  line-height: 1.6;
+  overflow-wrap: anywhere;
+}
+
+.root :global(.assess-table tbody tr:last-child td) {
+  border-bottom: 0;
+}
+
+.root :global(.assess-table tbody tr:hover) {
+  background: #fafafa;
+}
+
+.root :global(.assess-table__muted) {
+  margin-top: 5px;
+  color: #858585;
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.root :global(.assess-table__actions) {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.root :global(.assess-chip) {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 28px;
+  padding: 6px 12px;
+  background: #f0f0f0;
+  color: #555555;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.root :global(.assess-chip--active),
+.root :global(.assess-chip--submitted) {
+  background: #e9f5ed;
+  color: #28633b;
+}
+
+.root :global(.assess-chip--draft) {
+  background: #fff3df;
+  color: #895d20;
+}
+
+.root :global(.assess-chip--inactive) {
+  background: #fff0f0;
+  color: #a52d2d;
+}
+
+.root :global(.assess-chip--none) {
+  background: #eeeeee;
+  color: #777777;
+}
+
+@media (max-width: 760px) {
+  .root :global(.assess-card) {
+    padding: 22px 18px;
+    border-radius: 14px;
+  }
+
+  .root :global(.assess-grid) {
+    grid-template-columns: 1fr;
+    gap: 18px;
+  }
+
+  .root :global(.assess-table th),
+  .root :global(.assess-table td) {
+    padding: 16px;
+  }
+
+  .root :global(.assess-actions) {
+    justify-content: stretch;
+  }
+
+  .root :global(.assess-actions .btn) {
+    flex: 1 1 140px;
+  }
+
+  .root :global(.assess-field input),
+  .root :global(.assess-field select),
+  .root :global(.assess-field textarea) {
+    font-size: 16px;
+  }
+}

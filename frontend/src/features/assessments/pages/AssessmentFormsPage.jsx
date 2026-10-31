@@ -1,7 +1,8 @@
-import { useEffect, useState } from 'react';
+﻿import { useEffect, useState } from 'react';
 import PortalLayout from '../../../components/shared/PortalLayout';
 import * as assessmentsApi from '../../../api/assessments.api';
-import './AssessmentPages.css';
+import base from './AssessmentBase.module.css';
+import styles from './AssessmentFormsPage.module.css';
 
 const KIND_OPTIONS = [
   { value: 'industry', label: 'Industrial supervisor assessment' },
@@ -141,6 +142,7 @@ export default function AssessmentFormsPage() {
 
   return (
     <PortalLayout eyebrow="Results" title="Assessment forms">
+      <div className={`${base.root} ${styles.root}`}>
       {error && <p className="assess-error">{error}</p>}
       {loading && <p className="assess-empty">Loading forms...</p>}
 
@@ -351,6 +353,7 @@ export default function AssessmentFormsPage() {
           </div>
         </>
       )}
+      </div>
     </PortalLayout>
   );
 }
