@@ -1,34 +1,59 @@
-import './LoginShell.css';
+﻿import styles from './LoginShell.module.css';
 
 export default function LoginShell({ eyebrow, title, subtitle, children }) {
   return (
-    <div className="login-shell">
-      <div className="login-shell__card">
-        <main className="login-shell__panel">
-          <div className="login-shell__brand">
-            <span className="login-shell__mark">AT</span>
-            <span className="login-shell__wordmark">AttachTrack</span>
+    <div className={styles.shell}>
+      <div className={styles.container}>
+        <main className={styles.panel}>
+          <header className={styles.header}>
+            <div className={styles.brand}>
+              <span className={styles.mark}>AT</span>
+              <span className={styles.wordmark}>AttachTrack</span>
+            </div>
+            <span className={styles.headerLabel}>MUBAS PLATFORM</span>
+          </header>
+
+          <div className={styles.content}>
+            <div className={styles.introduction}>
+              {eyebrow && (
+                <span className={styles.eyebrow}>{eyebrow}</span>
+              )}
+              <h1 className={styles.title}>{title}</h1>
+              {subtitle && (
+                <p className={styles.subtitle}>{subtitle}</p>
+              )}
+            </div>
+
+            <div className={styles.formArea}>
+              {children}
+            </div>
           </div>
 
-          <div className="login-shell__form-wrap">
-            {eyebrow && <span className="login-shell__eyebrow">{eyebrow}</span>}
-            <h1 className="login-shell__title">{title}</h1>
-            {subtitle && <p className="login-shell__subtitle">{subtitle}</p>}
-            {children}
-          </div>
-
-          <p className="login-shell__footer">
-            Malawi University of Business and Applied Sciences
-          </p>
+          <footer className={styles.footer}>
+            <span>Malawi University of Business and Applied Sciences</span>
+            <span>AttachTrack</span>
+          </footer>
         </main>
 
-        <aside className="login-shell__visual" aria-hidden="true">
-          <div className="login-shell__caption">
-            <span className="login-shell__rule" />
-            <p className="login-shell__tagline">
-              One record of your industrial attachment submissions, feedback,
-              and grading, kept in one place from placement to sign-off.
+        <aside className={styles.visual}>
+          <div className={styles.visualImage} aria-hidden="true" />
+          <div className={styles.visualContent}>
+            <span className={styles.visualLabel}>
+              INDUSTRIAL ATTACHMENT MANAGEMENT
+            </span>
+            <h2 className={styles.visualTitle}>
+              Your attachment.
+              <br />
+              All in one place.
+            </h2>
+            <p className={styles.visualDescription}>
+              Manage logbooks, attendance, reports and supervisor
+              feedback through one connected platform.
             </p>
+            <div className={styles.visualLine} />
+            <span className={styles.visualFooter}>
+              Built for students and supervisors.
+            </span>
           </div>
         </aside>
       </div>
