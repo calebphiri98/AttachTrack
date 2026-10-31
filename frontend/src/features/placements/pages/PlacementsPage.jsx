@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+﻿import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import PortalLayout from '../../../components/shared/PortalLayout';
 import AllocationCell from '../components/AllocationCell';
@@ -6,18 +6,12 @@ import { useAuth } from '../../../context/AuthContext';
 import * as placementsApi from '../../../api/placements.api';
 import * as companiesApi from '../../../api/companies.api';
 import '../../../styles/portalSections.css';
-import '../../admin/pages/AdminDashboardPage.css';
+import styles from './PlacementsPage.module.css';
 
 const STATUS_LABELS = {
   unallocated: 'Unallocated',
   allocated: 'Awaiting confirmation',
   confirmed: 'Confirmed',
-};
-
-const STATUS_COLORS = {
-  unallocated: 'var(--muted)',
-  allocated: 'var(--ink)',
-  confirmed: 'var(--stamp)',
 };
 
 const FILTERS = [
@@ -176,6 +170,7 @@ export default function PlacementsPage() {
       title={isHod ? 'Confirm placements' : 'Allocate students'}
       actions={actions}
     >
+      <div className={styles.root}>
       {error && <p className="admin-error">{error}</p>}
       {message && <p className="admin-result__note">{message}</p>}
       {loading && <p className="admin-empty">Loading placements...</p>}
@@ -239,20 +234,20 @@ export default function PlacementsPage() {
                       <tr key={row.student_id}>
                         <td data-label="Student">
                           <div>
-                            <div style={{ fontWeight: 700 }}>{row.name}</div>
-                            <div style={{ color: 'var(--muted)', fontSize: 12 }}>{row.email}</div>
+                            <div className={styles.personName}>{row.name}</div>
+                            <div className={styles.personDetail}>{row.email}</div>
                           </div>
                         </td>
                         <td data-label="Programme">{row.programme || '-'}</td>
                         <td data-label="Organisation">
                           {row.company_name ? (
                             <div>
-                              <div style={{ fontWeight: 700 }}>{row.company_name}</div>
-                              <div style={{ color: 'var(--muted)', fontSize: 12 }}>
+                              <div className={styles.personName}>{row.company_name}</div>
+                              <div className={styles.personDetail}>
                                 {row.industry_sector || 'No sector'}
                               </div>
                               {row.preference_note && (
-                                <div style={{ color: 'var(--muted)', fontSize: 12 }}>
+                                <div className={styles.personDetail}>
                                   Note: {row.preference_note}
                                 </div>
                               )}
@@ -262,7 +257,7 @@ export default function PlacementsPage() {
                           )}
                         </td>
                         <td data-label="Status">
-                          <span style={{ fontWeight: 700, color: STATUS_COLORS[row.status] }}>
+                          <span className={`${styles.status} ${row.status === 'confirmed' ? styles.statusConfirmed : row.status === 'allocated' ? styles.statusAllocated : styles.statusUnallocated}`}>
                             {STATUS_LABELS[row.status]}
                           </span>
                         </td>
@@ -310,6 +305,7 @@ export default function PlacementsPage() {
           </section>
         </>
       )}
+      </div>
     </PortalLayout>
   );
 }
