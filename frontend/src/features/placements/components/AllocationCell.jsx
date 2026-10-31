@@ -1,22 +1,7 @@
-import { useState } from 'react';
+﻿import { useState } from 'react';
+import styles from './AllocationCell.module.css';
 
-const selectStyle = {
-  width: '100%',
-  padding: '10px 12px',
-  borderRadius: 8,
-  border: '1px solid var(--line)',
-  background: 'var(--paper)',
-  color: 'var(--ink)',
-  fontSize: 14,
-};
 
-const fieldStyle = {
-  display: 'flex',
-  flexDirection: 'column',
-  gap: 4,
-  fontSize: 12,
-  color: 'var(--muted)',
-};
 
 function companyLabel(company) {
   const sector = company.industry_sector ? ` - ${company.industry_sector}` : '';
@@ -40,11 +25,11 @@ export default function AllocationCell({ row, companies, saving, onSave, onRemov
   }
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-      <label style={fieldStyle}>
+    <div className={styles.root}>
+      <label className={styles.field}>
         <span>Organisation</span>
         <select
-          style={selectStyle}
+          className={styles.input}
           value={companyId}
           onChange={(e) => setCompanyId(e.target.value)}
           disabled={saving}
@@ -61,10 +46,10 @@ export default function AllocationCell({ row, companies, saving, onSave, onRemov
         </select>
       </label>
 
-      <label style={fieldStyle}>
+      <label className={styles.field}>
         <span>Note (optional)</span>
         <input
-          style={selectStyle}
+          className={styles.input}
           value={note}
           maxLength={1000}
           onChange={(e) => setNote(e.target.value)}
@@ -73,11 +58,11 @@ export default function AllocationCell({ row, companies, saving, onSave, onRemov
         />
       </label>
 
-      <div style={{ display: 'flex', gap: 8 }}>
+      <div className={styles.actions}>
         <button
           type="button"
           className="btn btn--primary"
-          style={{ flex: 1 }}
+
           onClick={handleSave}
           disabled={saving || !companyId || !changed}
         >
