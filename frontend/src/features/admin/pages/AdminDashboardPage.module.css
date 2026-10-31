@@ -1,0 +1,474 @@
+﻿.root {
+  width: 100%;
+  min-width: 0;
+  color: #171717;
+}
+
+.root *,
+.root *::before,
+.root *::after {
+  box-sizing: border-box;
+}
+
+.root :global(.admin-panel) {
+  min-width: 0;
+  margin-bottom: 24px;
+  padding: 28px 30px;
+  background: #fff;
+  border: 1px solid #e8e8e8;
+  border-radius: 18px;
+  box-shadow: 0 5px 24px rgba(0, 0, 0, 0.025);
+}
+
+.root :global(.admin-panel__title) {
+  margin: 0 0 8px;
+  color: #171717;
+  font-size: 20px;
+  font-weight: 750;
+  letter-spacing: -0.035em;
+  line-height: 1.35;
+}
+
+.root :global(.admin-panel__hint) {
+  margin: 0 0 24px;
+  color: #7a7a7a;
+  font-size: 13px;
+  line-height: 1.7;
+}
+
+.root :global(.admin-form) {
+  display: grid;
+  grid-template-columns: minmax(0, 1.2fr) minmax(0, 1.4fr) minmax(0, 1fr) auto;
+  align-items: end;
+  gap: 16px;
+}
+
+.root :global(.inline-form__field) {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  gap: 8px;
+  margin-bottom: 0;
+  color: #414141;
+  font-size: 12px;
+  font-weight: 650;
+}
+
+.root :global(.inline-form__field input),
+.root :global(.inline-form__field select),
+.root :global(.admin-assign__field select) {
+  width: 100%;
+  min-width: 0;
+  min-height: 45px;
+  padding: 10px 13px;
+  background: #fafafa;
+  color: #202020;
+  border: 1px solid #dedede;
+  border-radius: 9px;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 450;
+}
+
+.root :global(.inline-form__field input:focus),
+.root :global(.inline-form__field select:focus),
+.root :global(.admin-assign__field select:focus) {
+  outline: none;
+  background: #fff;
+  border-color: #171717;
+  box-shadow: 0 0 0 3px rgba(0, 0, 0, 0.055);
+}
+
+.root :global(.btn) {
+  display: inline-flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 43px;
+  padding: 10px 17px;
+  border-radius: 9px;
+  font-size: 12px;
+  font-weight: 700;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.root :global(.btn--primary) {
+  background: #171717;
+  color: #fff;
+  border: 1px solid #171717;
+}
+
+.root :global(.btn--primary:hover:not(:disabled)) {
+  background: #333;
+  border-color: #333;
+}
+
+.root :global(.btn--ghost) {
+  background: #fff;
+  color: #333;
+  border: 1px solid #dedede;
+}
+
+.root :global(.btn--ghost:hover:not(:disabled)) {
+  background: #f3f3f3;
+  border-color: #bdbdbd;
+}
+
+.root :global(.btn--danger) {
+  color: #b13b3b;
+  background: #fff7f7;
+  border: 1px solid #f0d5d5;
+}
+
+.root :global(.btn--danger:hover:not(:disabled)) {
+  color: #912c2c;
+  background: #ffeded;
+  border-color: #dca9a9;
+}
+
+.root :global(.btn:disabled) {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.root :global(.admin-error) {
+  margin: 14px 0;
+  padding: 13px 16px;
+  background: #fff4f4;
+  color: #a13232;
+  border: 1px solid #f0d4d4;
+  border-radius: 10px;
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+.root :global(.admin-empty) {
+  padding: 32px 14px;
+  color: #858585;
+  text-align: center;
+  font-size: 13px;
+}
+
+.root :global(.admin-result) {
+  margin-top: 22px;
+  padding: 20px;
+  background: #f8faf8;
+  border: 1px solid #d9e9dc;
+  border-left: 3px solid #4a9461;
+  border-radius: 11px;
+  font-size: 13px;
+  line-height: 1.7;
+}
+
+.root :global(.admin-result p) {
+  overflow-wrap: anywhere;
+}
+
+.root :global(.admin-result__password) {
+  display: inline-block;
+  padding: 5px 10px;
+  color: #171717;
+  background: #e9ece9;
+  border-radius: 6px;
+  font-family: monospace;
+  font-size: 13px;
+  font-weight: 700;
+  user-select: all;
+}
+
+.root :global(.admin-result__note) {
+  color: #707070;
+  font-size: 12px;
+}
+
+.root :global(.admin-result__note--warn) {
+  color: #a13232;
+}
+
+.root :global(.stat-grid) {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 16px;
+  margin: 0 0 24px;
+}
+
+.root :global(.stat-card) {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 21px;
+  min-width: 0;
+  min-height: 145px;
+  padding: 23px;
+  background: #fff;
+  border: 1px solid #e8e8e8;
+  border-radius: 16px;
+  box-shadow: 0 5px 24px rgba(0, 0, 0, 0.025);
+}
+
+.root :global(.stat-card)::before {
+  content: "";
+  width: 28px;
+  height: 3px;
+  background: #171717;
+  border-radius: 10px;
+}
+
+.root :global(.stat-card__label) {
+  color: #777;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.5;
+}
+
+.root :global(.stat-card__value) {
+  margin: 0;
+  color: #171717;
+  font-size: clamp(25px, 3vw, 36px);
+  font-weight: 750;
+  letter-spacing: -0.055em;
+  line-height: 1.15;
+  overflow-wrap: anywhere;
+  font-variant-numeric: tabular-nums;
+}
+
+.root :global(.admin-toolbar) {
+  display: grid;
+  grid-template-columns: minmax(0, 2fr) minmax(0, 1fr);
+  align-items: end;
+  gap: 14px;
+  margin-bottom: 22px;
+}
+
+.root :global(.admin-table-wrap) {
+  min-width: 0;
+  overflow-x: auto;
+  margin-bottom: 24px;
+  background: #fff;
+  border: 1px solid #e6e6e6;
+  border-radius: 16px;
+  box-shadow: 0 5px 22px rgba(0, 0, 0, 0.025);
+}
+
+.root :global(.data-table.admin-table) {
+  width: 100%;
+  border-collapse: collapse;
+  border-spacing: 0;
+  background: #fff;
+  font-size: 13px;
+}
+
+.root :global(.data-table.admin-table th) {
+  padding: 18px 19px;
+  text-align: left;
+  color: #7b7b7b;
+  background: #f8f8f8;
+  border-bottom: 1px solid #e7e7e7;
+  font-size: 10px;
+  font-weight: 750;
+  letter-spacing: 0.075em;
+  text-transform: uppercase;
+}
+
+.root :global(.data-table.admin-table td) {
+  padding: 19px;
+  color: #333;
+  border-bottom: 1px solid #ededed;
+  vertical-align: middle;
+  overflow-wrap: anywhere;
+  line-height: 1.6;
+}
+
+.root :global(.data-table.admin-table tbody tr:last-child td) {
+  border-bottom: 0;
+}
+
+.root :global(.data-table.admin-table tbody tr:hover) {
+  background: #fafafa;
+}
+
+.root :global(.admin-table--students) {
+  min-width: 920px;
+}
+
+.root :global(.admin-person__name) {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px 8px;
+  color: #202020;
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1.5;
+}
+
+.root :global(.admin-person__sub) {
+  margin-top: 6px;
+  color: #898989;
+  font-size: 11px;
+  line-height: 1.5;
+}
+
+.root :global(.admin-cell-strong) {
+  color: #202020;
+  font-weight: 700;
+}
+
+.root :global(.admin-cell-muted) {
+  color: #6c6c6c;
+}
+
+.root :global(.admin-unassigned) {
+  color: #999;
+  font-size: 12px;
+}
+
+.root :global(.admin-grade) {
+  color: #171717;
+  font-size: 17px;
+  font-weight: 750;
+}
+
+.root :global(.admin-pill) {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-height: 27px;
+  padding: 5px 10px;
+  color: #555;
+  background: #f0f0f0;
+  border-radius: 999px;
+  font-size: 10px;
+  font-weight: 700;
+  line-height: 1.4;
+  white-space: nowrap;
+  text-transform: capitalize;
+}
+
+.root :global(.admin-pill--ok) {
+  color: #287142;
+  background: #e8f5ec;
+}
+
+.root :global(.admin-pill--bad) {
+  color: #a53939;
+  background: #fff0f0;
+}
+
+.root :global(.admin-pill--role) {
+  color: #454545;
+  background: #efefef;
+}
+
+.root :global(.admin-assign) {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-width: 0;
+}
+
+.root :global(.admin-assign__field) {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+  color: #777;
+  font-size: 11px;
+  font-weight: 650;
+}
+
+.root :global(.admin-assign__field select) {
+  min-height: 39px;
+  padding: 8px 10px;
+  font-size: 12px;
+}
+
+.root :global(.admin-assign .btn--block) {
+  width: 100%;
+}
+
+@media (max-width: 1050px) {
+  .root :global(.stat-grid) {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .root :global(.admin-form) {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .root :global(.admin-form > .btn) {
+    min-height: 45px;
+  }
+}
+
+@media (max-width: 640px) {
+  .root :global(.admin-panel) {
+    padding: 21px 17px;
+    border-radius: 14px;
+  }
+
+  .root :global(.admin-panel__title) {
+    font-size: 18px;
+  }
+
+  .root :global(.admin-form),
+  .root :global(.admin-toolbar) {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .root :global(.stat-grid) {
+    gap: 11px;
+  }
+
+  .root :global(.stat-card) {
+    min-height: 115px;
+    padding: 16px;
+    gap: 15px;
+    border-radius: 13px;
+  }
+
+  .root :global(.stat-card__value) {
+    font-size: 26px;
+  }
+
+  .root :global(.admin-table-wrap) {
+    overflow-x: visible;
+    border: none;
+    border-radius: 0;
+    box-shadow: none;
+    background: transparent;
+  }
+
+  .root :global(.data-table.admin-table) {
+    min-width: 0;
+  }
+
+  .root :global(.data-table--stack tbody tr) {
+    background: #fff;
+    border: 1px solid #e6e6e6;
+    border-radius: 13px;
+    margin-bottom: 12px;
+  }
+
+  .root :global(.data-table--stack td) {
+    padding: 12px 15px;
+  }
+
+  .root :global(.data-table--stack td.data-table__full) {
+    display: block;
+    text-align: left;
+    border-top: 1px solid #ededed;
+  }
+
+  .root :global(.data-table--stack td.data-table__full::before) {
+    display: block;
+    margin-bottom: 10px;
+  }
+}
+
+@media (max-width: 380px) {
+  .root :global(.stat-grid) {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
