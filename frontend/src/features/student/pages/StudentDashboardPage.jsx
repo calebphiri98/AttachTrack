@@ -9,6 +9,8 @@ import AttendanceSection from '../components/AttendanceSection';
 import SubmissionsSection from '../components/SubmissionsSection';
 import GradesSection from '../components/GradesSection';
 import LogbookSection from '../components/LogbookSection';
+import AreaInterestEditor from '../components/AreaInterestEditor';
+import AttachmentLocation from '../../../components/supervisor/AttachmentLocation';
 import * as studentsApi from '../../../api/students.api';
 import * as reportsApi from '../../../api/reports.api';
 import * as placementsApi from '../../../api/placements.api';
@@ -98,6 +100,7 @@ export default function StudentDashboardPage() {
               {placement.address && (
                 <p style={{ margin: '0 0 4px', color: 'var(--muted)' }}>{placement.address}</p>
               )}
+              <AttachmentLocation companyName={placement.company_name} address={placement.address} />
               {placement.confirmed_at && (
                 <p style={{ margin: 0, color: 'var(--muted)', fontSize: '0.85rem' }}>
                   Confirmed on {new Date(placement.confirmed_at).toLocaleDateString()}
@@ -107,6 +110,8 @@ export default function StudentDashboardPage() {
           )}
         </Card>
       )}
+
+      {profile && <AreaInterestEditor value={profile.area_interest} onSaved={(area_interest) => setProfile((previous) => ({ ...previous, area_interest }))} />}
 
       {profile && (
         <>
