@@ -12,6 +12,7 @@ import StudentDashboardPage from '../features/student/pages/StudentDashboardPage
 import UniversityStudentsListPage from '../features/universitySupervisor/pages/StudentsListPage';
 import UniversityStudentDetailPage from '../features/universitySupervisor/pages/StudentDetailPage';
 import MessagesPage from '../features/shared/pages/MessagesPage';
+import AnnouncementsPage from '../features/shared/pages/AnnouncementsPage';
 import AdminDashboardPage from '../features/admin/pages/AdminDashboardPage';
 import AdminCompaniesPage from '../features/admin/pages/AdminCompaniesPage';
 import HodDashboardPage from '../features/hod/pages/HodDashboardPage';
@@ -32,185 +33,31 @@ export default function AppRoutes() {
       <Route path="/login" element={<LoginPage />} />
       <Route path="/forgot-password" element={<ForgotPasswordPage />} />
       <Route path="/reset-password" element={<ResetPasswordPage />} />
-      <Route
-        path="/dashboard"
-        element={
-          <ProtectedRoute>
-            <DashboardPlaceholder />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/student/dashboard"
-        element={
-          <ProtectedRoute roles={['student']}>
-            <StudentDashboardPage />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/industry/students"
-        element={
-          <ProtectedRoute roles={['industry_supervisor']}>
-            <StudentsListPage />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/industry/students/:studentId"
-        element={
-          <ProtectedRoute roles={['industry_supervisor']}>
-            <StudentDetailPage />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/industry/attendance"
-        element={
-          <ProtectedRoute roles={['industry_supervisor']}>
-            <AttendancePage />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/industry/assessments"
-        element={
-          <ProtectedRoute roles={['industry_supervisor']}>
-            <AssessmentsListPage kind="industry" />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/industry/assessments/:studentId"
-        element={
-          <ProtectedRoute roles={['industry_supervisor']}>
-            <AssessmentFormPage kind="industry" />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/university/students"
-        element={
-          <ProtectedRoute roles={['university_supervisor']}>
-            <UniversityStudentsListPage />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/university/students/:studentId"
-        element={
-          <ProtectedRoute roles={['university_supervisor']}>
-            <UniversityStudentDetailPage />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/university/assessments"
-        element={
-          <ProtectedRoute roles={['university_supervisor']}>
-            <AssessmentsListPage kind="university" />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/university/assessments/:studentId"
-        element={
-          <ProtectedRoute roles={['university_supervisor']}>
-            <AssessmentFormPage kind="university" />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/student/messages"
-        element={
-          <ProtectedRoute roles={['student']}>
-            <MessagesPage />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/industry/messages"
-        element={
-          <ProtectedRoute roles={['industry_supervisor']}>
-            <MessagesPage />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/university/messages"
-        element={
-          <ProtectedRoute roles={['university_supervisor']}>
-            <MessagesPage />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/admin/dashboard"
-        element={
-          <ProtectedRoute roles={['admin']}>
-            <AdminDashboardPage />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/admin/companies"
-        element={
-          <ProtectedRoute roles={['admin']}>
-            <AdminCompaniesPage />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/assessments/forms"
-        element={
-          <ProtectedRoute roles={['admin']}>
-            <AssessmentFormsPage />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/hod/dashboard"
-        element={
-          <ProtectedRoute roles={['hod']}>
-            <HodDashboardPage />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/results"
-        element={
-          <ProtectedRoute roles={['admin', 'hod']}>
-            <ResultsPage />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/placements"
-        element={
-          <ProtectedRoute roles={['admin', 'hod']}>
-            <PlacementsPage />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/sync"
-        element={
-          <ProtectedRoute>
-            <SyncCenterPage />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/settings/notifications"
-        element={
-          <ProtectedRoute>
-            <NotificationSettingsPage />
-          </ProtectedRoute>
-        }
-      />
+      <Route path="/dashboard" element={<ProtectedRoute><DashboardPlaceholder /></ProtectedRoute>} />
+      <Route path="/student/dashboard" element={<ProtectedRoute roles={['student']}><StudentDashboardPage /></ProtectedRoute>} />
+      <Route path="/industry/students" element={<ProtectedRoute roles={['industry_supervisor']}><StudentsListPage /></ProtectedRoute>} />
+      <Route path="/industry/students/:studentId" element={<ProtectedRoute roles={['industry_supervisor']}><StudentDetailPage /></ProtectedRoute>} />
+      <Route path="/industry/attendance" element={<ProtectedRoute roles={['industry_supervisor']}><AttendancePage /></ProtectedRoute>} />
+      <Route path="/industry/assessments" element={<ProtectedRoute roles={['industry_supervisor']}><AssessmentsListPage kind="industry" /></ProtectedRoute>} />
+      <Route path="/industry/assessments/:studentId" element={<ProtectedRoute roles={['industry_supervisor']}><AssessmentFormPage kind="industry" /></ProtectedRoute>} />
+      <Route path="/university/students" element={<ProtectedRoute roles={['university_supervisor']}><UniversityStudentsListPage /></ProtectedRoute>} />
+      <Route path="/university/students/:studentId" element={<ProtectedRoute roles={['university_supervisor']}><UniversityStudentDetailPage /></ProtectedRoute>} />
+      <Route path="/university/assessments" element={<ProtectedRoute roles={['university_supervisor']}><AssessmentsListPage kind="university" /></ProtectedRoute>} />
+      <Route path="/university/assessments/:studentId" element={<ProtectedRoute roles={['university_supervisor']}><AssessmentFormPage kind="university" /></ProtectedRoute>} />
+      <Route path="/student/messages" element={<ProtectedRoute roles={['student']}><MessagesPage /></ProtectedRoute>} />
+      <Route path="/industry/messages" element={<ProtectedRoute roles={['industry_supervisor']}><MessagesPage /></ProtectedRoute>} />
+      <Route path="/university/messages" element={<ProtectedRoute roles={['university_supervisor']}><MessagesPage /></ProtectedRoute>} />
+      <Route path="/announcements" element={<ProtectedRoute roles={['admin', 'student', 'industry_supervisor', 'university_supervisor']}><AnnouncementsPage /></ProtectedRoute>} />
+      <Route path="/admin/dashboard" element={<ProtectedRoute roles={['admin']}><AdminDashboardPage /></ProtectedRoute>} />
+      <Route path="/admin/companies" element={<ProtectedRoute roles={['admin']}><AdminCompaniesPage /></ProtectedRoute>} />
+      <Route path="/assessments/forms" element={<ProtectedRoute roles={['admin']}><AssessmentFormsPage /></ProtectedRoute>} />
+      <Route path="/hod/dashboard" element={<ProtectedRoute roles={['hod']}><HodDashboardPage /></ProtectedRoute>} />
+      <Route path="/results" element={<ProtectedRoute roles={['admin', 'hod']}><ResultsPage /></ProtectedRoute>} />
+      <Route path="/placements" element={<ProtectedRoute roles={['admin', 'hod']}><PlacementsPage /></ProtectedRoute>} />
+      <Route path="/sync" element={<ProtectedRoute><SyncCenterPage /></ProtectedRoute>} />
+      <Route path="/settings/notifications" element={<ProtectedRoute><NotificationSettingsPage /></ProtectedRoute>} />
       <Route path="/" element={<Navigate to="/login" replace />} />
       <Route path="*" element={<Navigate to="/login" replace />} />
     </Routes>
   );
 }
-
