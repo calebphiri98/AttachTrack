@@ -52,32 +52,9 @@ function requireIndustryContext(supervisorContext) {
   }
 }
 
-async function assertActiveSupervisor(student, supervisorId, dates) {
-  const { rows } = await db.query(
-    `SELECT industry_supervisor_id,
-            to_char(start_date, 'YYYY-MM-DD') AS start_date,
-            to_char(end_date, 'YYYY-MM-DD') AS end_date
-     FROM temp_supervisor_assignments
-     WHERE student_id = $1`,
-    [student.id]
-  );
-
-  for (const date of dates) {
-    const covering = rows.filter(
-      (row) => row.start_date <= date && (!row.end_date || row.end_date >= date)
-    );
-    const activeIds =
-      covering.length > 0
-        ? covering.map((row) => row.industry_supervisor_id)
-        : [student.industry_supervisor_id];
-
-    if (!activeIds.includes(supervisorId)) {
-      throw new AppError(
-        `You were not the active industrial supervisor on ${date}, so you cannot mark attendance for that day`,
-        403,
-        'NOT_ACTIVE_SUPERVISOR'
-      );
-    }
+function assertActiveSupervisor(student, supervisorId) {
+  if (student.industry_supervisor_id !== supervisorId) {
+    throw new AppError('You do not supervise this student', 403);
   }
 }
 
@@ -152,7 +129,7 @@ async function markAttendance({
     );
   }
 
-  await assertActiveSupervisor(student, supervisorContext.id, dates);
+  assertActiveSupervisor(student, supervisorContext.id);
 
   const timing = requestContext.getTiming();
   const reference = referenceDayTime();
@@ -371,13 +348,6 @@ async function listMyStudents(supervisorContext) {
        WHERE a.student_id = s.id
      ) st ON TRUE
      WHERE s.industry_supervisor_id = $1
-        OR EXISTS (
-             SELECT 1
-             FROM temp_supervisor_assignments t
-             WHERE t.student_id = s.id
-               AND t.industry_supervisor_id = $1
-               AND t.end_date IS NULL
-           )
      ORDER BY s.name`,
     [supervisorContext.id]
   );
@@ -392,4 +362,6 @@ module.exports = {
   getSettingNumber,
   getSettings,
 };
+
+
 
