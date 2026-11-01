@@ -140,15 +140,6 @@ async function updateAreaInterest({ userId, areaInterest }) {
   return rows[0];
 }
 
-async function hasActiveTempAssignment(studentId, industrySupervisorId) {
-  const { rows } = await db.query(
-    `SELECT 1 FROM temp_supervisor_assignments
-     WHERE student_id = $1 AND industry_supervisor_id = $2 AND end_date IS NULL`,
-    [studentId, industrySupervisorId]
-  );
-  return rows.length > 0;
-}
-
 async function assertSupervises(studentId, supervisorColumn, supervisorId) {
   assertValidSupervisorColumn(supervisorColumn);
   const student = await getById(studentId);
@@ -157,21 +148,11 @@ async function assertSupervises(studentId, supervisorColumn, supervisorId) {
     return student;
   }
 
-  if (supervisorColumn === 'industry_supervisor_id') {
-    const isTempSupervisor = await hasActiveTempAssignment(studentId, supervisorId);
-    if (isTempSupervisor) {
-      return student;
-    }
-  }
-
   throw new AppError('You do not supervise this student', 403);
 }
 
 async function isIndustrySupervisorOf(student, industrySupervisorId) {
-  if (student.industry_supervisor_id === industrySupervisorId) {
-    return true;
-  }
-  return hasActiveTempAssignment(student.id, industrySupervisorId);
+  return student.industry_supervisor_id === industrySupervisorId;
 }
 
 module.exports = {
@@ -185,3 +166,5 @@ module.exports = {
   assertSupervises,
   isIndustrySupervisorOf,
 };
+
+
