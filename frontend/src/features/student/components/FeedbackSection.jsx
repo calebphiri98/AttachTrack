@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Card, EmptyState } from '../../../components/shared/Card';
 import * as feedbackApi from '../../../api/feedback.api';
+import styles from './FeedbackSection.module.css';
 
 export default function FeedbackSection({ studentId }) {
   const [records, setRecords] = useState(null);
@@ -14,30 +15,33 @@ export default function FeedbackSection({ studentId }) {
   }, [studentId]);
 
   return (
-    <Card>
-      <h2 className="section-title">Feedback</h2>
-      {error && <p style={{ color: 'var(--error)' }}>{error}</p>}
-      {records === null && !error && <p style={{ color: 'var(--muted)' }}>Loading…</p>}
-      {records && records.length === 0 && <EmptyState>No feedback yet.</EmptyState>}
-      {records && records.length > 0 && (
-        <ul className="record-list">
-          {records.map((f) => (
-            <li key={f.id} className="record-list__row" style={{ flexDirection: 'column', alignItems: 'flex-start' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', width: '100%' }}>
-                <span className="record-list__date">
-                  {new Date(f.created_at).toLocaleDateString()}
-                </span>
-                {f.flagged_concern && (
-                  <span style={{ color: 'var(--error)', fontSize: '0.8rem', fontWeight: 600 }}>
-                    Flagged
-                  </span>
-                )}
-              </div>
-              <p style={{ margin: '6px 0 0', color: 'var(--ink)' }}>{f.content}</p>
-            </li>
-          ))}
-        </ul>
-      )}
-    </Card>
+    <div className={styles.surface}>
+      <Card>
+        <div className={styles.heading}>
+          <div>
+            <span className={styles.eyebrow}>SUPERVISOR INSIGHTS</span>
+            <h2 className="section-title">Feedback</h2>
+            <p>Comments and recommendations from your supervisors.</p>
+          </div>
+          {records && <span className={styles.count}>{records.length} {records.length === 1 ? 'note' : 'notes'}</span>}
+        </div>
+        {error && <p className={styles.error} role="alert">{error}</p>}
+        {records === null && !error && <p className={styles.muted}>Loading feedback…</p>}
+        {records && records.length === 0 && <EmptyState>No feedback has been shared yet.</EmptyState>}
+        {records && records.length > 0 && (
+          <ul className={styles.list}>
+            {records.map((item) => (
+              <li key={item.id} className={styles.item}>
+                <div className={styles.meta}>
+                  <span className={styles.date}>{new Date(item.created_at).toLocaleDateString(undefined, { day: 'numeric', month: 'short', year: 'numeric' })}</span>
+                  {item.flagged_concern && <span className={styles.flag}>Needs attention</span>}
+                </div>
+                <p className={styles.content}>{item.content}</p>
+              </li>
+            ))}
+          </ul>
+        )}
+      </Card>
+    </div>
   );
 }
