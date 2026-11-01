@@ -26,6 +26,7 @@ const NAV = {
   industry_supervisor: [
     { to: '/industry/students', label: 'Dashboard' },
     { to: '/industry/attendance', label: 'Attendance' },
+    { to: '/industry/academic-calendar', label: 'Academic calendar' },
     { to: '/industry/assessments', label: 'Assessments' },
     { to: '/industry/messages', label: 'Messages' },
     { to: '/announcements', label: 'Announcements' },
