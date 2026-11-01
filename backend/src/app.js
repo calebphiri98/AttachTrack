@@ -25,6 +25,7 @@ const placementsRoutes = require('./modules/placements/placements.routes');
 const assessmentsRoutes = require('./modules/assessments/assessments.routes');
 const resultsRoutes = require('./modules/results/results.routes');
 const syncRoutes = require('./modules/sync/sync.routes');
+const announcementsRoutes = require('./modules/announcements/announcements.routes');
 
 const app = express();
 
@@ -50,6 +51,7 @@ app.use('/api/attendance', attendanceRoutes);
 app.use('/api/feedback', feedbackRoutes);
 app.use('/api/grades', gradesRoutes);
 app.use('/api/messages', messagesRoutes);
+app.use('/api/announcements', announcementsRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/companies', companiesRoutes);
 app.use('/api/logbooks', logbooksRoutes);
