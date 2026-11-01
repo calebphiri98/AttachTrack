@@ -3,6 +3,7 @@ import PortalLayout from '../shared/PortalLayout';
 import StatusBadge from '../shared/StatusBadge';
 import ExportButton from '../shared/ExportButton';
 import StudentAvatar from './StudentAvatar';
+import StudentAttachmentDetails from './StudentAttachmentDetails';
 import * as reportsApi from '../../api/reports.api';
 import '../../styles/portalSections.css';
 import './supervisor.tokens.css';
@@ -72,6 +73,8 @@ export default function StudentProfileLayout({
           <p className={styles.loading}>Loading student…</p>
         )}
       </header>
+
+      {student && <StudentAttachmentDetails student={student} />}
 
       <nav className={styles.jump} aria-label="Sections">
         {sections.map((section) => (
