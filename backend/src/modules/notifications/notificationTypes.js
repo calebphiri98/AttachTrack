@@ -97,13 +97,6 @@ const NOTIFICATION_TYPES = [
     roles: ['student'],
     defaults: { inApp: true, email: true },
   },
-  {
-    type: 'result_released',
-    label: 'Final result released',
-    description: 'Your end-of-semester attachment result is available.',
-    roles: ['student'],
-    defaults: { inApp: true, email: true },
-  },
 ];
 
 function findType(type) {
