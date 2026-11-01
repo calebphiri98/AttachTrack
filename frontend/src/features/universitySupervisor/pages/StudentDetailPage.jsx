@@ -5,7 +5,6 @@ import AttendanceSection from '../components/AttendanceSection';
 import FeedbackSection from '../components/FeedbackSection';
 import SubmissionsSection from '../components/SubmissionsSection';
 import SiteVisitSection from '../components/SiteVisitSection';
-import TempSupervisorSection from '../components/TempSupervisorSection';
 import * as universitySupervisorsApi from '../../../api/universitySupervisors.api';
 import useResolvedStudent from '../../shared/hooks/useResolvedStudent';
 
@@ -32,11 +31,6 @@ export default function StudentDetailPage() {
       label: 'Site visits',
       node: <SiteVisitSection studentId={studentId} studentName={student ? student.name : ''} />,
     },
-    {
-      id: 'temporary-supervisor',
-      label: 'Temporary supervisor',
-      node: <TempSupervisorSection studentId={studentId} />,
-    },
   ];
 
   return (
@@ -49,3 +43,4 @@ export default function StudentDetailPage() {
     />
   );
 }
+
