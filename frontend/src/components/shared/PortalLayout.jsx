@@ -1,4 +1,4 @@
-﻿import { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import styles from './PortalLayout.module.css';
 import NotificationBell from './NotificationBell';
@@ -21,20 +21,24 @@ const NAV = {
   student: [
     { to: '/student/dashboard', label: 'Dashboard' },
     { to: '/student/messages', label: 'Messages' },
+    { to: '/announcements', label: 'Announcements' },
   ],
   industry_supervisor: [
     { to: '/industry/students', label: 'Dashboard' },
     { to: '/industry/attendance', label: 'Attendance' },
     { to: '/industry/assessments', label: 'Assessments' },
     { to: '/industry/messages', label: 'Messages' },
+    { to: '/announcements', label: 'Announcements' },
   ],
   university_supervisor: [
     { to: '/university/students', label: 'Dashboard' },
     { to: '/university/assessments', label: 'Assessments' },
     { to: '/university/messages', label: 'Messages' },
+    { to: '/announcements', label: 'Announcements' },
   ],
   admin: [
     { to: '/admin/dashboard', label: 'Dashboard' },
+    { to: '/announcements', label: 'Announcements' },
     { to: '/placements', label: 'Placements' },
     { to: '/assessments/forms', label: 'Assessment forms' },
     { to: '/results', label: 'Results' },
@@ -218,4 +222,3 @@ export default function PortalLayout({ eyebrow, title, actions, children }) {
     </div>
   );
 }
-
