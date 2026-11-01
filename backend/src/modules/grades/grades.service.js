@@ -48,13 +48,7 @@ async function getForStudent(studentId, requester) {
   }
 
   if (isOwnRecord) {
-    const { rows } = await db.query(
-      `SELECT grade_value, computed_final_score, released_at
-       FROM grades
-       WHERE student_id = $1 AND released_at IS NOT NULL`,
-      [studentId]
-    );
-    return rows[0] || null;
+    throw new AppError('Attachment grades are not available through AttachTrack', 403);
   }
 
   const { rows } = await db.query(
@@ -91,62 +85,12 @@ async function listResultsOverview() {
   return rows;
 }
 
-async function notifyStudents(studentIds) {
-  if (studentIds.length === 0) return;
-
-  const { rows } = await db.query(
-    `SELECT id, user_id FROM students WHERE id = ANY($1::uuid[]) AND user_id IS NOT NULL`,
-    [studentIds]
-  );
-
-  for (const row of rows) {
-    await notificationsService.notifySafe({
-      userId: row.user_id,
-      type: 'result_released',
-      title: 'Your final result is available',
-      body: 'Your end-of-semester attachment result has been released.',
-      relatedId: row.id,
-    });
-  }
+async function releaseGrade() {
+  throw new AppError('Attachment grades cannot be published through AttachTrack before official university release', 403);
 }
 
-async function releaseGrade({ studentId, releasedBy }) {
-  requireUuid(studentId, 'studentId');
-
-  const { rows } = await db.query(
-    `UPDATE grades
-     SET released_at = now(), released_by = $2, updated_at = now()
-     WHERE student_id = $1 AND released_at IS NULL
-     RETURNING *`,
-    [studentId, releasedBy]
-  );
-
-  if (rows.length === 0) {
-    const { rows: existing } = await db.query(
-      'SELECT released_at FROM grades WHERE student_id = $1',
-      [studentId]
-    );
-    if (existing.length === 0) {
-      throw new AppError('No grade has been recorded for this student', 404);
-    }
-    throw new AppError('This result has already been released', 409);
-  }
-
-  await notifyStudents([studentId]);
-  return rows[0];
-}
-
-async function releaseAll({ releasedBy }) {
-  const { rows } = await db.query(
-    `UPDATE grades
-     SET released_at = now(), released_by = $1, updated_at = now()
-     WHERE released_at IS NULL
-     RETURNING student_id`,
-    [releasedBy]
-  );
-
-  await notifyStudents(rows.map((r) => r.student_id));
-  return { released: rows.length };
+async function releaseAll() {
+  throw new AppError('Attachment grades cannot be published through AttachTrack before official university release', 403);
 }
 
 module.exports = {
