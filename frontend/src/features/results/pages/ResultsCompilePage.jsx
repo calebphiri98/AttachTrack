@@ -109,7 +109,6 @@ export default function ResultsCompilePage() {
   const count = (stage) => students.filter((row) => row.stage === stage).length;
   const compilable = students.filter((row) => row.stage === 'ready' || row.needs_recompile).length;
   const sendable = students.filter((row) => row.stage === 'compiled' && !row.needs_recompile).length;
-  const releasable = count('approved');
 
   function handleCompile(row) {
     run(
@@ -144,30 +143,6 @@ export default function ResultsCompilePage() {
       'bulk:send',
       () => resultsApi.sendResultsToHod(),
       (data) => `${data.sent} result${data.sent === 1 ? '' : 's'} sent to the HOD.`
-    );
-  }
-
-  function handleRelease(row) {
-    const confirmed = window.confirm(
-      `Release the result for ${row.name}? The student will see it immediately.`
-    );
-    if (!confirmed) return;
-    run(
-      `row:${row.student_id}`,
-      () => resultsApi.releaseResult(row.result.id),
-      `Result released for ${row.name}.`
-    );
-  }
-
-  function handleReleaseAll() {
-    const confirmed = window.confirm(
-      `Release ${releasable} approved result${releasable === 1 ? '' : 's'} to students? They will see them immediately.`
-    );
-    if (!confirmed) return;
-    run(
-      'bulk:release',
-      () => resultsApi.releaseAllResults(),
-      (data) => `${data.released} result${data.released === 1 ? '' : 's'} released.`
     );
   }
 
@@ -209,14 +184,6 @@ export default function ResultsCompilePage() {
             disabled={Boolean(busy) || sendable === 0}
           >
             {busy === 'bulk:send' ? 'Sending...' : `Send to HOD (${sendable})`}
-          </button>
-          <button
-            type="button"
-            className="btn btn--ghost"
-            onClick={handleReleaseAll}
-            disabled={Boolean(busy) || releasable === 0}
-          >
-            {busy === 'bulk:release' ? 'Releasing...' : `Release approved (${releasable})`}
           </button>
         </>
       }
@@ -354,16 +321,6 @@ export default function ResultsCompilePage() {
                           )}
                           {row.stage === 'sent' && (
                             <span className="assess-table__muted">Waiting for the HOD</span>
-                          )}
-                          {row.stage === 'approved' && (
-                            <button
-                              type="button"
-                              className="btn btn--primary"
-                              onClick={() => handleRelease(row)}
-                              disabled={Boolean(busy)}
-                            >
-                              {rowBusy ? 'Releasing...' : 'Release'}
-                            </button>
                           )}
                           {row.stage === 'released' && (
                             <span className="assess-table__muted">
