@@ -47,17 +47,10 @@ async function findRecipientUserIds(student, recipientRole) {
   }
 
   const { rows } = await db.query(
-    `SELECT DISTINCT isup.user_id
+    `SELECT isup.user_id
      FROM industry_supervisors isup
-     WHERE isup.id = $1
-        OR isup.id IN (
-          SELECT t.industry_supervisor_id
-          FROM temp_supervisor_assignments t
-          WHERE t.student_id = $2
-            AND t.start_date <= CURRENT_DATE
-            AND (t.end_date IS NULL OR t.end_date >= CURRENT_DATE)
-        )`,
-    [student.industry_supervisor_id, student.id]
+     WHERE isup.id = $1`,
+    [student.industry_supervisor_id]
   );
   return rows.map((row) => row.user_id);
 }
@@ -347,4 +340,6 @@ module.exports = {
   listMine,
   listForStudent,
 };
+
+
 
