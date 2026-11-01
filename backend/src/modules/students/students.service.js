@@ -65,10 +65,15 @@ async function attachUserAccount({ email, name, userId }) {
 async function listBySupervisor(supervisorColumn, supervisorId) {
   assertValidSupervisorColumn(supervisorColumn);
   const { rows } = await db.query(
-    `SELECT id, name, email, link_status, location, created_at
-     FROM students
-     WHERE ${supervisorColumn} = $1
-     ORDER BY created_at DESC`,
+    `SELECT s.id, s.name, s.email, s.link_status, s.location,
+            s.programme, s.area_interest, s.created_at,
+            c.name AS company_name, c.address AS company_address,
+            c.industry_sector, p.confirmed_at AS placement_confirmed_at
+     FROM students s
+     LEFT JOIN placements p ON p.student_id = s.id AND p.status = 'confirmed'
+     LEFT JOIN companies c ON c.id = p.company_id
+     WHERE s.${supervisorColumn} = $1
+     ORDER BY s.created_at DESC`,
     [supervisorId]
   );
   return rows;
@@ -76,7 +81,7 @@ async function listBySupervisor(supervisorColumn, supervisorId) {
 
 async function getProfileByUserId(userId) {
   const { rows } = await db.query(
-    `SELECT s.id, s.name, s.email, s.link_status, s.location,
+    `SELECT s.id, s.name, s.email, s.link_status, s.location, s.area_interest,
             iSup.company_name AS industry_supervisor_company,
             uSup.department AS university_supervisor_department
      FROM students s
@@ -124,6 +129,17 @@ async function updateLocation({ userId, location }) {
   return rows[0] || student;
 }
 
+async function updateAreaInterest({ userId, areaInterest }) {
+  const cleanValue = optionalString(areaInterest, { max: 300 });
+  const { rows } = await db.query(
+    `UPDATE students SET area_interest = $1 WHERE user_id = $2
+     RETURNING id, area_interest`,
+    [cleanValue, userId]
+  );
+  if (!rows[0]) throw new AppError('Student profile not found', 404);
+  return rows[0];
+}
+
 async function hasActiveTempAssignment(studentId, industrySupervisorId) {
   const { rows } = await db.query(
     `SELECT 1 FROM temp_supervisor_assignments
@@ -165,6 +181,7 @@ module.exports = {
   getByUserId,
   getById,
   updateLocation,
+  updateAreaInterest,
   assertSupervises,
   isIndustrySupervisorOf,
 };
