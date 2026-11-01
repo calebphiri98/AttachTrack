@@ -166,13 +166,8 @@ async function notifyIndustrySupervisors(student) {
     const { rows } = await db.query(
       `SELECT isup.user_id
        FROM industry_supervisors isup
-       WHERE isup.id = $1::uuid
-       UNION
-       SELECT isup.user_id
-       FROM temp_supervisor_assignments t
-       JOIN industry_supervisors isup ON isup.id = t.industry_supervisor_id
-       WHERE t.student_id = $2::uuid AND t.end_date IS NULL`,
-      [student.industry_supervisor_id, student.id]
+       WHERE isup.id = $1::uuid`,
+      [student.industry_supervisor_id]
     );
 
     for (const row of rows) {
@@ -609,4 +604,6 @@ module.exports = {
   submitWeek,
   reviewWeek,
 };
+
+
 
