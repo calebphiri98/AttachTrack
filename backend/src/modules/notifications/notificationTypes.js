@@ -1,5 +1,12 @@
 const NOTIFICATION_TYPES = [
   {
+    type: 'announcement_posted',
+    label: 'New announcements',
+    description: 'The Coordinator posted an announcement.',
+    roles: ['student', 'industry_supervisor', 'university_supervisor'],
+    defaults: { inApp: true, email: false },
+  },
+  {
     type: 'logbook_submitted',
     label: 'Logbook entries submitted',
     description: 'A student submitted logbook entries for your review.',
