@@ -87,26 +87,6 @@ export default function ResultsApprovePage() {
     );
   }
 
-  function handleRelease(row) {
-    const confirmed = window.confirm(
-      `Release the result for ${row.name}? The student will see it immediately.`
-    );
-    if (!confirmed) return;
-    run(`row:${row.id}`, () => resultsApi.releaseResult(row.id), `Result released for ${row.name}.`);
-  }
-
-  function handleReleaseAll() {
-    const confirmed = window.confirm(
-      `Release ${approved} approved result${approved === 1 ? '' : 's'} to students? They will see them immediately.`
-    );
-    if (!confirmed) return;
-    run(
-      'bulk:release',
-      () => resultsApi.releaseAllResults(),
-      (data) => `${data.released} result${data.released === 1 ? '' : 's'} released.`
-    );
-  }
-
   const term = search.trim().toLowerCase();
   const visible = rows.filter((row) => {
     if (filter !== 'all' && row.stage !== filter) return false;
@@ -135,14 +115,6 @@ export default function ResultsApprovePage() {
           >
             {busy === 'bulk:approve' ? 'Approving...' : `Approve all (${awaiting})`}
           </button>
-          <button
-            type="button"
-            className="btn btn--ghost"
-            onClick={handleReleaseAll}
-            disabled={Boolean(busy) || approved === 0}
-          >
-            {busy === 'bulk:release' ? 'Releasing...' : `Release approved (${approved})`}
-          </button>
         </>
       }
     >
@@ -165,7 +137,7 @@ export default function ResultsApprovePage() {
             <h2 className="assess-card__title">Compiled results</h2>
             <p className="assess-card__hint">
               You see only results the Coordinator has sent for approval. Approving locks a result,
-              and releasing it makes it visible to the student.
+              but does not publish it to students.
             </p>
 
             <div className="assess-grid">
@@ -242,16 +214,6 @@ export default function ResultsApprovePage() {
                               disabled={Boolean(busy)}
                             >
                               {rowBusy ? 'Approving...' : 'Approve'}
-                            </button>
-                          )}
-                          {row.stage === 'approved' && (
-                            <button
-                              type="button"
-                              className="btn btn--ghost"
-                              onClick={() => handleRelease(row)}
-                              disabled={Boolean(busy)}
-                            >
-                              {rowBusy ? 'Releasing...' : 'Release'}
                             </button>
                           )}
                           {row.stage === 'released' && (
