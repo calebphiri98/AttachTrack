@@ -7,7 +7,6 @@ import { Card, EmptyState } from '../../../components/shared/Card';
 import FeedbackSection from '../components/FeedbackSection';
 import AttendanceSection from '../components/AttendanceSection';
 import SubmissionsSection from '../components/SubmissionsSection';
-import GradesSection from '../components/GradesSection';
 import LogbookSection from '../components/LogbookSection';
 import AreaInterestEditor from '../components/AreaInterestEditor';
 import AttachmentLocation from '../../../components/supervisor/AttachmentLocation';
@@ -16,12 +15,12 @@ import * as reportsApi from '../../../api/reports.api';
 import * as placementsApi from '../../../api/placements.api';
 import '../../../styles/portalSections.css';
 import './StudentDashboardPage.css';
+import styles from './StudentDashboardPage.module.css';
 
 const SECTIONS = [
   { id: 'submissions', label: 'Submissions' },
   { id: 'attendance', label: 'Attendance' },
   { id: 'feedback', label: 'Feedback' },
-  { id: 'grades', label: 'Final result' },
   { id: 'logbook', label: 'Logbook' },
 ];
 
@@ -115,19 +114,23 @@ export default function StudentDashboardPage() {
 
       {profile && (
         <>
-          <SectionTabs
+          <div className={styles.workspace}>
+            <div className={styles.workspaceHeading}>
+              <div><span className={styles.eyebrow}>ATTACHMENT WORKSPACE</span><h2>Records and progress</h2><p>Manage submissions, attendance, supervisor feedback and daily activities.</p></div>
+            </div>
+            <SectionTabs
             items={SECTIONS}
             activeId={activeSection}
             onChange={setActiveSection}
             label="Student sections"
-          />
+            />
+          </div>
 
           {activeSection === 'submissions' && (
             <SubmissionsSection canSubmit={profile.link_status === 'linked'} />
           )}
           {activeSection === 'attendance' && <AttendanceSection studentId={profile.id} />}
           {activeSection === 'feedback' && <FeedbackSection studentId={profile.id} />}
-          {activeSection === 'grades' && <GradesSection studentId={profile.id} />}
           {activeSection === 'logbook' && <LogbookSection />}
         </>
       )}
