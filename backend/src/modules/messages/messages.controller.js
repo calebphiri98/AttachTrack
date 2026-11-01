@@ -12,12 +12,12 @@ const send = asyncHandler(async (req, res) => {
 });
 
 const threads = asyncHandler(async (req, res) => {
-  const data = await messagesService.listThreads(req.user.id);
+  const data = await messagesService.listThreads(req.user);
   res.status(200).json({ success: true, data });
 });
 
 const thread = asyncHandler(async (req, res) => {
-  const data = await messagesService.getThread(req.user.id, req.params.userId);
+  const data = await messagesService.getThread(req.user, req.params.userId);
   res.status(200).json({ success: true, data });
 });
 
