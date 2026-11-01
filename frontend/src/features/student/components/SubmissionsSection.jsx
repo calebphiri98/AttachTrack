@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Card, EmptyState } from '../../../components/shared/Card';
+import styles from './SubmissionsSection.module.css';
 import StampButton from '../../../components/shared/StampButton';
 import SyncChip from '../../../components/shared/SyncChip';
 import * as submissionsApi from '../../../api/submissions.api';
@@ -132,14 +133,15 @@ export default function SubmissionsSection({ canSubmit }) {
   const hasAnything = (submissions && submissions.length > 0) || queued.length > 0;
 
   return (
-    <Card>
-      <h2 className="section-title">Submissions</h2>
+    <div className={styles.surface}>
+      <Card>
+      <div className={styles.sectionHeader}><div><span className={styles.eyebrow}>DOCUMENT CENTRE</span><h2 className="section-title">Submissions</h2><p>Upload documents, respond to requirements and track your records.</p></div><span className={styles.count}>{(submissions?.length || 0) + queued.length} records</span></div>
 
       {notice && <p className="pending-note">{notice}</p>}
 
       {requirements.length > 0 && (
         <>
-          <h3 style={{ marginTop: 0 }}>Submission Requirements</h3>
+          <h3 className={styles.subheading}>Required submissions</h3>
 
           {requirementError && <p style={{ color: 'var(--error)' }}>{requirementError}</p>}
 
@@ -230,7 +232,7 @@ export default function SubmissionsSection({ canSubmit }) {
         </>
       )}
 
-      <h3>Normal Submissions</h3>
+      <h3 className={styles.subheading}>Your documents</h3>
 
       {canSubmit ? (
         <form onSubmit={handleUpload} className="inline-form">
@@ -317,5 +319,6 @@ export default function SubmissionsSection({ canSubmit }) {
         </ul>
       )}
     </Card>
+    </div>
   );
 }
