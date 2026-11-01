@@ -437,81 +437,16 @@ async function approveAll({ userId }) {
   return { approved: rows.length };
 }
 
-async function notifyReleased(studentIds) {
-  if (studentIds.length === 0) return;
-
-  const { rows } = await db.query(
-    `SELECT id, user_id FROM students WHERE id = ANY($1::uuid[]) AND user_id IS NOT NULL`,
-    [studentIds]
-  );
-
-  for (const row of rows) {
-    await notificationsService.notifySafe({
-      userId: row.user_id,
-      type: 'result_released',
-      title: 'Your final result is available',
-      body: 'Your end-of-semester attachment result has been released.',
-      relatedId: row.id,
-    });
-  }
+async function release() {
+  throw new AppError('Attachment results cannot be published through AttachTrack before official university release', 403);
 }
 
-async function release({ resultId, userId }) {
-  requireUuid(resultId, 'resultId');
-
-  const { rows } = await db.query(
-    `UPDATE results
-     SET released_by = $2, released_at = now(), updated_at = now()
-     WHERE id = $1 AND status = 'approved' AND released_at IS NULL
-     RETURNING *`,
-    [resultId, userId]
-  );
-
-  if (rows.length === 0) {
-    const { rows: existing } = await db.query(
-      'SELECT status, released_at FROM results WHERE id = $1',
-      [resultId]
-    );
-    if (!existing[0]) {
-      throw new AppError('Result not found', 404);
-    }
-    if (existing[0].released_at) {
-      throw new AppError('This result has already been released', 409);
-    }
-    throw new AppError('Only approved results can be released', 409);
-  }
-
-  await notifyReleased([rows[0].student_id]);
-  return rows[0];
+async function releaseAll() {
+  throw new AppError('Attachment results cannot be published through AttachTrack before official university release', 403);
 }
 
-async function releaseAll({ userId }) {
-  const { rows } = await db.query(
-    `UPDATE results
-     SET released_by = $1, released_at = now(), updated_at = now()
-     WHERE status = 'approved' AND released_at IS NULL
-     RETURNING student_id`,
-    [userId]
-  );
-
-  await notifyReleased(rows.map((row) => row.student_id));
-  return { released: rows.length };
-}
-
-async function getMyResult(userId) {
-  const { rows } = await db.query(
-    `SELECT r.final_percent, r.released_at
-     FROM results r
-     JOIN students s ON s.id = r.student_id
-     WHERE s.user_id = $1 AND r.released_at IS NOT NULL`,
-    [userId]
-  );
-
-  if (!rows[0]) {
-    return null;
-  }
-
-  return { final_percent: Number(rows[0].final_percent), released_at: rows[0].released_at };
+async function getMyResult() {
+  throw new AppError('Attachment results are not available through AttachTrack', 403);
 }
 
 module.exports = {
