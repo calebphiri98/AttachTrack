@@ -290,12 +290,7 @@ async function remind({ studentId }) {
       `SELECT isup.user_id
        FROM students s
        JOIN industry_supervisors isup ON isup.id = s.industry_supervisor_id
-       WHERE s.id = $1
-       UNION
-       SELECT isup.user_id
-       FROM temp_supervisor_assignments t
-       JOIN industry_supervisors isup ON isup.id = t.industry_supervisor_id
-       WHERE t.student_id = $1 AND t.end_date IS NULL`,
+       WHERE s.id = $1`,
       [studentId]
     );
     rows.forEach((row) => recipients.push({ userId: row.user_id, kind: 'industry' }));
@@ -462,3 +457,5 @@ module.exports = {
   releaseAll,
   getMyResult,
 };
+
+
