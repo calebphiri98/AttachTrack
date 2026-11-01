@@ -1,4 +1,4 @@
-﻿const db = require('../../config/db');
+const db = require('../../config/db');
 const AppError = require('../../utils/AppError');
 const escapeHtml = require('../../utils/escapeHtml');
 const { sendNotificationEmail } = require('../../config/mailer');
@@ -84,7 +84,7 @@ async function listForUser(userId, limit) {
   const { rows } = await db.query(
     `SELECT id, type, title, body, related_id, read_at, created_at
      FROM notifications
-     WHERE user_id = $1 AND in_app_visible = TRUE
+     WHERE user_id = $1 AND in_app_visible = TRUE AND type <> 'result_released'
      ORDER BY created_at DESC
      LIMIT $2`,
     [userId, safeLimit]
@@ -96,7 +96,7 @@ async function countUnread(userId) {
   const { rows } = await db.query(
     `SELECT COUNT(*)::int AS count
      FROM notifications
-     WHERE user_id = $1 AND in_app_visible = TRUE AND read_at IS NULL`,
+     WHERE user_id = $1 AND in_app_visible = TRUE AND read_at IS NULL AND type <> 'result_released'`,
     [userId]
   );
   return rows[0].count;
