@@ -223,17 +223,6 @@ async function confirmForm(kind, userId) {
 async function listStudents(kind, supervisorContext) {
   const config = requireKindContext(kind, supervisorContext);
 
-  const tempClause =
-    kind === 'industry'
-      ? `OR EXISTS (
-             SELECT 1
-             FROM temp_supervisor_assignments t
-             WHERE t.student_id = s.id
-               AND t.industry_supervisor_id = $1
-               AND t.end_date IS NULL
-           )`
-      : '';
-
   const { rows } = await db.query(
     `SELECT s.id AS student_id,
             s.name,
@@ -249,7 +238,6 @@ async function listStudents(kind, supervisorContext) {
      LEFT JOIN companies c ON c.id = p.company_id
      LEFT JOIN assessments a ON a.student_id = s.id AND a.kind = $2
      WHERE s.${config.column} = $1
-        ${tempClause}
      ORDER BY s.name`,
     [supervisorContext.id, kind]
   );
@@ -539,4 +527,6 @@ module.exports = {
   getAssessment,
   saveAssessment,
 };
+
+
 
