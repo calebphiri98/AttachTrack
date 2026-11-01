@@ -21,4 +21,12 @@ const updateMyLocation = asyncHandler(async (req, res) => {
   res.status(200).json({ success: true, data: profile });
 });
 
-module.exports = { getMyProfile, updateMyLocation };
+const updateMyAreaInterest = asyncHandler(async (req, res) => {
+  const profile = await studentsService.updateAreaInterest({
+    userId: req.user.id,
+    areaInterest: req.body.areaInterest,
+  });
+  res.status(200).json({ success: true, data: profile });
+});
+
+module.exports = { getMyProfile, updateMyLocation, updateMyAreaInterest };
