@@ -1,4 +1,4 @@
-import { useLocation, useParams } from 'react-router-dom';
+import { Link, useLocation, useParams } from 'react-router-dom';
 import StudentProfileLayout from '../../../components/supervisor/StudentProfileLayout';
 import LogbookPanel from '../../../components/supervisor/LogbookPanel';
 import AttendanceSection from '../components/AttendanceSection';
@@ -17,6 +17,7 @@ export default function StudentDetailPage() {
   );
 
   const sections = [
+    { id: 'academic-calendar', label: 'Academic calendar', node: <p><Link to="/industry/academic-calendar">View the official MUBAS academic calendar</Link></p> },
     { id: 'attendance', label: 'Attendance', node: <AttendanceSection studentId={studentId} /> },
     { id: 'feedback', label: 'Feedback', node: <FeedbackSection studentId={studentId} /> },
     { id: 'submissions', label: 'Submissions', node: <SubmissionsSection studentId={studentId} /> },
