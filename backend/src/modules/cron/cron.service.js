@@ -1,4 +1,4 @@
-﻿const db = require('../../config/db');
+const db = require('../../config/db');
 const notificationsService = require('../notifications/notifications.service');
 const attendanceService = require('../attendance/attendance.service');
 
@@ -57,16 +57,7 @@ async function checkMissedAttendance() {
     `SELECT u.id AS user_id,
             array_agg(DISTINCT st.name ORDER BY st.name) AS student_names
      FROM students st
-     JOIN industry_supervisors isup
-       ON isup.id = st.industry_supervisor_id
-       OR EXISTS (
-            SELECT 1
-            FROM temp_supervisor_assignments t
-            WHERE t.student_id = st.id
-              AND t.industry_supervisor_id = isup.id
-              AND t.start_date <= CURRENT_DATE
-              AND (t.end_date IS NULL OR t.end_date >= CURRENT_DATE)
-          )
+     JOIN industry_supervisors isup ON isup.id = st.industry_supervisor_id
      JOIN users u ON u.id = isup.user_id AND u.is_active = TRUE
      LEFT JOIN LATERAL (
        SELECT MAX(a.attendance_date) AS last_date
@@ -111,3 +102,4 @@ async function checkMissedAttendance() {
 }
 
 module.exports = { checkMissedSubmissions, checkMissedAttendance };
+
