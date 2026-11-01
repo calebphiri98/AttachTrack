@@ -11,6 +11,7 @@ import { prepareFiles, validateFiles } from '../../../offline/images';
 import { discardRecord } from '../../../offline/syncEngine';
 import './LogbookSection.css';
 import './LogbookWeeks.css';
+import styles from './LogbookSection.module.css';
 
 const MAX_FILES = 5;
 const MAX_FILE_BYTES = 10 * 1024 * 1024;
@@ -315,8 +316,9 @@ export default function LogbookSection({ studentId = null }) {
   }
 
   return (
-    <Card>
-      <h2 className="section-title">Logbook</h2>
+    <div className={styles.surface}>
+      <Card>
+      <div className={styles.heading}><div><span className={styles.eyebrow}>DAILY ACTIVITY JOURNAL</span><h2 className="section-title">Logbook</h2><p>Document your work, keep evidence and follow supervisor reviews.</p></div><span className={styles.counter}>{entries.length} {entries.length === 1 ? 'entry' : 'entries'}</span></div>
 
       {error && <p className="logbook-error">{error}</p>}
       {message && <p className="logbook-message">{message}</p>}
@@ -570,56 +572,43 @@ export default function LogbookSection({ studentId = null }) {
                       </div>
                     </div>
 
-                    <p className="logbook-entry__task">{entry.activity}</p>
+                    <section className={styles.entryContent} aria-label="Activity details">
+                      <h4 className={styles.activityTitle}>{entry.activity}</h4>
+                      {entry.description && <p className={styles.activityDescription}>{entry.description}</p>}
 
-                    <div className="logbook-entry__details">
-                      {entry.description && <div>{entry.description}</div>}
-                      {entry.skills_learned && (
-                        <div>
-                          <span className="logbook-entry__label">Skills learned: </span>
-                          {entry.skills_learned}
-                        </div>
+                      {(entry.skills_learned || entry.challenges || entry.tools_used || entry.notes) && (
+                        <dl className={styles.detailList}>
+                          {entry.skills_learned && <><dt>Skills developed</dt><dd>{entry.skills_learned}</dd></>}
+                          {entry.challenges && <><dt>Challenges</dt><dd>{entry.challenges}</dd></>}
+                          {entry.tools_used && <><dt>Tools and materials</dt><dd>{entry.tools_used}</dd></>}
+                          {entry.notes && <><dt>Additional notes</dt><dd>{entry.notes}</dd></>}
+                        </dl>
                       )}
-                      {entry.challenges && (
-                        <div>
-                          <span className="logbook-entry__label">Challenges: </span>
-                          {entry.challenges}
-                        </div>
-                      )}
-                      {entry.tools_used && (
-                        <div>
-                          <span className="logbook-entry__label">Tools: </span>
-                          {entry.tools_used}
-                        </div>
-                      )}
-                      {entry.notes && <div className="logbook-entry__notes">{entry.notes}</div>}
-                    </div>
 
-                    {entry.files && entry.files.length > 0 && (
-                      <div className="logbook-entry__files">
-                        {entry.files.map((file) =>
-                          file.pending ? (
-                            <span key={file.id} className="logbook-entry__link">
-                              {file.name} (waiting to upload)
-                            </span>
-                          ) : (
-                            <a
-                              key={file.id}
-                              href={file.url}
-                              target="_blank"
-                              rel="noreferrer"
-                              className="logbook-entry__link"
-                            >
-                              {file.name}
-                            </a>
-                          )
-                        )}
-                      </div>
-                    )}
+                      {entry.files && entry.files.length > 0 && (
+                        <section className={styles.evidenceSection} aria-label="Supporting evidence">
+                          <h5>Evidence <span>({entry.files.length})</span></h5>
+                          <ul className={styles.evidenceList}>
+                            {entry.files.map((file) => (
+                              <li key={file.id}>
+                                {file.pending ? (
+                                  <span className={styles.pendingFile}>{file.name} · Waiting to upload</span>
+                                ) : (
+                                  <a href={file.url} target="_blank" rel="noreferrer">{file.name} <span aria-hidden="true">↗</span></a>
+                                )}
+                              </li>
+                            ))}
+                          </ul>
+                        </section>
+                      )}
 
-                    {entry.review_comment && (
-                      <div className="logbook-entry__review">{entry.review_comment}</div>
-                    )}
+                      {entry.review_comment && (
+                        <aside className={styles.reviewNote} aria-label="Supervisor feedback">
+                          <strong>Supervisor feedback</strong>
+                          <p>{entry.review_comment}</p>
+                        </aside>
+                      )}
+                    </section>
 
                     {isOwner && entry._sync && entry._sync.status === 'failed' && entry._record && (
                       <div className="logbook-entry__actions">
@@ -670,7 +659,7 @@ export default function LogbookSection({ studentId = null }) {
           </section>
         );
       })}
-    </Card>
+      </Card>
+    </div>
   );
 }
-
