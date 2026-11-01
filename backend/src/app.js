@@ -18,7 +18,6 @@ const logbooksRoutes = require('./modules/logbooks/logbooks.routes');
 const siteVisitsRoutes = require('./modules/siteVisits/siteVisits.routes');
 const reportsRoutes = require('./modules/reports/reports.routes');
 const { authLimiter, generalLimiter } = require('./middleware/rateLimiters');
-const tempSupervisorsRoutes = require('./modules/tempSupervisors/tempSupervisors.routes');
 const notificationsRoutes = require('./modules/notifications/notifications.routes');
 const cronRoutes = require('./modules/cron/cron.routes');
 const placementsRoutes = require('./modules/placements/placements.routes');
@@ -57,7 +56,6 @@ app.use('/api/companies', companiesRoutes);
 app.use('/api/logbooks', logbooksRoutes);
 app.use('/api/site-visits', siteVisitsRoutes);
 app.use('/api/reports', reportsRoutes);
-app.use('/api/temp-supervisors', tempSupervisorsRoutes);
 app.use('/api/notifications', notificationsRoutes);
 app.use('/api/cron', cronRoutes);
 app.use('/api/placements', placementsRoutes);
@@ -71,3 +69,5 @@ app.use((req, res, next) => {
 app.use(errorHandler);
 
 module.exports = app;
+
+
