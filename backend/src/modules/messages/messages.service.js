@@ -1,4 +1,4 @@
-﻿const db = require('../../config/db');
+const db = require('../../config/db');
 const AppError = require('../../utils/AppError');
 const { requireUuid, optionalString } = require('../../utils/validators');
 const studentsService = require('../students/students.service');
@@ -141,7 +141,9 @@ async function sendMessage({ sender, recipientId, content, file }) {
   return message;
 }
 
-async function listThreads(userId) {
+async function listThreads(user) {
+  const contacts = await getContacts(user);
+  const allowedIds = new Set(contacts.map((contact) => contact.id));
   const { rows } = await db.query(
     `SELECT
        other.id AS user_id,
@@ -174,20 +176,24 @@ async function listThreads(userId) {
          AND read_at IS NULL
      ) unread ON true
      ORDER BY last_msg.sent_at DESC`,
-    [userId]
+    [user.id]
   );
-  return rows;
+  return rows.filter((row) => allowedIds.has(row.user_id));
 }
 
-async function getThread(userId, otherUserId) {
+async function getThread(user, otherUserId) {
   requireUuid(otherUserId, 'userId');
+  const contacts = await getContacts(user);
+  if (!contacts.some((contact) => contact.id === otherUserId)) {
+    throw new AppError('You cannot access this conversation', 403);
+  }
   const { rows } = await db.query(
     `SELECT *
      FROM messages
      WHERE (sender_id = $1 AND recipient_id = $2)
         OR (sender_id = $2 AND recipient_id = $1)
      ORDER BY sent_at ASC`,
-    [userId, otherUserId]
+    [user.id, otherUserId]
   );
   return rows;
 }
