@@ -1,0 +1,10 @@
+ALTER TABLE site_visits ADD COLUMN IF NOT EXISTS status VARCHAR(16) NOT NULL DEFAULT 'completed';
+ALTER TABLE site_visits ADD COLUMN IF NOT EXISTS visit_time VARCHAR(5);
+ALTER TABLE site_visits ADD COLUMN IF NOT EXISTS notify_audience VARCHAR(16);
+ALTER TABLE site_visits ADD COLUMN IF NOT EXISTS score NUMERIC(5,2);
+ALTER TABLE site_visits ADD COLUMN IF NOT EXISTS completed_at TIMESTAMPTZ;
+ALTER TABLE site_visits ADD CONSTRAINT site_visits_status_valid CHECK (status IN ('scheduled', 'completed'));
+ALTER TABLE site_visits ADD CONSTRAINT site_visits_audience_valid CHECK (notify_audience IS NULL OR notify_audience IN ('student', 'industry', 'both'));
+ALTER TABLE site_visits ADD CONSTRAINT site_visits_score_valid CHECK (score IS NULL OR (score >= 0 AND score <= 100));
+CREATE INDEX IF NOT EXISTS idx_site_visits_student_status ON site_visits(student_id, status, visit_date);
+INSERT INTO schema_migrations (filename) VALUES ('023_site_visit_scheduling.sql') ON CONFLICT (filename) DO NOTHING;
