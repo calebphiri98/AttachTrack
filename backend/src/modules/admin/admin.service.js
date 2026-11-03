@@ -27,6 +27,7 @@ async function listStudents() {
             s.email,
             s.link_status,
             s.location,
+            s.programme,
             s.created_at,
             i.id AS industry_supervisor_id,
             iu.name AS industry_supervisor_name,
