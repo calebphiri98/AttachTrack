@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import PortalLayout from '../../../components/shared/PortalLayout';
+import SiteVisitReadOnly from '../../shared/components/SiteVisitReadOnly';
 import StatusBadge from '../../../components/shared/StatusBadge';
 import ExportButton from '../../../components/shared/ExportButton';
 import SectionTabs from '../../../components/shared/SectionTabs';
@@ -22,6 +23,7 @@ const SECTIONS = [
   { id: 'attendance', label: 'Attendance' },
   { id: 'feedback', label: 'Feedback' },
   { id: 'logbook', label: 'Logbook' },
+  { id: 'site-visits', label: 'Site visits' },
 ];
 
 export default function StudentDashboardPage() {
@@ -132,6 +134,7 @@ export default function StudentDashboardPage() {
           {activeSection === 'attendance' && <AttendanceSection studentId={profile.id} />}
           {activeSection === 'feedback' && <FeedbackSection studentId={profile.id} />}
           {activeSection === 'logbook' && <LogbookSection />}
+          {activeSection === 'site-visits' && <SiteVisitReadOnly studentId={profile.id} />}
         </>
       )}
     </PortalLayout>
