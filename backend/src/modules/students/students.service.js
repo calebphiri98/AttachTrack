@@ -67,6 +67,7 @@ async function listBySupervisor(supervisorColumn, supervisorId) {
   const { rows } = await db.query(
     `SELECT s.id, s.name, s.email, s.link_status, s.location,
             s.programme, s.area_interest, s.created_at,
+            s.industry_supervisor_id, s.university_supervisor_id,
             c.name AS company_name, c.address AS company_address,
             c.industry_sector, p.confirmed_at AS placement_confirmed_at
      FROM students s
