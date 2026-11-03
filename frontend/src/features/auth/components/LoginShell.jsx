@@ -1,4 +1,4 @@
-﻿import styles from './LoginShell.module.css';
+import styles from './LoginShell.module.css';
 
 export default function LoginShell({ eyebrow, title, subtitle, children }) {
   return (
@@ -7,7 +7,7 @@ export default function LoginShell({ eyebrow, title, subtitle, children }) {
         <main className={styles.panel}>
           <header className={styles.header}>
             <div className={styles.brand}>
-              <span className={styles.mark}>AT</span>
+              <img className={styles.logo} src="/mubas-logo.png" alt="MUBAS logo" />
               <span className={styles.wordmark}>AttachTrack</span>
             </div>
             <span className={styles.headerLabel}>MUBAS PLATFORM</span>
