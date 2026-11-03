@@ -27,6 +27,9 @@ function formatVisitDate(value) {
 
 export default function SiteVisitSection({ studentId, studentName }) {
   const [visits, setVisits] = useState([]);
+  const [schedule, setSchedule] = useState({ visitDate: '', visitTime: '09:00', audience: 'both' });
+  const [scheduleBusy, setScheduleBusy] = useState(false);
+  const [completion, setCompletion] = useState({});
   const [form, setForm] = useState({ visitDate: today(), notes: '' });
   const [photo, setPhoto] = useState(null);
   const [photoKey, setPhotoKey] = useState(0);
@@ -89,6 +92,30 @@ export default function SiteVisitSection({ studentId, studentName }) {
     }
   }
 
+  async function scheduleVisit(event) {
+    event.preventDefault();
+    setError(''); setNotice(''); setScheduleBusy(true);
+    try {
+      await siteVisitsApi.scheduleSiteVisit({ studentId, ...schedule });
+      setNotice('Visit scheduled. The selected recipients were notified according to their preferences.');
+      await loadVisits();
+    } catch (err) { setError(err.message); }
+    finally { setScheduleBusy(false); }
+  }
+
+  async function finishVisit(event, visit) {
+    event.preventDefault();
+    setError(''); setNotice(''); setSaving(true);
+    const details = completion[visit.id] || {};
+    try {
+      await siteVisitsApi.completeSiteVisit(visit.id, details);
+      setNotice('Visit completed and assessment recorded for authorised staff.');
+      setCompletion((previous) => ({ ...previous, [visit.id]: {} }));
+      await loadVisits();
+    } catch (err) { setError(err.message); }
+    finally { setSaving(false); }
+  }
+
   const total = visits.length + pending.length;
   const description = total > 0
     ? `${total} visit${total === 1 ? '' : 's'} recorded`
@@ -96,6 +123,14 @@ export default function SiteVisitSection({ studentId, studentName }) {
 
   return (
     <SectionShell title="Site visits" description={description}>
+      <form className={`${ui.form} ${ui.panel}`} onSubmit={scheduleVisit}>
+        <h3 className={ui.panelTitle}>Schedule a workplace visit</h3>
+        <label className={ui.field}><span className={ui.label}>Planned date</span><input className={ui.input} type="date" value={schedule.visitDate} min={today()} onChange={(event) => setSchedule({ ...schedule, visitDate: event.target.value })} required /></label>
+        <label className={ui.field}><span className={ui.label}>Time (local)</span><input className={ui.input} type="time" value={schedule.visitTime} onChange={(event) => setSchedule({ ...schedule, visitTime: event.target.value })} required /></label>
+        <label className={ui.field}><span className={ui.label}>Notify</span><select className={ui.input} value={schedule.audience} onChange={(event) => setSchedule({ ...schedule, audience: event.target.value })}><option value="student">Student only</option><option value="industry">Industrial Supervisor only</option><option value="both">Both</option></select></label>
+        <p className={styles.meta}>Only the selected recipients will receive a notification. The planned visit will be visible in their site visit section.</p>
+        <div className={ui.actions}><button type="submit" className="btn btn--primary" disabled={scheduleBusy}>{scheduleBusy ? 'Scheduling…' : 'Schedule visit'}</button></div>
+      </form>
       <form onSubmit={handleSubmit} className={`${ui.form} ${ui.panel}`}>
         <h3 className={ui.panelTitle}>Record a visit</h3>
 
@@ -195,7 +230,17 @@ export default function SiteVisitSection({ studentId, studentName }) {
                   <strong className={styles.visitDate}>{formatVisitDate(visit.visit_date)}</strong>
                   {visit.supervisor_name && <Pill tone="info">{visit.supervisor_name}</Pill>}
                 </div>
+                <span className={styles.meta}>{visit.status === 'scheduled' ? `Scheduled${visit.visit_time ? ` at ${visit.visit_time}` : ''}` : 'Completed'}</span>
                 {visit.notes && <p className={styles.notes}>{visit.notes}</p>}
+                {visit.score !== null && visit.score !== undefined && <p className={styles.meta}>Site visit assessment: {visit.score}/100 (staff only; separate from final grade)</p>}
+                {visit.status === 'scheduled' && (
+                  <form className={ui.form} onSubmit={(event) => finishVisit(event, visit)}>
+                    <label className={ui.field}><span className={ui.label}>Visit findings</span><textarea className={ui.textarea} rows={3} value={completion[visit.id]?.notes || ''} onChange={(event) => setCompletion({ ...completion, [visit.id]: { ...completion[visit.id], notes: event.target.value } })} /></label>
+                    <label className={ui.field}><span className={ui.label}>Visit assessment (0–100, optional)</span><input className={ui.input} type="number" min="0" max="100" step="0.01" value={completion[visit.id]?.score || ''} onChange={(event) => setCompletion({ ...completion, [visit.id]: { ...completion[visit.id], score: event.target.value } })} /></label>
+                    <label className={ui.field}><span className={ui.label}>Photo (optional)</span><input className={ui.input} type="file" accept="image/*" onChange={(event) => setCompletion({ ...completion, [visit.id]: { ...completion[visit.id], photo: event.target.files?.[0] || null } })} /></label>
+                    <div className={ui.actions}><button className="btn btn--primary" type="submit" disabled={saving}>Complete visit</button></div>
+                  </form>
+                )}
                 {visit.photo_url && (
                   <img className={styles.photo} src={visit.photo_url} alt="Site visit" />
                 )}
