@@ -34,24 +34,18 @@ async function generateStudentCsv(studentId, requester) {
     `SELECT content, flagged_concern, created_at FROM feedback WHERE student_id = $1 ORDER BY created_at DESC`,
     [studentId]
   );
-  const { rows: resultRows } = await db.query(
-    `SELECT final_percent FROM results WHERE student_id = $1 AND released_at IS NOT NULL`,
-    [studentId]
-  );
   const { rows: submissionRows } = await db.query(
     `SELECT file_name, submitted_at, status FROM submissions WHERE student_id = $1 ORDER BY submitted_at DESC`,
     [studentId]
   );
 
-  const finalResult = resultRows[0] ? resultRows[0].final_percent : '';
-  const header = ['Student', 'Email', 'Status', 'Industry Supervisor', 'University Supervisor', 'Final result (%)', 'Attendance days recorded', 'Submissions', 'Feedback'];
+  const header = ['Student', 'Email', 'Status', 'Industry Supervisor', 'University Supervisor', 'Attendance days recorded', 'Submissions', 'Feedback'];
   const body = [
     student.name,
     student.email,
     student.link_status,
     student.industry_supervisor_id || '',
     student.university_supervisor_id || '',
-    finalResult,
     attendanceRows.length,
     submissionRows.length,
     feedbackRows.length,
