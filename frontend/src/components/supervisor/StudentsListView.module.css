@@ -1,4 +1,4 @@
-﻿.srOnly {
+.srOnly {
   position: absolute;
   width: 1px;
   height: 1px;
@@ -623,3 +623,9 @@
     font-size: 16px;
   }
 }
+
+.filterField { display: flex; flex: 0 1 185px; flex-direction: column; min-width: 0; gap: 6px; color: #444; font-size: 12px; font-weight: 600; }
+.filterField select { box-sizing: border-box; display: block; width: 100%; min-width: 0; min-height: 46px; padding: 10px; border: 1px solid #dedede; border-radius: 9px; background: #fafafa; color: #171717; font: inherit; font-size: 13px; }
+.filterField select:focus { outline: 2px solid #777; outline-offset: 1px; }
+.searchInput { box-sizing: border-box; min-width: 0; }
+@media (max-width: 680px) { .filterField { flex: 1 1 160px; } .search { flex-basis: 100%; max-width: 100%; } }
