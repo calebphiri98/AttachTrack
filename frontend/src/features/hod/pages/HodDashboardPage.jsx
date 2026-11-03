@@ -1,6 +1,8 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import PortalLayout from '../../../components/shared/PortalLayout';
+import StudentDirectoryFilters from '../../../components/shared/StudentDirectoryFilters';
+import { filterStudentDirectory } from '../../../utils/studentDirectory.mjs';
 import * as adminApi from '../../../api/admin.api';
 import * as placementsApi from '../../../api/placements.api';
 import '../../../styles/portalSections.css';
@@ -11,6 +13,9 @@ export default function HodDashboardPage() {
   const [awaiting, setAwaiting] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [studentQuery, setStudentQuery] = useState('');
+  const [assignmentFilter, setAssignmentFilter] = useState('all');
+  const [studentSort, setStudentSort] = useState('name');
 
   useEffect(() => {
     adminApi
@@ -24,6 +29,8 @@ export default function HodDashboardPage() {
       .then((res) => setAwaiting(res.data.filter((row) => row.status === 'allocated').length))
       .catch(() => setAwaiting(null));
   }, []);
+
+  const visibleStudents = useMemo(() => filterStudentDirectory(dashboard?.students, { query: studentQuery, assignment: assignmentFilter, sort: studentSort }), [dashboard?.students, studentQuery, assignmentFilter, studentSort]);
 
   const stats = dashboard
     ? [
@@ -67,6 +74,17 @@ export default function HodDashboardPage() {
           {dashboard.students.length === 0 ? (
             <p className="admin-empty">No students registered yet.</p>
           ) : (
+            <>
+            <StudentDirectoryFilters
+              query={studentQuery} onQueryChange={setStudentQuery}
+              assignment={assignmentFilter} onAssignmentChange={setAssignmentFilter}
+              sort={studentSort} onSortChange={setStudentSort}
+              count={visibleStudents.length} total={dashboard.students.length}
+              label="HOD student filters"
+            />
+            {visibleStudents.length === 0 ? (
+              <p className="admin-empty" role="status">No students match the selected filters.</p>
+            ) : (
             <div className="data-table-wrap admin-table-wrap">
               <table className="data-table data-table--stack admin-table admin-table--hod">
                 <thead>
@@ -78,7 +96,7 @@ export default function HodDashboardPage() {
                   </tr>
                 </thead>
                 <tbody>
-                  {dashboard.students.map((student) => (
+                  {visibleStudents.map((student) => (
                     <tr key={student.id}>
                       <td data-label="Student">
                         <div className="admin-person">
@@ -129,6 +147,8 @@ export default function HodDashboardPage() {
                 </tbody>
               </table>
             </div>
+            )}
+            </>
           )}
         </>
       )}
