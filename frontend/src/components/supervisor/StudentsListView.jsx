@@ -20,15 +20,24 @@ function SkeletonRows() {
 
 export default function StudentsListView({ students, error, basePath }) {
   const [query, setQuery] = useState('');
+  const [assignment, setAssignment] = useState('all');
+  const [sort, setSort] = useState('name');
 
   const filtered = useMemo(() => {
-    if (!students) return [];
-    const q = query.trim().toLowerCase();
-    if (!q) return students;
-    return students.filter((s) =>
-      `${s.name || ''} ${s.email || ''}`.toLowerCase().includes(q)
-    );
-  }, [students, query]);
+    const list = Array.isArray(students) ? students : [];
+    const matches = list.filter((student) => {
+      const term = query.trim().toLowerCase();
+      const fields = [student.name, student.email, student.programme, student.location, student.company_name];
+      const searchable = !term || fields.some((value) => String(value ?? '').toLowerCase().includes(term));
+      const hasOther = basePath.startsWith('/university')
+        ? Boolean(student.industry_supervisor_id)
+        : Boolean(student.university_supervisor_id);
+      return searchable && (assignment === 'all' || (assignment === 'both' ? hasOther : !hasOther));
+    });
+    return matches.sort((a, b) => sort === 'newest'
+      ? String(b.created_at || '').localeCompare(String(a.created_at || ''))
+      : String(a.name || a.email || '').localeCompare(String(b.name || b.email || ''), undefined, { sensitivity: 'base' }));
+  }, [students, query, assignment, sort, basePath]);
 
   const statusCounts = useMemo(() => {
     const counts = {};
@@ -85,10 +94,25 @@ export default function StudentsListView({ students, error, basePath }) {
                 <input
                   type="search"
                   className={styles.searchInput}
-                  placeholder="Search by name or email"
+                  placeholder="Name, email, programme or company"
                   value={query}
                   onChange={(e) => setQuery(e.target.value)}
                 />
+              </label>
+              <label className={styles.filterField}>
+                <span>Assignment</span>
+                <select value={assignment} onChange={(event) => setAssignment(event.target.value)}>
+                  <option value="all">All assigned to me</option>
+                  <option value="both">Both supervisors assigned</option>
+                  <option value="only">Only my supervision</option>
+                </select>
+              </label>
+              <label className={styles.filterField}>
+                <span>Sort</span>
+                <select value={sort} onChange={(event) => setSort(event.target.value)}>
+                  <option value="name">Name A–Z</option>
+                  <option value="newest">Newest first</option>
+                </select>
               </label>
               <p className={styles.count} aria-live="polite">
                 {filtered.length} of {students.length}
@@ -96,7 +120,7 @@ export default function StudentsListView({ students, error, basePath }) {
             </div>
 
             {filtered.length === 0 ? (
-              <p className={styles.noResults}>No students match “{query}”.</p>
+              <p className={styles.noResults}>No students match your search or assignment filter.</p>
             ) : (
               <table className={styles.table}>
                 <thead>
