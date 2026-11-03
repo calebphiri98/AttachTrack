@@ -1,11 +1,15 @@
 const reportsService = require('./reports.service');
 const asyncHandler = require('../../utils/asyncHandler');
+const resolveSupervisorContext = require('../../utils/resolveSupervisorContext');
 
 const exportStudentReport = asyncHandler(async (req, res) => {
+  const supervisorContext = req.user.role === 'student'
+    ? null
+    : await resolveSupervisorContext(req.user);
   const csv = await reportsService.generateStudentCsv(req.params.studentId, {
     role: req.user.role,
     id: req.user.id,
-    supervisorId: req.user.supervisorId,
+    supervisorId: supervisorContext?.id || null,
   });
 
   res.setHeader('Content-Type', 'text/csv; charset=utf-8');
