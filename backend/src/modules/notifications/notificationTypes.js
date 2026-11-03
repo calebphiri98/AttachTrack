@@ -1,5 +1,12 @@
 const NOTIFICATION_TYPES = [
   {
+    type: 'site_visit_scheduled',
+    label: 'Site visit scheduled',
+    description: 'A university supervisor scheduled a site visit.',
+    roles: ['student', 'industry_supervisor'],
+    defaults: { inApp: true, email: true },
+  },
+  {
     type: 'announcement_posted',
     label: 'New announcements',
     description: 'The Coordinator posted an announcement.',
