@@ -1,28 +1,24 @@
-const siteVisitsService = require('./siteVisits.service');
+const service = require('./siteVisits.service');
 const asyncHandler = require('../../utils/asyncHandler');
 const resolveSupervisorContext = require('../../utils/resolveSupervisorContext');
 
 const createVisit = asyncHandler(async (req, res) => {
-  const visit = await siteVisitsService.createVisit({
-    userId: req.user.id,
-    studentId: req.body.studentId,
-    visitDate: req.body.visitDate,
-    notes: req.body.notes,
-    file: req.file,
-  });
-
-  res.status(201).json({ success: true, data: visit });
+  const data = await service.createVisit({ userId: req.user.id, ...req.body, file: req.file });
+  res.status(201).json({ success: true, data });
 });
-
+const scheduleVisit = asyncHandler(async (req, res) => {
+  const data = await service.scheduleVisit({ userId: req.user.id, ...req.body });
+  res.status(201).json({ success: true, data });
+});
+const completeVisit = asyncHandler(async (req, res) => {
+  const data = await service.completeVisit({ userId: req.user.id, visitId: req.params.visitId, ...req.body, file: req.file });
+  res.status(200).json({ success: true, data });
+});
 const listForStudent = asyncHandler(async (req, res) => {
-  const supervisorContext = await resolveSupervisorContext(req.user);
-  const visits = await siteVisitsService.listForStudent(req.params.studentId, {
-    role: req.user.role,
-    id: req.user.id,
-    supervisorId: supervisorContext ? supervisorContext.id : null,
+  const context = await resolveSupervisorContext(req.user);
+  const data = await service.listForStudent(req.params.studentId, {
+    role: req.user.role, id: req.user.id, supervisorId: context?.id || null,
   });
-
-  res.status(200).json({ success: true, data: visits });
+  res.status(200).json({ success: true, data });
 });
-
-module.exports = { createVisit, listForStudent };
+module.exports = { createVisit, scheduleVisit, completeVisit, listForStudent };
