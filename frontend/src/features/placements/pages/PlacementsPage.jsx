@@ -1,4 +1,4 @@
-﻿import { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import PortalLayout from '../../../components/shared/PortalLayout';
 import AllocationCell from '../components/AllocationCell';
@@ -136,8 +136,9 @@ export default function PlacementsPage() {
     if (filter !== 'all' && row.status !== filter) return false;
     if (!term) return true;
     return (
-      row.name.toLowerCase().includes(term) ||
-      row.email.toLowerCase().includes(term) ||
+      (row.name || '').toLowerCase().includes(term) ||
+      (row.email || '').toLowerCase().includes(term) ||
+      (row.programme || '').toLowerCase().includes(term) ||
       (row.company_name || '').toLowerCase().includes(term)
     );
   });
@@ -200,7 +201,7 @@ export default function PlacementsPage() {
                 <input
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
-                  placeholder="Student or organisation"
+                  placeholder="Student, email, programme or organisation"
                 />
               </label>
               <label className="inline-form__field">
@@ -215,6 +216,7 @@ export default function PlacementsPage() {
               </label>
             </div>
 
+            <p className="admin-panel__hint" aria-live="polite">Showing {visible.length} of {rows.length} students</p>
             {visible.length === 0 ? (
               <p className="admin-empty">No students match.</p>
             ) : (
