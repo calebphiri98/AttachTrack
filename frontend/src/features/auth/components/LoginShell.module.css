@@ -63,6 +63,14 @@
   letter-spacing: -0.025em;
 }
 
+.logo {
+  display: block;
+  width: 40px;
+  height: 40px;
+  object-fit: contain;
+  flex: 0 0 auto;
+}
+
 .wordmark {
   font-size: 19px;
   font-weight: 700;
@@ -149,8 +157,7 @@
   background-image: url('/login-students.jpg');
   background-position: center;
   background-size: cover;
-  filter: grayscale(100%);
-  opacity: 0.58;
+  opacity: 1;
 }
 
 .visual::before {
@@ -283,7 +290,14 @@
   outline-offset: 3px;
 }
 
-@media (max-width: 1050px) {
+/* Align the desktop brand with the login form column. */
+@media (min-width: 851px) {
+  .brand {
+    margin-left: max(0px, calc((100% - 420px) / 2));
+  }
+}
+
+@media (max-width: 1050px) and (min-width: 851px) {
   .panel {
     padding: 30px;
   }
@@ -293,13 +307,15 @@
   }
 }
 
+/* Tablet and phone layout: real content centering, no absolute offsets. */
 @media (max-width: 850px) {
   .shell {
     padding: 16px;
+    align-items: stretch;
   }
 
   .container {
-    grid-template-columns: 1fr;
+    grid-template-columns: minmax(0, 1fr);
     min-height: calc(100dvh - 32px);
   }
 
@@ -309,41 +325,246 @@
 
   .panel {
     min-height: calc(100dvh - 32px);
+    padding: 26px clamp(24px, 5vw, 44px);
+  }
+
+  .header,
+  .footer {
+    width: 100%;
+    max-width: 420px;
+    margin-inline: auto;
+  }
+
+  .content {
+    flex: 1;
+    min-width: 0;
+    padding: 36px 0;
+    margin: 0 auto;
+    justify-content: center;
+  }
+
+  .shell :global(.ledger-field__input) {
+    font-size: 16px;
   }
 }
 
 @media (max-width: 520px) {
   .shell {
     padding: 0;
-    background: white;
+    background: #fff;
   }
 
   .container {
+    min-height: 100vh;
+    min-height: 100dvh;
     border: 0;
     border-radius: 0;
     box-shadow: none;
-    min-height: 100dvh;
   }
 
   .panel {
-    padding: 24px 22px;
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
     min-height: 100dvh;
+    padding: 24px clamp(22px, 6vw, 32px) 22px;
   }
 
-  .headerLabel {
+  .header {
     display: none;
   }
 
   .content {
-    padding: 50px 0;
+    flex: 1;
+    width: 100%;
+    max-width: 380px;
+    margin: 0 auto;
+    padding: 34px 0 30px;
+    justify-content: center;
+  }
+
+  .introduction {
+    margin-bottom: 28px;
+  }
+
+  .eyebrow {
+    font-size: 12px;
+    margin-bottom: 9px;
   }
 
   .title {
-    font-size: 2.8rem;
+    font-size: clamp(38px, 10vw, 44px);
+    line-height: 1.1;
+    margin-bottom: 12px;
+  }
+
+  .subtitle {
+    font-size: 15px;
+    line-height: 1.55;
+    max-width: 32ch;
+  }
+
+  .shell :global(.ledger-field) {
+    margin-bottom: 19px;
+  }
+
+  .shell :global(.ledger-field__label) {
+    font-size: 12px;
+    margin-bottom: 8px;
+  }
+
+  .shell :global(.ledger-field__input),
+  .shell :global(.stamp-button) {
+    min-height: 51px;
+    border-radius: 10px;
   }
 
   .footer {
     flex-direction: column;
-    gap: 4px;
+    gap: 3px;
+    font-size: 10px;
+    line-height: 1.5;
+    padding-top: 8px;
+    margin-top: auto;
   }
 }
+
+@media (max-width: 360px) {
+  .panel {
+    padding-inline: 20px;
+  }
+
+  .content {
+    padding-block: 20px;
+  }
+
+  .introduction {
+    margin-bottom: 22px;
+  }
+
+  .title {
+    font-size: 38px;
+  }
+}
+
+@media (max-width: 520px) {
+  .eyebrow {
+    display: none;
+  }
+}
+
+/* ATTACHTRACK_MOBILE_CARD_START */
+/* Compact, centered login card on phones only. */
+@media (max-width: 520px) {
+  .shell {
+    display: grid;
+    place-items: center;
+    min-height: 100vh;
+    min-height: 100dvh;
+    padding: 18px;
+    background: #f5f5f5;
+  }
+
+  .container {
+    display: block;
+    width: min(100%, 420px);
+    max-width: 420px;
+    min-height: 0;
+    margin: 0 auto;
+    background: #fff;
+    border: 1px solid #e8e8e8;
+    border-radius: 20px;
+    box-shadow: 0 12px 32px rgba(0, 0, 0, 0.045);
+    overflow: visible;
+  }
+
+  .panel {
+    display: block;
+    width: 100%;
+    min-height: 0;
+    padding: 30px 24px 22px;
+  }
+
+  .header,
+  .visual {
+    display: none;
+  }
+
+  .content {
+    display: block;
+    width: 100%;
+    max-width: none;
+    min-width: 0;
+    margin: 0;
+    padding: 0;
+  }
+
+  .introduction {
+    margin-bottom: 22px;
+  }
+
+  .eyebrow {
+    display: none;
+  }
+
+  .title {
+    margin: 0 0 8px;
+    font-size: 32px;
+    line-height: 1.16;
+    letter-spacing: -0.045em;
+  }
+
+  .subtitle {
+    max-width: none;
+    font-size: 14px;
+    line-height: 1.55;
+  }
+
+  .formArea {
+    width: 100%;
+  }
+
+  .shell :global(.ledger-field) {
+    margin-bottom: 16px;
+  }
+
+  .shell :global(.ledger-field__input),
+  .shell :global(.stamp-button) {
+    width: 100%;
+    min-height: 48px;
+    font-size: 16px;
+    border-radius: 9px;
+  }
+
+  .footer {
+    width: 100%;
+    max-width: none;
+    margin: 28px 0 0;
+    padding: 16px 0 0;
+    border-top: 1px solid #eeeeee;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 3px;
+    text-align: center;
+    font-size: 10px;
+  }
+}
+
+@media (max-width: 350px) {
+  .shell {
+    padding: 10px;
+  }
+
+  .panel {
+    padding: 23px 18px 18px;
+  }
+
+  .title {
+    font-size: 29px;
+  }
+}
+
+/* ATTACHTRACK_MOBILE_CARD_END */
+
