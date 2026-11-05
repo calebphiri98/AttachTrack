@@ -6,7 +6,9 @@ const getMine = asyncHandler(async (req, res) => {
     `SELECT c.name AS company_name,
             c.address,
             c.industry_sector,
-            p.confirmed_at
+            p.confirmed_at,
+            p.attachment_start_date,
+            p.attachment_end_date
      FROM placements p
      JOIN students s ON s.id = p.student_id
      JOIN companies c ON c.id = p.company_id
