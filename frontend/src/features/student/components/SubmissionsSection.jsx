@@ -3,6 +3,7 @@ import { Card, EmptyState } from '../../../components/shared/Card';
 import styles from './SubmissionsSection.module.css';
 import StampButton from '../../../components/shared/StampButton';
 import SyncChip from '../../../components/shared/SyncChip';
+import SubmissionReceipt from './SubmissionReceipt';
 import * as submissionsApi from '../../../api/submissions.api';
 import * as actions from '../../../offline/actions';
 import { useOutbox, useSyncRefresh } from '../../../offline/hooks';
@@ -186,7 +187,8 @@ export default function SubmissionsSection({ canSubmit }) {
                   )}
 
                   {requirement.state === 'submitted' && (
-                    <div style={{ color: 'var(--stamp)' }}>Required submission completed.</div>
+                    <div style={{ color: 'var(--stamp)' }}>Required file received by AttachTrack. Review status is not recorded here.
+                      <SubmissionReceipt record={requirement} /></div>
                   )}
 
                   {canFulfill && (
@@ -314,6 +316,7 @@ export default function SubmissionsSection({ canSubmit }) {
                 {' - '}
                 {formatDate(s.submitted_at)}
               </span>
+              <SubmissionReceipt record={s} />
             </li>
           ))}
         </ul>
