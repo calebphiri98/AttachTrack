@@ -16,6 +16,8 @@ async function listOverview() {
             p.preference_note,
             p.allocated_at,
             p.confirmed_at,
+            p.attachment_start_date,
+            p.attachment_end_date,
             COALESCE(p.status::text, 'unallocated') AS status
      FROM students s
      LEFT JOIN placements p ON p.student_id = s.id
