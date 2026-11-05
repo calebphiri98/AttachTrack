@@ -26,6 +26,7 @@ const NAV = {
   industry_supervisor: [
     { to: '/industry/students', label: 'Dashboard' },
     { to: '/industry/attendance', label: 'Attendance' },
+    { to: '/attendance/monitor', label: 'Monitoring' },
     { to: '/industry/academic-calendar', label: 'Academic calendar' },
     { to: '/industry/assessments', label: 'Assessments' },
     { to: '/industry/messages', label: 'Messages' },
@@ -33,12 +34,14 @@ const NAV = {
   ],
   university_supervisor: [
     { to: '/university/students', label: 'Dashboard' },
+    { to: '/attendance/monitor', label: 'Monitoring' },
     { to: '/university/assessments', label: 'Assessments' },
     { to: '/university/messages', label: 'Messages' },
     { to: '/announcements', label: 'Announcements' },
   ],
   admin: [
     { to: '/admin/dashboard', label: 'Dashboard' },
+    { to: '/attendance/monitor', label: 'Monitoring' },
     { to: '/announcements', label: 'Announcements' },
     { to: '/placements', label: 'Placements' },
     { to: '/assessments/forms', label: 'Assessment forms' },
@@ -46,6 +49,7 @@ const NAV = {
   ],
   hod: [
     { to: '/hod/dashboard', label: 'Dashboard' },
+    { to: '/attendance/monitor', label: 'Monitoring' },
     { to: '/placements', label: 'Placements' },
     { to: '/results', label: 'Results' },
   ],
