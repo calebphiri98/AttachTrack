@@ -15,6 +15,7 @@ import * as studentsApi from '../../../api/students.api';
 import * as reportsApi from '../../../api/reports.api';
 import { downloadReport } from '../../../utils/downloadReport';
 import * as placementsApi from '../../../api/placements.api';
+import AttachmentCountdown from '../components/AttachmentCountdown';
 import '../../../styles/portalSections.css';
 import './StudentDashboardPage.css';
 import styles from './StudentDashboardPage.module.css';
@@ -98,6 +99,7 @@ export default function StudentDashboardPage() {
                 <p style={{ margin: '0 0 4px', color: 'var(--muted)' }}>{placement.address}</p>
               )}
               <AttachmentLocation companyName={placement.company_name} address={placement.address} />
+              <AttachmentCountdown placement={placement} />
               {placement.confirmed_at && (
                 <p style={{ margin: 0, color: 'var(--muted)', fontSize: '0.85rem' }}>
                   Confirmed on {new Date(placement.confirmed_at).toLocaleDateString()}
