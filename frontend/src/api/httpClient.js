@@ -125,9 +125,13 @@ async function perform(path, config) {
     if (onUnauthorized) onUnauthorized();
   }
 
-  const data = config.parseJson
+  const data = !res.ok
     ? await res.json().catch(() => ({}))
-    : await res.text().catch(() => '');
+    : config.responseType === 'blob'
+      ? await res.blob()
+      : config.parseJson
+        ? await res.json().catch(() => ({}))
+        : await res.text().catch(() => '');
 
   if (!res.ok) {
     const error = new Error((data && data.message) || 'Something went wrong');
@@ -214,9 +218,10 @@ async function request(
     headers,
     timeoutMs = DEFAULT_TIMEOUT_MS,
     cache,
+    responseType,
   } = {}
 ) {
-  const config = { method, body, isForm, retry, parseJson, headers, timeoutMs, cache };
+  const config = { method, body, isForm, retry, parseJson, headers, timeoutMs, cache, responseType };
 
   if (isCacheable(path, config)) {
     return cachedGet(path, config);

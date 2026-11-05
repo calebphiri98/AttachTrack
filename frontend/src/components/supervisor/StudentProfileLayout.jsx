@@ -5,6 +5,8 @@ import ExportButton from '../shared/ExportButton';
 import StudentAvatar from './StudentAvatar';
 import StudentAttachmentDetails from './StudentAttachmentDetails';
 import * as reportsApi from '../../api/reports.api';
+import { downloadReport } from '../../utils/downloadReport';
+import { useState } from 'react';
 import '../../styles/portalSections.css';
 import './supervisor.tokens.css';
 import styles from './StudentProfileLayout.module.css';
@@ -16,16 +18,17 @@ export default function StudentProfileLayout({
   assessmentPath,
   sections,
 }) {
-  async function handleExport() {
+  const [exportError, setExportError] = useState('');
+
+  async function handleExport(format) {
     if (!studentId) return;
-    const csv = await reportsApi.exportStudentReport(studentId);
-    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-    const url = URL.createObjectURL(blob);
-    const anchor = document.createElement('a');
-    anchor.href = url;
-    anchor.download = `${student?.name || 'student'}-report.csv`;
-    anchor.click();
-    URL.revokeObjectURL(url);
+    try {
+      setExportError('');
+      const blob = await reportsApi.exportStudentReport(studentId, format);
+      downloadReport(blob, `${student?.name || 'student'}-report`, format);
+    } catch (err) {
+      setExportError(err.message);
+    }
   }
 
   return (
@@ -40,6 +43,7 @@ export default function StudentProfileLayout({
       }
       title={student ? student.name : 'Student'}
     >
+      {exportError && <p role="alert">{exportError}</p>}
       <header className={styles.profile}>
         {student ? (
           <>

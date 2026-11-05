@@ -1,9 +1,16 @@
 import { request } from './httpClient';
 
-export function exportStudentReport(studentId) {
-  return request(`/reports/student/${studentId}`, { parseJson: false });
+const FORMATS = ['csv', 'pdf', 'docx'];
+
+function normalizeFormat(format) {
+  if (!FORMATS.includes(format)) throw new Error('Unsupported report format');
+  return format;
 }
 
-export function exportCohortReport() {
-  return request('/reports/cohort', { parseJson: false });
+export function exportStudentReport(studentId, format = 'csv') {
+  return request(`/reports/student/${encodeURIComponent(studentId)}?format=${normalizeFormat(format)}`, { responseType: 'blob', cache: false, timeoutMs: 45000 });
+}
+
+export function exportCohortReport(format = 'csv') {
+  return request(`/reports/cohort?format=${normalizeFormat(format)}`, { responseType: 'blob', cache: false, timeoutMs: 45000 });
 }

@@ -7,21 +7,13 @@ import AccountsPanel from '../components/AccountsPanel';
 import AssignmentCell from '../components/AssignmentCell';
 import * as adminApi from '../../../api/admin.api';
 import * as reportsApi from '../../../api/reports.api';
+import { downloadReport } from '../../../utils/downloadReport';
 import '../../../styles/portalSections.css';
 import styles from './AdminDashboardPage.module.css';
 
 const EMPTY_ACCOUNT = { name: '', email: '', role: 'industry_supervisor' };
 const EMPTY_SUPERVISORS = { industry: [], university: [] };
 
-function downloadCsv(text, filename) {
-  const blob = new Blob([text], { type: 'text/csv;charset=utf-8;' });
-  const url = URL.createObjectURL(blob);
-  const anchor = document.createElement('a');
-  anchor.href = url;
-  anchor.download = filename;
-  anchor.click();
-  URL.revokeObjectURL(url);
-}
 
 export default function AdminDashboardPage() {
   const [dashboard, setDashboard] = useState(null);
@@ -67,10 +59,11 @@ export default function AdminDashboardPage() {
     loadSupervisors();
   }, [accountsVersion]);
 
-  async function handleExport() {
+  async function handleExport(format) {
     try {
-      const csv = await reportsApi.exportCohortReport();
-      downloadCsv(csv, 'cohort-report.csv');
+      setError('');
+      const blob = await reportsApi.exportCohortReport(format);
+      downloadReport(blob, 'cohort-report', format);
     } catch (err) {
       setError(err.message);
     }
@@ -122,7 +115,7 @@ export default function AdminDashboardPage() {
     <PortalLayout
       eyebrow="Coordinator dashboard"
       title="Admin overview"
-      actions={<ExportButton onClick={handleExport}>Export cohort CSV</ExportButton>}
+      actions={<ExportButton onClick={handleExport}>Export cohort</ExportButton>}
     >
       <div className={styles.root}>
       {error && <p className="admin-error">{error}</p>}

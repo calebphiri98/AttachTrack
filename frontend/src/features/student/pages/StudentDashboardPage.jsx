@@ -13,6 +13,7 @@ import AreaInterestEditor from '../components/AreaInterestEditor';
 import AttachmentLocation from '../../../components/supervisor/AttachmentLocation';
 import * as studentsApi from '../../../api/students.api';
 import * as reportsApi from '../../../api/reports.api';
+import { downloadReport } from '../../../utils/downloadReport';
 import * as placementsApi from '../../../api/placements.api';
 import '../../../styles/portalSections.css';
 import './StudentDashboardPage.css';
@@ -32,17 +33,12 @@ export default function StudentDashboardPage() {
   const [activeSection, setActiveSection] = useState(SECTIONS[0].id);
   const [error, setError] = useState('');
 
-  async function handleExport() {
+  async function handleExport(format) {
     if (!profile) return;
     try {
-      const csv = await reportsApi.exportStudentReport(profile.id);
-      const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-      const url = URL.createObjectURL(blob);
-      const anchor = document.createElement('a');
-      anchor.href = url;
-      anchor.download = `${profile.name || 'student'}-report.csv`;
-      anchor.click();
-      URL.revokeObjectURL(url);
+      setError('');
+      const blob = await reportsApi.exportStudentReport(profile.id, format);
+      downloadReport(blob, `${profile.name || 'student'}-report`, format);
     } catch (err) {
       setError(err.message);
     }
