@@ -20,6 +20,7 @@ import HodDashboardPage from '../features/hod/pages/HodDashboardPage';
 import ResultsPage from '../features/results/pages/ResultsPage';
 import NotificationSettingsPage from '../features/settings/pages/NotificationSettingsPage';
 import PlacementsPage from '../features/placements/pages/PlacementsPage';
+import AttachmentDatesPage from '../features/placements/pages/AttachmentDatesPage';
 import AssessmentFormsPage from '../features/assessments/pages/AssessmentFormsPage';
 import AssessmentsListPage from '../features/assessments/pages/AssessmentsListPage';
 import AssessmentFormPage from '../features/assessments/pages/AssessmentFormPage';
@@ -58,6 +59,7 @@ export default function AppRoutes() {
       <Route path="/hod/dashboard" element={<ProtectedRoute roles={['hod']}><HodDashboardPage /></ProtectedRoute>} />
       <Route path="/results" element={<ProtectedRoute roles={['admin', 'hod']}><ResultsPage /></ProtectedRoute>} />
       <Route path="/placements" element={<ProtectedRoute roles={['admin', 'hod']}><PlacementsPage /></ProtectedRoute>} />
+      <Route path="/placements/periods" element={<ProtectedRoute roles={['admin']}><AttachmentDatesPage /></ProtectedRoute>} />
       <Route path="/sync" element={<ProtectedRoute><SyncCenterPage /></ProtectedRoute>} />
       <Route path="/settings/notifications" element={<ProtectedRoute><NotificationSettingsPage /></ProtectedRoute>} />
       <Route path="/" element={<Navigate to="/login" replace />} />
