@@ -24,6 +24,7 @@ import AssessmentFormsPage from '../features/assessments/pages/AssessmentFormsPa
 import AssessmentsListPage from '../features/assessments/pages/AssessmentsListPage';
 import AssessmentFormPage from '../features/assessments/pages/AssessmentFormPage';
 import AttendancePage from '../features/attendance/pages/AttendancePage';
+import AttendanceMonitoringPage from '../features/attendance/pages/AttendanceMonitoringPage';
 import SyncCenterPage from '../features/sync/pages/SyncCenterPage';
 
 export default function AppRoutes() {
@@ -40,6 +41,7 @@ export default function AppRoutes() {
       <Route path="/industry/students/:studentId" element={<ProtectedRoute roles={['industry_supervisor']}><StudentDetailPage /></ProtectedRoute>} />
       <Route path="/industry/academic-calendar" element={<ProtectedRoute roles={['industry_supervisor']}><AcademicCalendarPage /></ProtectedRoute>} />
       <Route path="/industry/attendance" element={<ProtectedRoute roles={['industry_supervisor']}><AttendancePage /></ProtectedRoute>} />
+      <Route path="/attendance/monitor" element={<ProtectedRoute roles={['industry_supervisor', 'university_supervisor', 'admin', 'hod']}><AttendanceMonitoringPage /></ProtectedRoute>} />
       <Route path="/industry/assessments" element={<ProtectedRoute roles={['industry_supervisor']}><AssessmentsListPage kind="industry" /></ProtectedRoute>} />
       <Route path="/industry/assessments/:studentId" element={<ProtectedRoute roles={['industry_supervisor']}><AssessmentFormPage kind="industry" /></ProtectedRoute>} />
       <Route path="/university/students" element={<ProtectedRoute roles={['university_supervisor']}><UniversityStudentsListPage /></ProtectedRoute>} />
