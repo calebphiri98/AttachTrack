@@ -44,6 +44,7 @@ const NAV = {
     { to: '/attendance/monitor', label: 'Monitoring' },
     { to: '/announcements', label: 'Announcements' },
     { to: '/placements', label: 'Placements' },
+    { to: '/placements/periods', label: 'Attachment dates' },
     { to: '/assessments/forms', label: 'Assessment forms' },
     { to: '/results', label: 'Results' },
   ],
