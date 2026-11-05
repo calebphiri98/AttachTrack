@@ -1,0 +1,9 @@
+.root{margin-top:1.15rem;padding-top:1rem;border-top:1px solid #e5e7eb;color:#1f2937}
+.top{display:flex;align-items:flex-start;justify-content:space-between;gap:1rem}
+.top h3{margin:0;font-size:1rem;font-weight:700}
+.top p{margin:.35rem 0 0;color:#475569}
+.top strong{font-size:1.45rem;font-variant-numeric:tabular-nums}
+.track{height:9px;background:#e5e7eb;border-radius:999px;overflow:hidden;margin:.8rem 0 .5rem}
+.track span{display:block;height:100%;background:#243047;border-radius:999px}
+.dates{display:flex;justify-content:space-between;gap:1rem;color:#475569;font-size:.87rem;flex-wrap:wrap}
+.root small{display:block;margin-top:.6rem;color:#64748b}
