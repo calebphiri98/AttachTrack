@@ -1,0 +1,5 @@
+.receipt{display:flex;align-items:flex-start;gap:.6rem;border-top:1px solid #e5e7eb;padding-top:.65rem;color:#1f2937}
+.mark{width:1.35rem;height:1.35rem;display:grid;place-items:center;border-radius:50%;background:#f0f4f3;border:1px solid #d5e0da;color:#25634d;font-size:.8rem;flex-shrink:0}
+.receipt strong{font-size:.88rem}
+.receipt p{margin:.2rem 0;color:#475569;font-size:.83rem}
+.receipt small{color:#64748b;font-size:.78rem}
